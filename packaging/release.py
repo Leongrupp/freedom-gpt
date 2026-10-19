@@ -16,7 +16,9 @@ def main():
  archive=OUT/('FreedomGPT-'+VERSION+'-Windows-x64.zip')
  with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as zip:
   for path in sorted(BUNDLE.rglob('*')):
-   if path.is_file():zip.write(path,path.relative_to(BUNDLE).as_posix())
+   if path.is_file() and '__pycache__' not in path.parts and path.suffix!='.pyc':
+    try:zip.write(path,path.relative_to(BUNDLE).as_posix())
+    except OSError as exc:raise RuntimeError('Cannot archive public bundle file: '+str(path.relative_to(BUNDLE))) from exc
  print('ZIP_BYTES',archive.stat().st_size,flush=True)
  installer=OUT/('FreedomGPT-Setup-'+VERSION+'.exe')
  with installer.open('wb') as dest:

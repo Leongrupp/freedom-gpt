@@ -2,7 +2,12 @@
 import argparse,ast,json,os,pathlib,re,shutil,subprocess,sys
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','BUILD.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt','deploy','app','packaging','site','assets','licenses']
+def assert_publication_allowed():
+ if (ROOT/'.private/publication-hold.json').exists() or (ROOT/'.tmp/transfers-paused-by-user.json').exists():
+  raise RuntimeError('Publication is paused by the project owner. Keep working locally; remove the hold only after new explicit approval. --prepare-only remains available.')
+
 def run(args,**kw):
+ if str(args[0])=='gh' or (str(args[0])=='git' and len(args)>1 and args[1]=='push'):assert_publication_allowed()
  kw.setdefault('cwd',ROOT);subprocess.run([str(a) for a in args],check=True,**kw)
 def github_env():
  env=os.environ.copy()
@@ -16,6 +21,7 @@ def github_env():
 def main():
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--version',required=True);parser.add_argument('--runtime-from',required=True,type=pathlib.Path);parser.add_argument('--prepare-only',action='store_true');args=parser.parse_args()
  if not re.fullmatch(r'\d+\.\d+\.\d+',args.version):raise ValueError('Use a numeric version, for example1.2.1')
+ if not args.prepare_only:assert_publication_allowed()
  env=github_env() if not args.prepare_only else os.environ.copy()
  meta=json.loads((ROOT/'app/version.json').read_text());meta['version']=args.version
  (ROOT/'app/version.json').write_text(json.dumps(meta,separators=(',',':'))+'\n')

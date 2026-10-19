@@ -31,6 +31,22 @@ def main():
    files.append({'name':name,'bytes':size,'sha256':sha,'url':f'https://github.com/{REPO}/releases/download/{tag}/{name}'})
   if len(files)!=2:raise ValueError('Windows release assets are incomplete')
   write('release.json',{'product':'Freedom GPT','version':tag[1:],'public':True,'status':'ready','files':files,'checked_at':time.time()})
+  layouts=[('windows-x64','Windows 10/11 x64', ['FreedomGPT-Setup-{v}.exe','FreedomGPT-{v}-Windows-x64.zip'], 'Python, Node.js и движки внутри; модели отдельно.', 'Python, Node.js and engines included; models separate.'),
+           ('ubuntu-x64','Ubuntu 24.04 x64',['FreedomGPT-Setup-{v}-Ubuntu-x64.run','FreedomGPT-{v}-Ubuntu-amd64.deb','FreedomGPT-{v}-Ubuntu-x64.tar.gz'],'Проверено в чистом контейнере без сети; GPU требует драйвера.','Tested in a clean offline container; GPU needs a driver.'),
+           ('macos-arm64','macOS · Apple Silicon',['FreedomGPT-{v}-macOS-AppleSilicon.zip'],'macOS 26.2+, M1+. Кандидат без подписи, запуск на Mac ещё не проверен.','macOS 26.2+, M1+. Unsigned candidate; native Mac execution not yet tested.')]
+  uploaded={a['name']:a for a in value.get('assets',[]) if a.get('state')=='uploaded'};platforms=[]
+  for target,label,patterns,ru,en in layouts:
+   downloads=[]
+   for pattern in patterns:
+    name=pattern.format(v=tag[1:]);asset=uploaded.get(name)
+    if not asset:continue
+    size=asset.get('size',0)
+    if not isinstance(size,int) or not 0<size<2*1024**3:continue
+    digest=asset.get('digest','');sha=digest[7:] if re.fullmatch(r'sha256:[a-f0-9]{64}',digest or '') else None
+    fmt='EXE' if name.endswith('.exe') else 'DEB' if name.endswith('.deb') else '.run' if name.endswith('.run') else 'TAR.GZ' if name.endswith('.tar.gz') else '.app ZIP' if target=='macos-arm64' else 'ZIP'
+    downloads.append({'name':name,'bytes':size,'sha256':sha,'format':fmt,'url':f'https://github.com/{REPO}/releases/download/{tag}/{name}'})
+   if downloads:platforms.append({'id':target,'name':label,'files':downloads,'note_ru':ru,'note_en':en,'native_tested':target!='macos-arm64'})
+  write('platforms.json',{'product':'Freedom GPT','version':tag[1:],'published':True,'platforms':platforms,'checked_at':time.time()})
  except Exception as exc:
   old={}
   try:old=json.loads((META/'release.json').read_text())

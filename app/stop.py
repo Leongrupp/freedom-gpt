@@ -20,10 +20,19 @@ try:
 except (urllib.error.URLError,TimeoutError):pass
 if not bootstrap.PRIVATE:library.stop_model()
 record=read(ROOT/'.tmp/server-process.json',{})
+def wait_stopped(process,timeout=15):
+ deadline=time.monotonic()+timeout
+ while time.monotonic()<deadline:
+  try:
+   if not process.is_running() or process.status()==psutil.STATUS_ZOMBIE:return
+   process.wait(timeout=.2);return
+  except psutil.NoSuchProcess:return
+  except psutil.TimeoutExpired:pass
+ raise RuntimeError('Freedom GPT server did not stop. Keep the disk connected and retry.')
 try:
  process=psutil.Process(record['pid'])
- if abs(process.create_time()-record['created'])<1 and str(ROOT/'server.py').lower() in ' '.join(process.cmdline()).lower():process.terminate();process.wait(timeout=15)
+ if abs(process.create_time()-record['created'])<1 and str(ROOT/'server.py').lower() in ' '.join(process.cmdline()).lower():process.terminate();wait_stopped(process)
 except (KeyError,psutil.NoSuchProcess):pass
 from hermes_cli.gateway import stop_profile_gateway
 stop_profile_gateway()
-print('Freedom GPT background services stopped. Close its browser window and safely eject the disk in Windows.')
+print('Freedom GPT background services stopped. Close its browser window before safely ejecting the disk.')

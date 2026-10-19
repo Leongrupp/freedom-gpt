@@ -22,8 +22,8 @@ def fit(size,device,*,kind='chat',ram=None,vram=None,installed=False):
     disk=device.get('free_disk_gb',0);available_ram=device.get('ram_gb',0);gpu=device.get('vram_gb',0)
     if not installed and disk<weight+2:return {'level':'limited','rank':0,'reason':'Недостаточно места для модели и запаса.'}
     if available_ram<need_ram:return {'level':'limited','rank':1,'reason':f'Рекомендуется от {need_ram} ГБ RAM. На этом ПК модель может не поместиться.'}
-    if device.get('cuda') and gpu>=need_vram-.1:return {'level':'recommended','rank':3,'reason':'Подходит по памяти. Скорость и работа инструментов проверяются после загрузки.'}
-    if kind!='chat':return {'level':'limited','rank':1,'reason':f'Для этого режима рекомендуется NVIDIA от {need_vram} ГБ VRAM.'}
+    if device.get('gpu_accelerated',device.get('cuda')) and gpu>=need_vram-.1:return {'level':'recommended','rank':3,'reason':'Подходит по памяти. Скорость и работа инструментов проверяются после загрузки.'}
+    if kind!='chat':return {'level':'limited','rank':1,'reason':f'Для этого режима рекомендуется совместимый GPU от {need_vram} ГБ памяти.'}
     return {'level':'cpu','rank':2,'reason':'Возможна работа с RAM или частичной загрузкой в GPU; скорость ниже.'}
 
 def repo_name(value):

@@ -50,3 +50,13 @@ Verification limitation:
   rule stability. It does not reconstruct an earlier raw rule export.
 
 Upload instructions: ../../FILEZILLA-MODELS.txt
+
+Static design updates to an existing deployment:
+  Build with packaging/site_design.py. It packages only an explicit static
+  design allowlist, without app releases, catalog, models or service configs.
+  Upload that archive and update_design.py to /root/freedom-gpt-deploy.
+  Run update_design.py <absolute-archive-path> <sha256>.
+  The updater preserves the old release, verifies file digests and HTTP,
+  swaps the current symlink atomically, checks protected config/service
+  hashes and the published app version, and rolls back on verification failure.
+  No nginx reload, VPN restart or firewall changes are performed.

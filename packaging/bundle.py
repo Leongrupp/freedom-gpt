@@ -17,7 +17,7 @@ def main():
  DEST.mkdir(parents=True,exist_ok=True)
  for name in ['updater.py','apply_update.py','update_protocol.py','version.json','update-key.pub','README.txt','bootstrap.py','init-project-memory.py','gguf_info.py','launch.py','stop.py','server.py','library.py','engine_supervisor.py','generate-image-request.py','catalog.json','freedom.ico','Start-FreedomGPT.cmd','Stop-FreedomGPT.cmd']:
   copy(APP/name,DEST/name)
- for name in ['discovery.py','video.py']:copy(APP/name,DEST/'runtime/freedom'/name)
+ for name in ['discovery.py','video.py','platform_support.py','preflight.py','system_check.py']:copy(APP/name,DEST/'runtime/freedom'/name)
  tree(APP/'dist',DEST/'dist');tree(APP/'public',DEST/'public')
  tree(PYBASE,DEST/'runtime/python')
  # No venv absolute redirector, user .pth, token cache or editable-install path.
@@ -70,6 +70,31 @@ def main():
    source=vc/name
    if not source.is_file():raise RuntimeError('Missing Microsoft redistributable '+name+'; set FREEDOM_BUILD_MSVC to its licensed runtime directory')
    copy(source,target)
+ for name in ['gpu_lease.py','image-tool.py']:copy(APP/'creative'/name,DEST/'stack/creative-kit'/name)
+ # Additional official backends let a clean PC fall back from CUDA to Vulkan/CPU.
+ from archive_utils import unpack
+ lock=json.loads((ROOT/'packaging/native-lock.json').read_text())
+ native={'platform':'windows-x64','engines':{'llama':{'cuda':'runtime/llama/llama-server.exe'},'sd':{'cuda':'runtime/sd/sd-cli.exe'}},'upstream':lock['targets']['windows-x64']}
+ for kind,item in native['upstream'].items():
+  archive=ROOT/'.cache/platforms/downloads'/item['file'];h=hashlib.sha256()
+  with archive.open('rb') as stream:
+   for block in iter(lambda:stream.read(4*1024**2),b''):h.update(block)
+  if archive.stat().st_size!=item['bytes'] or h.hexdigest()!=item['sha256']:raise ValueError('Runtime verification failed: '+item['file'])
+  folder=ROOT/'.cache/platforms/unpacked/windows-x64'/kind;unpack(archive,folder)
+  family,backend=kind.split('-',1);destination=DEST/'runtime'/family/backend;tree(folder,destination)
+  executable=next(destination.rglob('llama-server.exe' if family=='llama' else 'sd-cli.exe'))
+  native['engines'][family][backend]=executable.relative_to(DEST).as_posix()
+ for name in ['msvcp140.dll','msvcp140_codecvt_ids.dll','vcruntime140.dll','vcruntime140_1.dll','vcomp140.dll']:copy(DEST/'runtime/sd'/name,DEST/'runtime/system/lib'/name)
+ node=pathlib.Path(os.environ.get('FREEDOM_BUILD_NODE',str(ROOT/'vendor/node')))
+ if not (node/'node.exe').is_file():raise ValueError('Set FREEDOM_BUILD_NODE to an official Windows Node.js runtime')
+ tree(node,DEST/'runtime/node')
+ wheelhouse=ROOT/'.cache/platforms/wheels/windows-x64'
+ if not (wheelhouse/'manifest.json').is_file():raise ValueError('Prepare the offline repair wheels: packaging/fetch_wheels.py --target windows-x64')
+ for item in json.loads((wheelhouse/'manifest.json').read_text()):
+  file=wheelhouse/item['file']
+  if file.stat().st_size!=item['bytes'] or hashlib.sha256(file.read_bytes()).hexdigest()!=item['sha256']:raise ValueError('Repair wheel verification failed: '+file.name)
+ tree(wheelhouse,DEST/'runtime/wheels');copy(ROOT/'packaging/requirements-portable.lock',DEST/'runtime/wheels/requirements.lock')
+ (DEST/'runtime/native.json').write_text(json.dumps(native,indent=2))
  tree(ROOT/'licenses',DEST/'licenses')
  copy(HERMES/'LICENSE',DEST/'licenses/Hermes-MIT.txt');copy(PYBASE/'LICENSE.txt',DEST/'licenses/Python.txt')
  (DEST/'stack/hermes-runtime/SOUL.md').write_text('Ты — Freedom GPT, локальный помощник. Говори честно о доступных инструментах. Не обещай выполненную работу без фактического результата. Храни память проекта в выбранной рабочей папке. Интернет нужен только для внешних ресурсов и загрузок; модель работает локально.\n',encoding='utf8')

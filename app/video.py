@@ -3,6 +3,7 @@ import asyncio,concurrent.futures,contextlib,importlib.util,json,os,pathlib,re,s
 from aiohttp import web
 from bootstrap import ROOT,STACK,PRIVATE,config,read,write
 from library import library
+from platform_support import native_environment
 
 class Videos:
     def __init__(self):
@@ -33,7 +34,7 @@ class Videos:
             if active():raise ValueError('Видеокарта занята генерацией. Дождитесь завершения текущего задания.')
             item=self.model()
             if not item or not library.ready(item):raise ValueError('Сначала скачайте комплект видеомодели в разделе «Модели».')
-            if not library.device.get('cuda') or library.recommendation(item)['level']=='limited':raise ValueError('Для этого видеорежима нужно от 24 ГБ RAM и NVIDIA от 8 ГБ VRAM.')
+            if not library.device.get('gpu_accelerated',library.device.get('cuda')) or library.recommendation(item)['level']=='limited':raise ValueError('Для видео нужно от 24 ГБ RAM и совместимый GPU: NVIDIA, Metal или Vulkan.')
             prompt=str(value.get('prompt','')).strip()
             if not 1<=len(prompt)<=6000:raise ValueError('Описание видео должно содержать от 1 до 6000 символов.')
             width,height=value.get('width',512),value.get('height',288);frames=value.get('frames',33);steps=value.get('steps',20)
@@ -79,7 +80,7 @@ class Videos:
                     '--offload-to-cpu','--clip-on-cpu','--vae-on-cpu','--vae-tiling','--temporal-tiling','--diffusion-fa',
                     '-t',str(max(1,min(16,library.device.get('physical_cores') or 4))),'-s',str(job['seed']),'-o',job['output']]
                 with open(job['log'],'wb') as log:
-                    child=subprocess.Popen(args,cwd=ROOT,env=os.environ.copy(),stdout=log,stderr=log,creationflags=subprocess.CREATE_NO_WINDOW)
+                    child=subprocess.Popen(args,cwd=ROOT,env=native_environment(ROOT,module.engine()),stdout=log,stderr=log,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
                     self.process=child;add_child(lease,child.pid)
                     while child.poll() is None:
                         if self.stop.wait(1):raise InterruptedError()

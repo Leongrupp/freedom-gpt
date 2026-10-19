@@ -3,26 +3,13 @@ import asyncio,concurrent.futures,hashlib,json,math,os,pathlib,shutil,subprocess
 import psutil,requests
 from aiohttp import web
 from bootstrap import ROOT,STACK,HOME,config,read,write,write_hermes
+from platform_support import PROCESS_FLAGS,file_lock,hardware as platform_hardware,native_binary
 sys.path.insert(0,str(STACK/'creative-kit'))
 from gpu_lease import active as image_job_active
 GIB=1024**3
 
-def hardware():
- memory=psutil.virtual_memory();gpus=[];cpu='';notes=[]
- try:
-  raw=subprocess.check_output(['nvidia-smi','--query-gpu=name,memory.total,memory.free,driver_version','--format=csv,noheader,nounits'],text=True,timeout=8,creationflags=subprocess.CREATE_NO_WINDOW)
-  for line in raw.strip().splitlines():
-   name,total,free,driver=[p.strip() for p in line.split(',')];gpus.append({'name':name,'vram_gb':round(float(total)/1024,1),'free_gb':round(float(free)/1024,1),'driver':driver,'cuda':True})
- except Exception:notes.append('CUDA не обнаружена. Доступен CPU; скорость генерации будет ниже.')
- try:
-  script="[pscustomobject]@{cpu=(Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name);gpu=@(Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name)} | ConvertTo-Json -Compress"
-  info=json.loads(subprocess.check_output(['powershell.exe','-NoProfile','-Command',script],text=True,encoding='utf8',errors='replace',timeout=15,creationflags=subprocess.CREATE_NO_WINDOW));cpu=info['cpu']
-  if not gpus:gpus=[{'name':name,'vram_gb':None,'cuda':False} for name in info.get('gpu',[])]
- except Exception:cpu=os.environ.get('PROCESSOR_IDENTIFIER','CPU')
- return {'cpu':cpu,'physical_cores':psutil.cpu_count(logical=False),'threads':psutil.cpu_count(),
-         'ram_gb':math.ceil(memory.total/GIB),'ram_available_gb':round(memory.available/GIB,1),'gpus':gpus,
-         'vram_gb':max((g.get('vram_gb') or 0 for g in gpus),default=0),'cuda':any(g.get('cuda') for g in gpus),
-         'free_disk_gb':round(shutil.disk_usage(ROOT).free/GIB,1),'notes':notes,'storage':str(ROOT),'estimate_only':True}
+def hardware():return platform_hardware(ROOT)
+
 def digest(path):
  h=hashlib.sha256()
  with path.open('rb') as source:
@@ -67,13 +54,8 @@ class Library:
   if self.jobs.get(ident,{}).get('state') in ['downloading','verifying']:return
   missing=sum(max(0,f['bytes']-((self.folder(item)/(f['name']+'.part')).stat().st_size if (self.folder(item)/(f['name']+'.part')).exists() else f['bytes'] if (self.folder(item)/f['name']).exists() else 0)) for f in item['files'])
   if shutil.disk_usage(ROOT).free<missing+2*GIB:raise ValueError('Недостаточно места. Для загрузки и запаса нужно '+str(round((missing+2*GIB)/GIB,1))+' ГБ.')
-  import msvcrt
-  self.folder(item).mkdir(parents=True,exist_ok=True)
-  lock=(self.folder(item)/'.download.lock').open('a+b');lock.seek(0,2)
-  if not lock.tell():lock.write(b'0');lock.flush()
-  lock.seek(0)
-  try:msvcrt.locking(lock.fileno(),msvcrt.LK_NBLCK,1)
-  except OSError:lock.close();raise ValueError('Эта модель уже скачивается в другом процессе. Дождитесь завершения текущей загрузки.')
+  try:lock=file_lock(self.folder(item)/'.download.lock')
+  except OSError:raise ValueError('Эта модель уже скачивается в другом процессе. Дождитесь завершения текущей загрузки.')
   self.download_locks[ident]=lock
   self.cancel[ident]=threading.Event();self.jobs[ident]={'state':'downloading','speed':0};self.pool.submit(self._download,item)
  def _download(self,item):
@@ -131,22 +113,28 @@ class Library:
    except psutil.TimeoutExpired:
     children=process.children();process.terminate()
     for child in children:
-     if child.name().lower()=='llama-server.exe':child.terminate()
+     if child.name().lower() in {'llama-server.exe','llama-server'}:child.terminate()
   except (KeyError,psutil.NoSuchProcess):pass
  def engine_config(self,item):
-  device=hardware();self.device=device;vram=max((g.get('free_gb') or 0 for g in device.get('gpus',[]) if g.get('cuda')),default=0);weight=sum(f['bytes'] for f in item['files'] if f['name']=='model.gguf')/GIB
+  device=hardware();self.device=device;vram=max((g.get('free_gb') or 0 for g in device.get('gpus',[]) if g.get('cuda') or g.get('metal') or g.get('vulkan')),default=0);weight=sum(f['bytes'] for f in item['files'] if f['name']=='model.gguf')/GIB
   context=65536
-  ngl='all' if device.get('cuda') and vram>=weight+2 else str(max(0,int(24*max(0,vram-2)/max(weight,1)))) if device.get('cuda') else '0'
-  required_ram=4 if ngl=='all' else max(0,weight-max(0,vram-2))+4
+  ngl='all' if device.get('gpu_accelerated') and vram>=weight+4 else str(max(0,int(24*max(0,vram-2)/max(weight,1)))) if device.get('gpu_accelerated') else '0'
+  overhead=max(2,min(5,1.5+weight*.35))
+  required_ram=weight+overhead if device.get('unified_memory') else 4 if ngl=='all' else max(0,weight-max(0,vram-2))+overhead
+  backend='metal' if device.get('metal') else 'cuda' if device.get('cuda') else 'vulkan' if device.get('vulkan') else 'cpu'
+  from system_check import system
+  backend=system.snapshot().get('text_backend') or backend
+  if backend=='cpu':ngl='0';required_ram=weight+overhead
+  native_binary(ROOT,'llama',backend)
   if device.get('ram_available_gb',0)<required_ram:raise ValueError('Недостаточно свободной RAM для этого режима: нужно примерно '+str(round(required_ram,1))+' ГБ. Закройте другие модели/тяжёлые приложения или выберите более лёгкую модель.')
   return {'model':str(self.folder(item)/'model.gguf'),'mmproj':str(self.folder(item)/'mmproj.gguf') if any(f['name']=='mmproj.gguf' for f in item['files']) else None,
           'context':context,'port':config()['model_port'],'alias':'freedom-local','threads':max(1,min(16,device.get('physical_cores') or 4)),
-          'ngl':ngl,'mtp':bool(item.get('mtp') and ngl=='all'),'kv_cache':'q8_0'}
+          'backend':backend,'ngl':ngl,'mtp':bool(item.get('mtp') and ngl=='all'),'kv_cache':'q8_0'}
  def start_model(self,item):
   cfg=self.engine_config(item);write(STACK/'server-settings.json',cfg);write_hermes(cfg['context'])
   (STACK/'.tmp/stop-server').unlink(missing_ok=True)
   with (ROOT/'logs/model-supervisor.log').open('ab') as log:
-   process=subprocess.Popen([sys.executable,'-s',str(ROOT/'engine_supervisor.py')],cwd=ROOT,env=os.environ.copy(),stdout=log,stderr=log,creationflags=subprocess.CREATE_NO_WINDOW)
+   process=subprocess.Popen([sys.executable,'-s',str(ROOT/'engine_supervisor.py')],cwd=ROOT,env=os.environ.copy(),stdout=log,stderr=log,creationflags=PROCESS_FLAGS)
   write(STACK/'.tmp/supervisor-process.json',{'pid':process.pid,'created':psutil.Process(process.pid).create_time()})
  def activate(self,ident):
   import bootstrap

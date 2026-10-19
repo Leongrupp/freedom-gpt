@@ -6,6 +6,7 @@ ROOT=pathlib.Path(__file__).resolve().parent
 import bootstrap as portable
 from library import library, register as register_library
 from video import videos, register as register_video
+from system_check import system,register as register_system
 STACK=portable.STACK
 PROJECTS=portable.workspace_root() if portable.PRIVATE else ROOT.resolve()
 CREATIVE=STACK/'creative-kit'
@@ -15,7 +16,7 @@ def model_origin():return portable.model_url().removesuffix("/v1")
 for name in ('.tmp','.cache','logs','data','uploads','output','archive'):(ROOT/name).mkdir(exist_ok=True,parents=True)
 os.environ.update(HERMES_HOME=str(portable.HOME),TEMP=str(ROOT/'.tmp'),TMP=str(ROOT/'.tmp'),
     PYTHONIOENCODING='utf-8',PYTHONDONTWRITEBYTECODE='1',UV_OFFLINE='1',HF_HUB_OFFLINE='1',TRANSFORMERS_OFFLINE='1')
-os.environ['PATH']=str(ROOT/'runtime/python')+os.pathsep+os.environ['PATH']
+os.environ['PATH']=str(pathlib.Path(sys.executable).parent)+os.pathsep+os.environ['PATH']
 sys.path.insert(0,str(HERMES_SOURCE))
 from aiohttp import web, ClientSession, ClientTimeout
 from PIL import Image
@@ -75,7 +76,7 @@ def find_artifacts(session_id,value):
         if isinstance(item,dict):
             for key,val in item.items():
                 if key in {'image','image_path','output','output_path','file_path','path'} and isinstance(val,str):
-                    if re.match(r'^[A-Za-z]:[/\\]',val):
+                    if pathlib.Path(val).is_absolute():
                         asset=register_artifact(session_id,val)
                         if asset:found.append(asset)
                 if isinstance(val,(dict,list)):walk(val)
@@ -214,7 +215,7 @@ async def monitor(app):
                 except Exception:pass
             try:
                 command=['nvidia-smi','--query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw','--format=csv,noheader,nounits']
-                proc=await asyncio.create_subprocess_exec(*command,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.DEVNULL,creationflags=subprocess.CREATE_NO_WINDOW)
+                proc=await asyncio.create_subprocess_exec(*command,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.DEVNULL,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
                 raw,_=await asyncio.wait_for(proc.communicate(),3)
                 row=raw.decode().splitlines()[0].split(',')
                 data['gpu']={'name':row[0].strip(),'percent':float(row[1]),'used_mb':float(row[2]),'total_mb':float(row[3]),'temperature':float(row[4]),'watts':float(row[5])}
@@ -257,7 +258,8 @@ async def bootstrap(request):
     active=library.model(portable.config().get('active')) or {}
     return web.json_response({'token':TOKEN,'name':'Freedom GPT','model':active.get('name',portable.config().get('external_model','Выберите модель')),'model_short':active.get('name',portable.config().get('external_model','Модель')),'model_id':portable.model_id(),'first_run':not portable.config().get('onboarded'),
         'version':META['version'],'updates':updates.status(),'context':portable.context_size(),'skills':None,'default_project':str(portable.workspace_root()),'images':image_status(),
-        'metrics':request.app['runtime'].get('metrics',{}),'root':str(ROOT),'history_home':str(portable.HOME),'language':portable.config().get('language')})
+        'metrics':request.app['runtime'].get('metrics',{}),'root':str(ROOT),'history_home':str(portable.HOME),'language':portable.config().get('language'),
+        'support':None if portable.PRIVATE else META.get('support')})
 
 async def sessions(request):
     rows={}
@@ -341,7 +343,7 @@ async def submit(request):
         job_folder=ROOT/'data/image-requests';job_folder.mkdir(exist_ok=True)
         job=job_folder/(input_id+'.json')
         if not job.exists():job.write_text(json.dumps({'prompt':text},ensure_ascii=False),encoding='utf-8')
-        command='"'+sys.executable+'" "'+str(ROOT/'generate-image-request.py')+'" "'+str(job)+'"'
+        command=__import__('shlex').join([sys.executable,str(ROOT/'generate-image-request.py'),str(job)]) if os.name!='nt' else subprocess.list2cmdline([sys.executable,str(ROOT/'generate-image-request.py'),str(job)])
         image_api_text=('Пользователь нажал кнопку создания изображения. Создай реальный PNG локально по описанию ниже. '
             'Если доступен image_generate, используй его. Если такого инструмента нет в текущем списке, '
             'вызови terminal и выполни точно эту установленную локальную команду: '+command+
@@ -473,6 +475,7 @@ async def index(request):
     return response
 async def startup(app):
     await asyncio.to_thread(library.scan)
+    system.start()
     portable.write_hermes(portable.context_size())
     await bridge.start();app['monitor_task']=asyncio.create_task(monitor(app))
     await updates.start(app,bridge)
@@ -492,6 +495,7 @@ def create_app():
     app.router.add_get('/api/updates',lambda r:web.json_response(updates.status()))
     app.router.add_post('/api/updates/check',update_check)
     app.router.add_post('/api/updates/settings',update_settings)
+    register_system(app)
     app.router.add_get('/api/health',health);app.router.add_get('/api/bootstrap',bootstrap)
     app.router.add_get('/api/sessions',sessions);app.router.add_post('/api/sessions',new_session)
     app.router.add_get('/api/sessions/{sid}',session_detail);app.router.add_patch('/api/sessions/{sid}',chat_meta)

@@ -1,18 +1,30 @@
 """Install-relative configuration. No account, model weights or personal history in the release."""
-import json,os,pathlib,sys
+import json,os,pathlib,sys,sysconfig
+sys.dont_write_bytecode=True
 ROOT=pathlib.Path(__file__).resolve().parent
 try:PRIVATE=json.loads((ROOT/'data/private-runtime.json').read_text(encoding='utf8'))
 except (OSError,ValueError):PRIVATE={}
 STACK=pathlib.Path(PRIVATE['stack']) if PRIVATE.get('stack') else ROOT/'stack'
 HOME=pathlib.Path(PRIVATE['home']) if PRIVATE.get('home') else STACK/'hermes-runtime'
 SOURCE=ROOT/'runtime/hermes'
+SITE_PACKAGES=pathlib.Path(sysconfig.get_path('purelib'))
 for item in ['data','logs','.tmp','.cache','workspaces','uploads','output','archive','stack/models','stack/logs','stack/.tmp','stack/.cache','stack/creative-kit/models','stack/creative-kit/.tmp','stack/creative-kit/logs']:(ROOT/item).mkdir(parents=True,exist_ok=True)
 HOME.mkdir(parents=True,exist_ok=True)
-os.environ.update(HERMES_HOME=str(HOME),PYTHONPATH=os.pathsep.join([str(SOURCE),str(ROOT/'runtime/python/Lib/site-packages'),str(ROOT/'runtime/freedom'),str(ROOT)]),
-    FREEDOM_ROOT=str(ROOT),FREEDOM_STACK=str(STACK),FREEDOM_HERMES_SOURCE=str(SOURCE),TEMP=str(ROOT/'.tmp'),TMP=str(ROOT/'.tmp'),
-    PYTHONDONTWRITEBYTECODE='1',PYTHONIOENCODING='utf-8',HF_HUB_DISABLE_IMPLICIT_TOKEN='1',HF_HUB_DISABLE_TELEMETRY='1')
-os.environ['PATH']=str(ROOT/'runtime/cuda')+os.pathsep+os.environ.get('PATH','')
-sys.path[:0]=[str(SOURCE),str(ROOT/'runtime/python/Lib/site-packages'),str(ROOT/'runtime/freedom')]
+os.environ.update(HERMES_HOME=str(HOME),PYTHONPATH=os.pathsep.join([str(SOURCE),str(SITE_PACKAGES),str(ROOT/'runtime/freedom'),str(ROOT)]),
+    FREEDOM_ROOT=str(ROOT),FREEDOM_STACK=str(STACK),FREEDOM_HERMES_SOURCE=str(SOURCE),TEMP=str(ROOT/'.tmp'),TMP=str(ROOT/'.tmp'),TMPDIR=str(ROOT/'.tmp'),
+    PYTHONDONTWRITEBYTECODE='1',PYTHONNOUSERSITE='1',PYTHONIOENCODING='utf-8',HF_HUB_DISABLE_IMPLICIT_TOKEN='1',HF_HUB_DISABLE_TELEMETRY='1')
+os.environ['PATH']=os.pathsep.join([str(ROOT/'runtime/node/bin'),str(ROOT/'runtime/node'),str(ROOT/'runtime/cuda'),os.environ.get('PATH','')])
+os.environ.update(PIP_CACHE_DIR=str(ROOT/'.cache/pip'),UV_CACHE_DIR=str(ROOT/'.cache/uv'),npm_config_cache=str(ROOT/'.cache/npm'))
+try:
+ import certifi
+ os.environ.setdefault('SSL_CERT_FILE',certifi.where())
+except ImportError:pass
+sys.path[:0]=[str(SOURCE),str(SITE_PACKAGES),str(ROOT/'runtime/freedom')]
+from platform_support import PROCESS_FLAGS
+_DLL_DIRECTORIES=[]
+if os.name=='nt' and hasattr(os,'add_dll_directory'):
+ for directory in [ROOT/'runtime/python',ROOT/'runtime/system/lib']:
+  if directory.is_dir():_DLL_DIRECTORIES.append(os.add_dll_directory(str(directory)))
 def read(path,default=None):
  try:return json.loads(path.read_text(encoding='utf-8-sig'))
  except (OSError,ValueError):return default
@@ -28,7 +40,7 @@ def ensure_private_model():
    if json.load(response).get('status')=='ok':return
  except Exception:pass
  script=STACK/'ensure-model.ps1'
- if script.is_file():subprocess.Popen(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',str(script)],cwd=STACK,env=os.environ.copy(),creationflags=subprocess.CREATE_NO_WINDOW)
+ if sys.platform=='win32' and script.is_file():subprocess.Popen(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',str(script)],cwd=STACK,env=os.environ.copy(),creationflags=PROCESS_FLAGS)
 def model_url():return config().get('external_url') or f"http://127.0.0.1:{config()['model_port']}/v1"
 def model_id():return config().get('external_model') or 'freedom-local'
 def local_history(sessions,previous=None):

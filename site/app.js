@@ -1,3 +1,4 @@
+import {copyText} from './premium.js?v=community-1.4.1';
 const en=document.documentElement.lang==='en';
 const size=n=>(n/1024**3).toFixed(2)+(en?' GB':' ГБ');
 const originalDownloads=new Map([...document.querySelectorAll('.download-link,#portable-download,#checksum-download')].map(link=>[link,link.innerHTML]));
@@ -30,11 +31,24 @@ async function mirrors(){try{
 document.getElementById('copy-donation').addEventListener('click',async event=>{
  const copied=event.currentTarget.dataset.copied;
  const text='bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6';
- const field=document.createElement('textarea');field.value=text;field.readOnly=true;field.style.cssText='position:fixed;left:-10000px';document.body.appendChild(field);field.focus();field.select();let success=false;
- try{success=document.execCommand('copy')}finally{field.remove()}
- if(!success){try{await navigator.clipboard.writeText(text);success=true}catch{}}
+ const success=await copyText(text);
  document.getElementById('copy-status').textContent=success?copied:(en?'Select the address and press Ctrl+C':'Выделите адрес и нажмите Ctrl+C');
 });
 release();
 mirrors();
+async function platforms(){try{
+ const r=await fetch('/api/platforms',{cache:'no-store'});if(!r.ok)return;
+ const data=await r.json(),section=document.getElementById('platform-downloads');if(!section||!data.platforms?.length)return;
+ section.replaceChildren();section.hidden=false;
+ const title=document.createElement('h3');title.textContent=en?'Choose your operating system':'Выберите операционную систему';section.append(title);
+ const grid=document.createElement('div');grid.className='platform-grid';section.append(grid);
+ for(const item of data.platforms){
+  const card=document.createElement('article'),heading=document.createElement('h4'),note=document.createElement('p');heading.textContent=item.name;note.textContent=en?item.note_en:item.note_ru;card.append(heading,note);
+  for(const file of item.files||[]){if(!file.url?.startsWith('/downloads/platform/')&&!file.url?.startsWith('https://github.com/Leongrupp/freedom-gpt/releases/download/'))continue;
+   const a=document.createElement('a');a.href=file.url;a.textContent=file.format+' · '+size(file.bytes);a.className='platform-file';card.append(a);
+  }grid.append(card);
+ }
+ if(data.local_only){const p=document.createElement('p');p.className='platform-local-note';p.textContent=en?'Local build previews. These files have not been published.':'Локальные сборки для проверки. Эти файлы ещё не опубликованы.';section.append(p)}
+}catch{/* A platform is offered only after verified metadata is available. */}}
+platforms();
 setInterval(()=>{release();mirrors()},60000);

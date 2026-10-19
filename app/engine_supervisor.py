@@ -1,11 +1,11 @@
 """Own and supervise this installation's llama.cpp process only."""
 import bootstrap
-import datetime,json,msvcrt,os,pathlib,subprocess,sys,time
+import datetime,json,os,pathlib,subprocess,sys,time
 from bootstrap import ROOT,STACK,read,write
+from platform_support import PROCESS_FLAGS,file_lock,native_binary,native_environment
 sys.path.insert(0,str(STACK/'creative-kit'))
 from gpu_lease import active as gpu_reserved
-lock=(STACK/'.tmp/supervisor.lock').open('a+b');lock.write(b'0');lock.flush();lock.seek(0)
-try:msvcrt.locking(lock.fileno(),msvcrt.LK_NBLCK,1)
+try:lock=file_lock(STACK/'.tmp/supervisor.lock')
 except OSError:raise SystemExit(0)
 child=None
 def idle():
@@ -17,13 +17,13 @@ def idle():
 try:
  while not (STACK/'.tmp/stop-server').exists():
   if gpu_reserved():time.sleep(1);continue
-  cfg=read(STACK/'server-settings.json',{});engine=ROOT/'runtime/llama/llama-server.exe'
+  cfg=read(STACK/'server-settings.json',{});engine=native_binary(ROOT,'llama',cfg.get('backend'))
   args=[str(engine),'-m',cfg['model'],'--host','127.0.0.1','--port',str(cfg['port']),'--alias',cfg['alias'],'-c',str(cfg['context']),'-np','1','-ngl',str(cfg['ngl']),'-fa','on','-ctk','q8_0','-ctv','q8_0','-t',str(cfg['threads']),'-tb',str(cfg['threads']),'-b','512','-ub','256','--metrics','--slots','--no-webui','--cache-prompt','--log-verbosity','3']
   if cfg.get('mmproj'):args+=['--mmproj',cfg['mmproj'],'--no-mmproj-offload']
   if cfg.get('mtp'):args+=['--spec-type','draft-mtp','--spec-draft-n-max','5','--reasoning-effort','low','--reasoning-budget','1024','--no-reasoning-preserve']
   path=STACK/'logs'/('llama-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.log');(STACK/'.tmp/current-server-log.txt').write_text(str(path),encoding='utf8')
   with path.open('ab') as log:
-   child=subprocess.Popen(args,cwd=ROOT/'runtime/llama',env=os.environ.copy(),stdout=log,stderr=log,creationflags=subprocess.CREATE_NO_WINDOW)
+   child=subprocess.Popen(args,cwd=engine.parent,env=native_environment(ROOT,engine),stdout=log,stderr=log,creationflags=PROCESS_FLAGS)
    write(STACK/'.tmp/model-process.json',{'pid':child.pid,'started':time.time()})
    while child.poll() is None and not (STACK/'.tmp/stop-server').exists():
     if gpu_reserved() and idle():break

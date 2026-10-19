@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 [assembly: AssemblyTitle("Freedom GPT")]
-[assembly: AssemblyVersion("1.3.0.0")]
+[assembly: AssemblyVersion("1.4.1.0")]
 class Launcher {
  [STAThread] static void Main() {
   try {

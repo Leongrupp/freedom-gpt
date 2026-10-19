@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "python": "3.14.8",
+  "llama_release": "b11740",
+  "sd_release": "master-975-95b3090",
+  "targets": {
+    "macos-arm64": {
+      "python": {
+        "file": "cpython-3.14.8+20261013-aarch64-apple-darwin-install_only_stripped.tar.gz",
+        "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.14.8%2B20261013-aarch64-apple-darwin-install_only_stripped.tar.gz",
+        "bytes": 26678949,
+        "sha256": "994adadc202c5df0b4570192cc9a70e3f2c131e512f4a125c56efa8562f44b28"
+      },
+      "llama-metal": {
+        "file": "llama-b11740-bin-macos-arm64.tar.gz",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/llama-b11740-bin-macos-arm64.tar.gz",
+        "bytes": 12324683,
+        "sha256": "0b6325b0464b1b253ef7a625f153fd71d6913d46cbb226db861af9555e1d2beb"
+      },
+      "sd-metal": {
+        "file": "sd-master-95b3090-bin-Darwin-macOS-26.6.2-arm64.zip",
+        "url": "https://github.com/leejet/stable-diffusion.cpp/releases/download/master-975-95b3090/sd-master-95b3090-bin-Darwin-macOS-26.6.2-arm64.zip",
+        "bytes": 36488395,
+        "sha256": "2edf5a21c4b73f448c3a02c87925283b77aa94f1859c0d8e649134da68b40813"
+      },
+      "node": {
+        "file": "node-v24.18.0-darwin-arm64.tar.gz",
+        "url": "https://nodejs.org/dist/v24.18.0/node-v24.18.0-darwin-arm64.tar.gz",
+        "bytes": 52087559,
+        "sha256": "e1a97e14c99c803e96c7339403282ea05a499c32f8d83defe9ef5ec66f979ed1"
+      }
+    },
+    "macos-x64": {
+      "python": {
+        "file": "cpython-3.14.8+20261013-x86_64-apple-darwin-install_only_stripped.tar.gz",
+        "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.14.8%2B20261013-x86_64-apple-darwin-install_only_stripped.tar.gz",
+        "bytes": 26894901,
+        "sha256": "f0137337ecf6234b30c9c955219dae2d71e1a00387c4d204d6c6929e24bf9a90"
+      },
+      "llama-cpu": {
+        "file": "llama-b11740-bin-macos-x64.tar.gz",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/llama-b11740-bin-macos-x64.tar.gz",
+        "bytes": 11799369,
+        "sha256": "0e0de4c3ff26f1a4dc280b626c17cf91f18f4a1a99f209a62f13390129b92619"
+      }
+    },
+    "ubuntu-x64": {
+      "python": {
+        "file": "cpython-3.14.8+20261013-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+        "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.14.8%2B20261013-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+        "bytes": 36326733,
+        "sha256": "d8faa1b588506b9e3e5a3f57807bb056d534a1641a6b10d15b6ea3f0b413b960"
+      },
+      "llama-cpu": {
+        "file": "llama-b11740-bin-ubuntu-x64.tar.gz",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/llama-b11740-bin-ubuntu-x64.tar.gz",
+        "bytes": 17991685,
+        "sha256": "6f67fd0a9aaeaad376b7cf4bf02a633dd7793cbe0f02cce2d773d4be724dce5a"
+      },
+      "llama-cuda": {
+        "file": "llama-b11740-bin-ubuntu-cuda-12.8-x64.tar.gz",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/llama-b11740-bin-ubuntu-cuda-12.8-x64.tar.gz",
+        "bytes": 173427565,
+        "sha256": "323fb63a801d7ac63f30cf10966c1a7fbdd77bef45bddaf64f7f812a5f3a2c8e"
+      },
+      "cuda-runtime": {
+        "file": "cudart-llama-b11740-bin-ubuntu-cuda-12.8-x64.tar.gz",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/cudart-llama-b11740-bin-ubuntu-cuda-12.8-x64.tar.gz",
+        "bytes": 594377553,
+        "sha256": "74036fe517c71f51d7b45e1ed86d5411ce0dca9a897d88f18c085c6a5a059b10"
+      },
+      "sd-cpu": {
+        "file": "sd-master-95b3090-bin-Linux-Ubuntu-24.04-x86_64.zip",
+        "url": "https://github.com/leejet/stable-diffusion.cpp/releases/download/master-975-95b3090/sd-master-95b3090-bin-Linux-Ubuntu-24.04-x86_64.zip",
+        "bytes": 26289165,
+        "sha256": "23757b2d46edd68ec59ad252e6e3d6c1854ab01d6be5d47a06e0bc751c2eee2a"
+      },
+      "sd-vulkan": {
+        "file": "sd-master-95b3090-bin-Linux-Ubuntu-24.04-x86_64-vulkan.zip",
+        "url": "https://github.com/leejet/stable-diffusion.cpp/releases/download/master-975-95b3090/sd-master-95b3090-bin-Linux-Ubuntu-24.04-x86_64-vulkan.zip",
+        "bytes": 36612523,
+        "sha256": "703f547a0bbe254979940ec6142a87b4af6acbc01d34e37358f4feabb430a225"
+      },
+      "llama-vulkan": {
+        "file": "llama-b11740-bin-ubuntu-vulkan-x64.tar.gz",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/llama-b11740-bin-ubuntu-vulkan-x64.tar.gz",
+        "bytes": 30641710,
+        "sha256": "5945d16f4185da258a69db731e52364691dfe77170900a4949af8f1b48275f06"
+      },
+      "node": {
+        "file": "node-v24.18.0-linux-x64.tar.gz",
+        "url": "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.gz",
+        "bytes": 57224421,
+        "sha256": "783130984963db7ba9cbd01089eaf2c2efb055c7c1693c943174b967b3050cb8"
+      }
+    },
+    "windows-x64": {
+      "llama-cpu": {
+        "file": "llama-b11740-bin-win-cpu-x64.zip",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/llama-b11740-bin-win-cpu-x64.zip",
+        "bytes": 19708549,
+        "sha256": "27df486de99c189d683b93a03accf47a0bf3896c7fb3fcd0dea1bbee64253c20"
+      },
+      "llama-vulkan": {
+        "file": "llama-b11740-bin-win-vulkan-x64.zip",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11740/llama-b11740-bin-win-vulkan-x64.zip",
+        "bytes": 32359586,
+        "sha256": "38475fd46e77ca051d4c2860e2dc3c32a6b3786ae7e845835c7ea5625209e0be"
+      },
+      "sd-cpu": {
+        "file": "sd-master-95b3090-bin-win-cpu-x64.zip",
+        "url": "https://github.com/leejet/stable-diffusion.cpp/releases/download/master-975-95b3090/sd-master-95b3090-bin-win-cpu-x64.zip",
+        "bytes": 17706677,
+        "sha256": "945ed74a22a5c6abbae480201312e439f16ad029166dd94e58cef9a2ecb2dba8"
+      },
+      "sd-vulkan": {
+        "file": "sd-master-95b3090-bin-win-vulkan-x64.zip",
+        "url": "https://github.com/leejet/stable-diffusion.cpp/releases/download/master-975-95b3090/sd-master-95b3090-bin-win-vulkan-x64.zip",
+        "bytes": 29371165,
+        "sha256": "17398d07ba89c2fba21b8662db69ecdd917888373e4f82779b7599e97a6b4bd3"
+      }
+    }
+  }
+}

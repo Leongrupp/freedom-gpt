@@ -32,6 +32,11 @@ Follow the Microsoft redistribution terms linked in licenses/.
 
 ## Publish new features
 
+If `.private/publication-hold.json` or `.tmp/transfers-paused-by-user.json`
+exists, the publisher refuses to push or upload. Local builds with
+`--prepare-only` remain available. Remove a hold only after the project owner
+explicitly approves publication again.
+
 From the reviewed Git checkout, run the same command without --prepare-only:
 
 ```powershell
@@ -78,3 +83,8 @@ An optional private `data/private-runtime.json` preserves an existing agent
 profile, toolkit and model server behind the interface. It is excluded from
 public builds and update paths. The author's personal copy uses this adapter;
 the public release creates a clean local profile.
+
+
+## Cross-platform releases
+
+See CROSS-PLATFORM.md for platform requirements, private runtimes, reproducible packaging, real verification and Mac limitations. Build locally first, verify the packages, then publish only the explicitly approved version. Older model-download and release-worker holds remain separate. The version-scoped publisher is packaging/publish_platforms.py.

@@ -1,4 +1,4 @@
-# Freedom GPT 1.2.0 verification
+# Freedom GPT verification history
 
 Verified on Windows 11 with Ryzen9 7900X, 32 GB RAM and NVIDIA RTX4080 16 GB.
 Other physical PCs and an external SSD on another PC were not tested.
@@ -61,8 +61,38 @@ preservation of 24 personal sessions were checked on the development PC.
 An isolated 1.2 client accepted the signed 1.3 update using its original verifier;
 the upgraded clean application started with the new search/video modules.
 
-The public 1.3 release is gated on a real Wan generation after all three weights
+The full video feature validation is gated on a real Wan generation after all three weights
 finish downloading: full WebM decode, HTTP Range delivery, restored coding-model
 health and a subsequent local model response. An incomplete model download or a
 working interface alone does not satisfy that gate. Memory recommendations for
 other GPUs remain estimates. No subscription or payment service is connected.
+
+
+## Version 1.4.1 platform release
+
+Windows: a clean copy runs with PATH restricted to Windows system folders and
+its private Python. Startup, empty history, chat creation, restart persistence,
+Node.js, bundled components and offline repair of a missing dependency passed.
+The actual EXE extraction and managed file hashes were checked.
+
+Ubuntu 24.04: app installation, private Python/Node/pip, gateway, chat creation,
+restart persistence and offline dependency repair passed without system Python
+or network. The .run and DEB are checked through actual installation. The native
+Linux CUDA engine previously loaded the same coding model and produced text and
+Python. This does not substitute for physical Linux desktop or AMD GPU tests.
+
+macOS: Apple Silicon, minimum macOS 26.2. Native-file architecture/dependency and
+archive integrity checks passed. The build remains an unsigned candidate;
+execution on a real Mac, signing and notarization are outstanding.
+
+A real code response through the updated personal Windows UI and copy/paste
+were checked. Public support links appear in Settings; the personal installation
+suppresses that section. Project chats and personal model routing are preserved.
+
+Video remains experimental. Model downloads are paused by the owner. A new
+successful rendering test is not claimed. No universal 100+ tokens/s claim is
+made. Public packages do not include personal chats, secrets or model weights.
+
+Website domain: aionpc.ru. HTTP domain routing is prepared. DNS is pending the
+owner's change. HTTPS and shared VPN-port routing are deferred by owner choice;
+the VPN port, configuration and processes are preserved.

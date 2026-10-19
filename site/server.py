@@ -18,6 +18,19 @@ async def release(request):
  return web.json_response(value or {'error':'Установщик ещё собирается'},status=200 if value else 503)
 async def catalog(request):return web.json_response(load(PROJECT/'app/catalog.json',[]))
 async def models(request):return web.json_response({'models':[]})
+def platform_folder():return PROJECT/'release/platforms'/load(PROJECT/'app/version.json',{'version':'1.4.0'})['version']
+async def platforms(request):
+ value=load(platform_folder()/'platforms.json',None)
+ if not value:return web.json_response({'platforms':[]})
+ # Public metadata never exposes local filesystem paths.
+ return web.json_response({'version':value['version'],'local_only':not value.get('published',False),'platforms':value['platforms']})
+async def platform_download(request):
+ name=request.match_info['name'];manifest=load(platform_folder()/'platforms.json',{})
+ allowed={f['name'] for p in manifest.get('platforms',[]) for f in p.get('files',[])}|{'SHA256SUMS.txt'}
+ if name not in allowed:return web.Response(status=404)
+ file=platform_folder()/name
+ if not file.is_file():return web.Response(status=404)
+ return web.FileResponse(file,headers={'Content-Type':'application/octet-stream','Content-Disposition':'attachment; filename="'+name+'"'})
 async def download(request):
  name=request.match_info['name'];manifest=load(PROJECT/'release/release.json',{})
  allowed={f['name'] for f in manifest.get('files',[])}|{'SHA256SUMS.txt','FreedomGPT-source-1.1.0.zip'}
@@ -28,6 +41,7 @@ async def download(request):
 def create_app():
  app=web.Application(middlewares=[headers]);app.router.add_get('/',index);app.router.add_get('/en/',index);app.router.add_get('/api/release',release);app.router.add_get('/api/catalog',catalog);app.router.add_get('/downloads/{name}',download)
  app.router.add_get('/api/models',models)
- for name in ['style.css','app.js','freedom.svg']:app.router.add_get('/'+name,lambda request,n=name:web.FileResponse(ROOT/n))
+ app.router.add_get('/api/platforms',platforms);app.router.add_get('/downloads/platform/{name}',platform_download)
+ for name in ['style.css','premium.css','premium.js','app.js','freedom.svg']:app.router.add_get('/'+name,lambda request,n=name:web.FileResponse(ROOT/n))
  app.router.add_static('/fonts/',ROOT/'fonts');app.router.add_static('/media/',PROJECT/'assets');return app
 if __name__=='__main__':web.run_app(create_app(),host='127.0.0.1',port=PORT,access_log=None)

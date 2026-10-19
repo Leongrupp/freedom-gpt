@@ -1,9 +1,10 @@
 """Opt-out automatic signed updates; apply only when this installation is idle."""
 import asyncio,contextlib,json,os,pathlib,shutil,subprocess,sys,time,urllib.parse,urllib.request
 from bootstrap import ROOT,STACK,config,read,write
-from update_protocol import verify,sha256,version
+from update_protocol import verify,sha256,version,target_platform
+from platform_support import python_binary,PROCESS_FLAGS
 META=read(ROOT/'version.json',{'version':'1.2.0','repository':'Leongrupp/freedom-gpt'})
-FEED='https://github.com/'+META['repository']+'/releases/latest/download/update.json'
+FEED='https://github.com/'+META['repository']+'/releases/latest/download/'+('update.json' if target_platform()=='windows-x64' else 'update-'+target_platform()+'.json')
 ALLOWED={'github.com','api.github.com','release-assets.githubusercontent.com','objects.githubusercontent.com'}
 
 class TrustedRedirect(urllib.request.HTTPRedirectHandler):
@@ -115,6 +116,6 @@ class Updates:
   for name in ['apply_update.py','update_protocol.py']:shutil.copy2(ROOT/name,helper/name)
   env=os.environ.copy();env.pop('PYTHONPATH',None);env.update(PYTHONDONTWRITEBYTECODE='1',TEMP=str(ROOT/'.tmp'),TMP=str(ROOT/'.tmp'))
   with (ROOT/'logs/update-apply.log').open('ab') as log:
-   subprocess.Popen([str(python/'python.exe'),'-s',str(helper/'apply_update.py'),'--root',str(ROOT),'--manifest',str(self.package.parent/'update.json'),'--package',str(self.package)],cwd=helper,env=env,stdout=log,stderr=log,creationflags=subprocess.CREATE_NO_WINDOW)
+   subprocess.Popen([str(python_binary(python)),'-s',str(helper/'apply_update.py'),'--root',str(ROOT),'--manifest',str(self.package.parent/'update.json'),'--package',str(self.package)],cwd=helper,env=env,stdout=log,stderr=log,creationflags=PROCESS_FLAGS)
 
 updates=Updates()

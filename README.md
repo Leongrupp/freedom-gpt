@@ -1,126 +1,107 @@
 <p align="center"><img src="assets/cover.png" alt="Freedom GPT — Your AI. Your computer." width="100%"></p>
 
-<h1 align="center">Freedom GPT</h1>
-<p align="center">A free local AI workspace for Windows. Chat, build software and create images on your own computer.</p>
-<p align="center"><a href="https://github.com/Leongrupp/freedom-gpt/releases/latest"><strong>Download for Windows</strong></a> · <a href="README.ru.md">Русский</a> · <a href="#getting-started">Installation</a> · <a href="#support-development">Support development</a></p>
-<p align="center"><img alt="Windows x64" src="https://img.shields.io/badge/Windows-10%20%2F%2011-8f9dea"><img alt="Languages: RU and EN" src="https://img.shields.io/badge/Languages-RU%20%2F%20EN-b8a5e8"><img alt="Application source license MIT" src="https://img.shields.io/badge/Source-MIT-a1c9b4"></p>
+<h1 align="center">Freedom GPT 💛</h1>
+<p align="center"><strong>A free local AI workspace. Your models, your projects, your computer.</strong></p>
+<p align="center"><a href="http://aionpc.ru">🌐 Website</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Downloads</a> · <a href="README.ru.md">🇷🇺 Русский</a> · <a href="https://t.me/AI1rus">💬 Telegram support</a></p>
+<p align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-silver" alt="MIT license"></a> <a href="https://github.com/Leongrupp/freedom-gpt/releases"><img src="https://img.shields.io/github/v/release/Leongrupp/freedom-gpt?color=647789" alt="Latest release"></a> <img src="https://img.shields.io/badge/interface-English%20%2F%20Русский-647789" alt="English and Russian"></p>
 
-## Your computer. Your models. Your choice.
+## ✨ What you can do
 
-Freedom GPT brings local AI into a practical desktop workspace: saved chats,
-project folders, files, code, model downloads and a live performance panel.
-You choose what runs on your hardware. No cloud API subscription is required.
+- Chat locally, stream code, attach files and analyze photos with a compatible vision model.
+- Keep chats, project folders and coding continuity on your disk.
+- See generation speed, RAM, VRAM and GPU activity.
+- Check your hardware, find models on Hugging Face or the public Ollama registry, and choose what to download.
+- Resume interrupted downloads and verify model SHA256 hashes.
+- Generate images with a separate Qwen Image model pack. Video Studio is **experimental** and still being tested.
+- Use English or Russian and receive signed updates between tasks.
 
-- **Chat and code:** streaming answers, copyable code, saved conversations and project memory.
-- **Three modes:** Fast code, Think and Image. Image generation hands the GPU back to the coding model when finished.
-- **Your files:** attach documents and images. Photo analysis needs a compatible vision model.
-- **Model library:** inspect hardware, download verified models, resume interrupted downloads, import compatible GGUF files or connect an existing local API.
-- **Model discovery:** search Hugging Face and the public Ollama registry, compare memory estimates, inspect GGUF family/context, and keep cached results offline.
-- **Free local video:** a separate Wan 2.1 studio with text prompts, quality settings, WebM preview/downloads and saved video history. Video weights download separately.
-- **RU / EN:** choose your language in the installer and switch it in the application.
-- **Automatic updates:** signed published versions download automatically and install between tasks, preserving chats, settings, models and workspaces. You can turn this off in Settings.
-- **Portable folder:** keep the application and its data together on an internal or external SSD.
+**Private Python, agent libraries, Node.js/npm and inference engines are included.** No preinstalled Python, Ollama or paid API is needed for local chat. Model weights download separately. GPU drivers and optional specialist tools are managed separately.
 
-## Getting started
+## ⬇ Choose your system
 
-<img src="assets/first-run-en.jpg" alt="Freedom GPT first-run hardware check and model library in English" width="100%">
-
-1. Open [Releases](https://github.com/Leongrupp/freedom-gpt/releases/latest) and download **FreedomGPT-Setup-1.3.0.exe**.
-2. Run the installer, choose **English** or **Русский**, and select a new empty folder on an SSD. Allow several GB for the application and additional space for models.
-3. Start **FreedomGPT.exe** or the desktop shortcut. The first-run screen checks CPU, RAM, NVIDIA VRAM and free disk space.
-4. Choose a model, click **Download model**, wait for SHA256 verification, then **Use model**.
-5. Open a chat. To generate images, download the separate image model set and select **Image**.
-
-The portable ZIP is also available in Releases. Extract the **whole archive**,
-then run FreedomGPT.exe. Python and the local engines are included. A current
-NVIDIA driver is required for NVIDIA acceleration; other GPUs use CPU in this
-version. The installer is **not Authenticode-signed**. Do not disable Windows
-security protections to install software.
-
-### Models and hardware
-
-| Profile | Model | Approximate starting point |
+| Platform | Download | Requirements and status |
 |---|---|---|
-| Standard coding | Huihui Qwen3.8 Coder 27B · IQ3_S3, with vision projector | 32 GB RAM, NVIDIA 16 GB VRAM |
-| Image generation | Qwen Image 2.1 Turbo · Q5_K_M, encoder and VAE | NVIDIA 12–16 GB VRAM; shares GPU with the coding model |
-| Optional video | Wan 2.1 T2V 1.3B FP16, UMT5 Q4_K_M and VAE, about 6.75 GB | 24 GB RAM, NVIDIA 8 GB+ VRAM; 12 GB+ for larger modes |
-| Lighter coding | Qwen3.5 4B · Q4_K_M | 12–16 GB RAM; less capable than the standard model |
-| Smallest option | Qwen3.5 0.8B · Q4_K_M | 8 GB RAM; limited coding and tool use |
+| Windows | [EXE installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1.exe) · [Portable ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Windows-x64.zip) | Windows 10/11 x64; verified on Windows 11 |
+| Ubuntu Linux | [`.run` installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; clean offline container and Linux CUDA smoke tests |
+| macOS candidate | [Apple Silicon `.app` ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Unsigned, not notarized; native Mac execution is not yet verified. Intel Mac is not included. |
 
-These are memory estimates, not a speed guarantee. The default model set is
-downloaded separately and totals approximately **24.3 GB**. Plan for **35 GB or
-more of free SSD space** for a standard installation, temporary downloads and
-updates. Long contexts and CPU offloading can be considerably slower.
+[All releases and notes](https://github.com/Leongrupp/freedom-gpt/releases) · [SHA256 checksums](https://github.com/Leongrupp/freedom-gpt/releases/latest/download/SHA256SUMS.txt) · [Source](https://github.com/Leongrupp/freedom-gpt/releases/latest)
 
-Model weights are **not** inside the installer. Sources and model licenses are
-shown in the library. Import currently supports single-file GGUF models with
-native context of at least 64K and an architecture supported by the bundled
-engine. Arbitrary training packages and image generators are not installed automatically.
+### Windows — easiest way
 
-### Model search and video
+Run the EXE, choose English/Russian and an empty SSD folder, then open **FreedomGPT.exe**. The first-run check suggests models for your hardware. Download and verify a model, activate it and start a chat.
 
-Open **Find an AI model** after the hardware check. Public metadata is fetched from the selected source; memory comparisons stay local. Inspect the model card and choose what to download. Unconfirmed architectures and insufficient native context are excluded from automatic installation. Memory estimates do not guarantee speed, answer quality or tool support; actual compatibility needs a successful load.
+Prefer a terminal? Open PowerShell in your chosen download folder:
 
-**Create video → Check PC and choose a model** opens the supported Wan pack. After SHA256 verification, enter a prompt and choose resolution, frames and steps. Generated WebM files stay local, with preview, downloads and history. This first adapter supports text-to-video without audio. The coding model releases GPU memory during video generation and returns afterwards. The feature is free, with no payment or subscription required. Other video architectures need an adapter; arbitrary search results cannot be loaded as video models automatically.
+```powershell
+curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1.exe
+.\FreedomGPT-Setup.exe
+```
 
-Allow **45 GB or more** of free SSD space for the standard pack plus optional video, temporary files and updates. The 256×144/9-frame preset is a load check, not a quality benchmark.
+### Ubuntu — no Python installation
 
-## Offline and private by default
+```sh
+curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1-Ubuntu-x64.run
+sh FreedomGPT.run
+```
 
-After downloading the models, local inference, chat history and files work
-without internet. Downloads, update checks, websites and online search need a
-connection. The API listens on **127.0.0.1** only. The clean release contains no
-personal chats, credentials, browser profiles or model weights from the author.
+If `curl` is absent, use a browser download or install your distribution's curl package. `.run` needs no root access. To choose a location: `FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT.run`. Add `--install-only` to install without launching. DEB works through the normal package manager.
 
-Use **Stop-FreedomGPT.cmd** before disconnecting an SSD or making a complete
-folder backup. Do not use one installation database from two PCs at the same time.
-The target PC still needs its own compatible GPU driver.
+### macOS — experimental candidate
 
-## Performance
+Extract the ZIP, move **Freedom GPT.app** to Applications and open it. The app includes its own Python and Metal engines. The current candidate requires **macOS 26.2+ on Apple Silicon**. It is unsigned/not notarized and needs real Mac validation. Do not disable OS protection globally.
 
-On the development PC (RTX 4080 16 GB, Ryzen 9 7900X, 32 GB RAM), the standard
-model produced a 2016-token code answer at **100.85 tokens/s**, with a following
-code answer at **102.34 tokens/s**. A separate direct-engine case reached
-135.36 tokens/s. At roughly 61K input tokens, one case measured 88.10 tokens/s.
-These are case-specific measurements, excluding prompt processing and tools.
-They do not predict every PC, task or generated answer's correctness.
+## 🧠 Models and hardware
 
-Fast mode can make mistakes. Run tests, review changes and use **Think** for
-complex logic. Project memory and compression help continue work, but are not
-perfect recall or a substitute for Git and backups.
+| Use | Model pack | Starting point |
+|---|---|---|
+| Standard code | Huihui Qwen3.8 Coder 27B IQ3_S3 + vision projector | 32 GB RAM, NVIDIA 16 GB VRAM |
+| Images | Qwen Image 2.1 Turbo Q5_K_M + encoder + VAE | A compatible GPU with enough memory; separate model download |
+| Lighter chat/code | Qwen3.5 4B or 0.8B GGUF | 8–16 GB RAM, with reduced coding/tool capability |
+| Experimental video | Wan 2.1 T2V 1.3B + encoder + VAE | Separate models and a compatible GPU; rendering validation is ongoing |
 
-## Updates and development
+These are estimates, not speed guarantees. Long context uses extra memory. CPU fallback is slower. Model licenses are separate. Plan at least **35 GB of free SSD space** for the standard app/model set, or **45 GB+** with video and update headroom.
 
-Updates are checked on startup and periodically while running. Releases use
-an Ed25519-signed manifest, package hashes and a managed file allowlist.
-Installation waits for idle tasks and keeps an application-file backup.
-Models, chats and user settings are outside that allowlist. Offline checks retry
-later; local inference continues. See [SECURITY.md](SECURITY.md).
+## 🔒 Local work and updates
 
-New features reach installed clients after a verified signed release is
-published. A source commit by itself is not a client update. For local builds
-and the maintainer release command, see [BUILD.md](BUILD.md).
+After downloading models, local inference, files and history work offline. Search, external websites, new downloads and update checks need internet. App/model APIs bind to **127.0.0.1**.
 
-The repository also includes a bilingual download website. Run
-**Start-Website.cmd** for a local preview. Server hosting is configured separately.
+Signed updates verify Ed25519 and SHA256, wait for idle tasks and preserve models, chats and settings. Windows, Ubuntu and macOS have separate update feeds. The Windows installer is not Authenticode-signed. An update signature is separate from an OS publisher certificate.
 
-## Support development
+Stop the app before disconnecting an SSD. Moving one physical SSD between different PCs is not yet verified. Keep Git and backups for your projects; model memory and generated code are not substitutes for them.
 
-Freedom GPT is free. If it helps your work and you would like to support future
-development, optional Bitcoin donations are welcome:
+## 🛠 Development and roadmap
 
-**BTC · Bitcoin mainnet**
+I am building Freedom GPT further: better agents, more compatible models, clearer setup and **local video generation**. Video Studio is experimental; finishing real rendering tests and expanding hardware support are next steps.
+
+- [x] Local chat, code, files and saved projects
+- [x] Hardware checks and model discovery
+- [x] Windows and Ubuntu packages
+- [ ] Real Mac validation, signing and broader macOS support
+- [ ] Stabilize video generation and improve GPU scheduling
+- [ ] More practical agent workflows and community contributions
+
+[Build instructions](BUILD.md) · [Platform details and verification limits](CROSS-PLATFORM.md) · [Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/Leongrupp/freedom-gpt/issues)
+
+<a id="support-development"></a>
+## 💛 Support development
+
+Freedom GPT is free. If it helps you, a **GitHub star**, useful feedback or sharing the project means a lot. Questions and suggestions: **[Telegram @AI1rus](https://t.me/AI1rus)**.
+
+Thank you to everyone helping the project grow. I appreciate every contribution 💛
+
+<details><summary>Optional Bitcoin donation</summary>
+
+Donations are voluntary, support development and do not unlock paid features.
+
+**Bitcoin · BTC · main network**
 
 ```text
 bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6
 ```
 
-Donations do not unlock features. You can also help by reporting reproducible
-bugs, improving translations or contributing focused fixes.
+</details>
 
-## Contributing and licenses
+## Licenses
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and
-[verification notes](VERIFICATION.md). Application source is MIT. Third-party
-components retain their original notices in [licenses/](licenses/); model
-licenses are separate. See [NOTICE](NOTICE).
+Application source: [MIT](LICENSE). Third-party components retain their own notices in [licenses/](licenses/) and [NOTICE](NOTICE). Public installers exclude the author's chats, accounts, API keys, browser profiles and model weights. There are no paid API charges required for local inference; your hardware and electricity are your own.

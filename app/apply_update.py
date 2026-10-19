@@ -4,7 +4,8 @@ from update_protocol import verify,sha256,safe_target
 
 def start_app(root):
  env=os.environ.copy();env.pop('PYTHONPATH',None)
- subprocess.Popen([str(root/'runtime/python/pythonw.exe'),'-s',str(root/'launch.py'),'--no-browser'],cwd=root,env=env,creationflags=subprocess.CREATE_NO_WINDOW)
+ python=root/('runtime/python/pythonw.exe' if os.name=='nt' else 'runtime/python/bin/python3')
+ subprocess.Popen([str(python),'-B','-s',str(root/'launch.py'),'--no-browser'],cwd=root,env=env,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
 
 def apply(root,envelope,package,stop=True,restart=True):
  root=pathlib.Path(root).resolve();package=pathlib.Path(package).resolve()
@@ -25,11 +26,13 @@ def apply(root,envelope,package,stop=True,restart=True):
    if entry.file_size!=expected[name]['bytes']:raise ValueError('File size mismatch')
    with archive.open(entry) as source,dest.open('wb') as output:shutil.copyfileobj(source,output,1024**2)
    if sha256(dest)!=expected[name]['sha256']:raise ValueError('File digest mismatch')
+   if os.name!='nt':os.chmod(dest,(entry.external_attr>>16)&0o755 or 0o644)
    seen.add(name.casefold())
  if seen!={n.casefold() for n in expected}:raise ValueError('Missing archive files')
  if stop:
   env=os.environ.copy();env.pop('PYTHONPATH',None)
-  subprocess.run([str(root/'runtime/python/python.exe'),'-s',str(root/'stop.py')],cwd=root,env=env,timeout=120,check=True,creationflags=subprocess.CREATE_NO_WINDOW)
+  python=root/('runtime/python/python.exe' if os.name=='nt' else 'runtime/python/bin/python3')
+  subprocess.run([str(python),'-B','-s',str(root/'stop.py')],cwd=root,env=env,timeout=120,check=True,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
  backup=root/'archive'/('update-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'-'+payload['version']);backup.mkdir(parents=True)
  changed=[]
  try:
