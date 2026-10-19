@@ -6,14 +6,14 @@
   "files": [
     {
       "name": "FreedomGPT-Setup-1.2.0.exe",
-      "bytes": 1402244528,
-      "sha256": "d990ad1ffba163d0b0df89f59e59c84c5dc496e8a38b242cadd4fb07d8cfb34f",
+      "bytes": 1402698253,
+      "sha256": "fd6f8f9234529e1210092632b6300cddc997e0840b2102a71bf0d40ea889d793",
       "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.2.0/FreedomGPT-Setup-1.2.0.exe"
     },
     {
       "name": "FreedomGPT-1.2.0-Windows-x64.zip",
-      "bytes": 1402210160,
-      "sha256": "9f3ce0e819b1234fbed95e33eb2ff3e195a477e2600b8beb26342d5390e4ad62",
+      "bytes": 1402663885,
+      "sha256": "0e1cbc8cea0c62aa569b8897d5326b2d036498b91bd5c8654ee01028e905e7b2",
       "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.2.0/FreedomGPT-1.2.0-Windows-x64.zip"
     }
   ],

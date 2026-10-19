@@ -60,6 +60,15 @@ def main():
  for name in ['cublas64_12.dll','cublasLt64_12.dll']:copy(shared/name,DEST/'runtime/cuda'/name)
  tree(cuda,DEST/'runtime/llama',exclude=('cublas64_12.dll','cublasLt64_12.dll'))
  tree(donor/'runtime/sd' if donor else STACK/'creative-kit/engine/sd-95b3090-cuda12',DEST/'runtime/sd',exclude=('cublas64_12.dll','cublasLt64_12.dll'))
+ # Keep the image engine usable on Windows without a separately installed VC runtime.
+ # A licensed, unmodified Microsoft redistributable directory can be supplied by builders.
+ vc=pathlib.Path(os.environ.get('FREEDOM_BUILD_MSVC',str(pathlib.Path(os.environ.get('SystemRoot','C:/Windows'))/'System32')))
+ for name in ['msvcp140.dll','msvcp140_codecvt_ids.dll','vcruntime140.dll','vcruntime140_1.dll','vcomp140.dll']:
+  target=DEST/'runtime/sd'/name
+  if not target.is_file():
+   source=vc/name
+   if not source.is_file():raise RuntimeError('Missing Microsoft redistributable '+name+'; set FREEDOM_BUILD_MSVC to its licensed runtime directory')
+   copy(source,target)
  tree(ROOT/'licenses',DEST/'licenses')
  copy(HERMES/'LICENSE',DEST/'licenses/Hermes-MIT.txt');copy(PYBASE/'LICENSE.txt',DEST/'licenses/Python.txt')
  (DEST/'stack/hermes-runtime/SOUL.md').write_text('Ты — Freedom GPT, локальный помощник. Говори честно о доступных инструментах. Не обещай выполненную работу без фактического результата. Храни память проекта в выбранной рабочей папке. Интернет нужен только для внешних ресурсов и загрузок; модель работает локально.\n',encoding='utf8')

@@ -1,0 +1,16 @@
+Microsoft Visual C++ Runtime libraries
+Copyright Microsoft Corporation. All rights reserved.
+
+Unmodified Microsoft runtime binaries accompany the native engines. These
+binaries are governed by the applicable Microsoft Software License Terms;
+the Freedom GPT MIT license does not apply to them.
+
+Publisher/build requirements and redistribution information:
+https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files
+https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution
+
+Native image engine application-local prerequisites:
+msvcp140.dll, msvcp140_codecvt_ids.dll, vcruntime140.dll,
+vcruntime140_1.dll, vcomp140.dll (Windows x64).
+
+The package does not replace or register system-wide runtime libraries.

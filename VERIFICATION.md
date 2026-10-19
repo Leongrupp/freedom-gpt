@@ -24,10 +24,16 @@ Other physical PCs and an external SSD on another PC were not tested.
   cuBLAS, answered a real code request and restored the previous model process.
 - The packaged image engine generated a real1024×1024 PNG at8 steps using the
   shared cuBLAS libraries, finishing the native process in23.88 seconds.
+- Native PE imports were checked. The image engine includes its five
+  application-local Microsoft C++ runtime DLLs, with valid Microsoft signatures
+  and recorded SHA256 hashes, so those files do not depend on a separate runtime
+  installation. The final installer was extracted and its managed files hashed.
 - The author's private upgrade retained all22 existing session IDs. Original
   model/agent configuration hashes matched before and after upgrade. A streamed
   code response identified itself as Freedom GPT and used the local model/API.
   The private toolkit remained available with21 tools in that test session.
+- The upgraded private interface generated another1024×1024 image, displayed
+  the PNG in its chat and restored the coding model; total image call40.8 seconds.
 
 The complete standard model set is not embedded in the installer. The isolated
 tests used already downloaded, verified local model weights, with no paid API.

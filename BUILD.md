@@ -24,6 +24,12 @@ The binary runtime is copied from an explicit allowlist. Shared CUDA libraries
 are included once in runtime/cuda; process-local PATH supplies both local engines.
 All third-party licenses stay included. The clean bundle has no personal data.
 
+The image engine also ships its five application-local Microsoft Visual C++
+runtime dependencies. For an initial build, `FREEDOM_BUILD_MSVC` can point to
+a licensed unmodified x64 redistributable directory; the default is System32.
+Builds from a complete previous release reuse its engine runtime files.
+Follow the Microsoft redistribution terms linked in licenses/.
+
 ## Publish new features
 
 From the reviewed Git checkout, run the same command without --prepare-only:
