@@ -33,7 +33,12 @@ class Library:
   self.catalog=read(ROOT/'catalog.json',[])+read(ROOT/'data/custom-models.json',[])
   self.device=read(ROOT/'data/hardware.json',{})
   self.jobs={};self.cancel={};self.pool=concurrent.futures.ThreadPoolExecutor(max_workers=2)
-  self.transition=threading.Lock();self.activation=None
+  self.transition=threading.Lock();self.activation=None;self.download_locks={}
+  from discovery import Discovery
+  self.discovery=Discovery(self)
+ def save_custom(self):
+  bundled={m['id'] for m in read(ROOT/'catalog.json',[])}
+  write(ROOT/'data/custom-models.json',[m for m in self.catalog if m['id'] not in bundled])
  def model(self,ident):
   return next((item for item in self.catalog if item['id']==ident),None)
  def folder(self,item):return STACK/'creative-kit/models' if item['kind']=='image' else STACK/'models'/item['id']
@@ -44,7 +49,7 @@ class Library:
   h=self.device;ram=h.get('ram_gb',0);vram=h.get('vram_gb',0);need=item.get('recommended_ram_gb',16)
   if ram<need:return {'level':'limited','reason':f'Рекомендуется от {need} ГБ RAM. На этом ПК модель может не поместиться.'}
   if vram>=item.get('recommended_vram_gb',8)-.1:return {'level':'recommended','reason':'Подходит по объёму RAM и VRAM. Оценка скорости зависит от видеокарты и контекста.'}
-  if item['kind']=='image':return {'level':'limited','reason':'Для этой сборки генератора рекомендуется NVIDIA с 12 ГБ VRAM. Работа на CPU значительно медленнее.'}
+  if item['kind'] in {'image','video'}:return {'level':'limited','reason':f"Для этого режима рекомендуется NVIDIA от {item.get('recommended_vram_gb',12)} ГБ VRAM."}
   return {'level':'cpu','reason':'Возможна частичная загрузка на GPU или работа на CPU. Скорость будет ниже.'}
  def snapshot(self):
   rows=[]
@@ -53,14 +58,23 @@ class Library:
    rows.append({**item,'installed':self.ready(item),'bytes':done,'total':total,'percent':round(done/total*100,1) if total else 0,'recommendation':self.recommendation(item),'job':self.jobs.get(item['id'])})
   selected='huihui-qwen38-coder' if self.device.get('vram_gb',0)>=15.9 and self.device.get('ram_gb',0)>=31 else 'qwen35-4b' if self.device.get('ram_gb',0)>=12 else 'qwen35-08b'
   return {'hardware':self.device,'models':rows,'active':config().get('active'),'external_model':config().get('external_model'),'recommended':selected,'activation':self.activation,'first_run':not config().get('onboarded'),'root':str(ROOT),'license_notice':'Лицензии и источники указаны у каждой модели. Модели загружаются отдельно от приложения.'}
- def scan(self):
-  self.device=hardware();write(ROOT/'data/hardware.json',self.device);return self.snapshot()
+ def scan(self,task='code'):
+  self.device=hardware();write(ROOT/'data/hardware.json',self.device)
+  self.discovery.start(task=task);return self.snapshot()
  def download(self,ident):
   item=self.model(ident)
   if not item:raise ValueError('Модель не найдена.')
   if self.jobs.get(ident,{}).get('state') in ['downloading','verifying']:return
   missing=sum(max(0,f['bytes']-((self.folder(item)/(f['name']+'.part')).stat().st_size if (self.folder(item)/(f['name']+'.part')).exists() else f['bytes'] if (self.folder(item)/f['name']).exists() else 0)) for f in item['files'])
   if shutil.disk_usage(ROOT).free<missing+2*GIB:raise ValueError('Недостаточно места. Для загрузки и запаса нужно '+str(round((missing+2*GIB)/GIB,1))+' ГБ.')
+  import msvcrt
+  self.folder(item).mkdir(parents=True,exist_ok=True)
+  lock=(self.folder(item)/'.download.lock').open('a+b');lock.seek(0,2)
+  if not lock.tell():lock.write(b'0');lock.flush()
+  lock.seek(0)
+  try:msvcrt.locking(lock.fileno(),msvcrt.LK_NBLCK,1)
+  except OSError:lock.close();raise ValueError('Эта модель уже скачивается в другом процессе. Дождитесь завершения текущей загрузки.')
+  self.download_locks[ident]=lock
   self.cancel[ident]=threading.Event();self.jobs[ident]={'state':'downloading','speed':0};self.pool.submit(self._download,item)
  def _download(self,item):
   ident=item['id'];folder=self.folder(item);folder.mkdir(parents=True,exist_ok=True);verified=read(folder/'.verified.json',{})
@@ -94,7 +108,7 @@ class Library:
       if self.cancel[ident].wait(min(10,2+attempt)):raise InterruptedError()
     self.jobs[ident]['state']='verifying'
     if part.stat().st_size!=f['bytes'] or digest(part)!=f['sha256']:raise ValueError('SHA256 не совпал. Частичный файл сохранён; запуск запрещён.')
-    if item['kind']=='chat':
+    if item['kind']=='chat' and f['name']=='model.gguf':
      from gguf_info import model_context
      model_context(part)
     os.replace(part,final);verified[f['name']]={'sha256':f['sha256'],'mtime_ns':final.stat().st_mtime_ns};write(folder/'.verified.json',verified);self.jobs[ident]['state']='downloading'
@@ -103,6 +117,9 @@ class Library:
    self.jobs[ident]={'state':'complete','speed':0}
   except InterruptedError:self.jobs[ident]={'state':'paused','speed':0}
   except Exception as exc:self.jobs[ident]={'state':'error','error':str(exc),'speed':0}
+  finally:
+   lock=self.download_locks.pop(ident,None)
+   if lock:lock.close()
  def stop_model(self):
   import bootstrap
   if bootstrap.PRIVATE:return
@@ -191,37 +208,54 @@ class Library:
   shutil.copy2(source,folder/'model.gguf');sha=digest(folder/'model.gguf')
   item={'id':ident,'name':str(name or source.stem)[:100],'kind':'chat','quantization':'Импорт GGUF','context':65536,'recommended_ram_gb':max(8,math.ceil(source.stat().st_size/GIB)+5),'recommended_vram_gb':math.ceil(source.stat().st_size/GIB)+2,
         'source':'Локальный файл','license':'Проверьте лицензию исходной модели','files':[{'name':'model.gguf','bytes':source.stat().st_size,'sha256':sha,'url':None}]}
-  self.catalog.append(item);write(ROOT/'data/custom-models.json',[m for m in self.catalog if m['id'].startswith('import-') or m['id'].startswith('hf-')]);write(folder/'.verified.json',{'model.gguf':{'sha256':sha,'mtime_ns':(folder/'model.gguf').stat().st_mtime_ns}});return item
+  self.catalog.append(item);self.save_custom();write(folder/'.verified.json',{'model.gguf':{'sha256':sha,'mtime_ns':(folder/'model.gguf').stat().st_mtime_ns}});return item
  def hf_files(self,value):
   value=value.strip().removeprefix('https://huggingface.co/').strip('/')
   parts=value.split('/')
   if len(parts)!=2 or not all(__import__('re').fullmatch(r'[A-Za-z0-9_.-]+',p) for p in parts):raise ValueError('Введите owner/repository или ссылку на репозиторий Hugging Face.')
   response=requests.get('https://huggingface.co/api/models/'+value,params={'blobs':'true'},timeout=30);response.raise_for_status();meta=response.json()
   return {'repo':value,'revision':meta['sha'],'license':meta.get('cardData',{}).get('license','see model card'),
+          'architecture':(meta.get('gguf') or {}).get('architecture'),'context':(meta.get('gguf') or {}).get('context_length'),
           'files':[{'name':f['rfilename'],'bytes':f.get('size') or f.get('lfs',{}).get('size'),'sha256':f.get('lfs',{}).get('sha256')} for f in meta['siblings'] if f['rfilename'].endswith('.gguf') and f.get('lfs',{}).get('sha256') and 'mmproj' not in f['rfilename'].lower()]}
  def add_hf(self,repo,filename):
   meta=self.hf_files(repo);file=next((f for f in meta['files'] if f['name']==filename),None)
   if not file:raise ValueError('Файл не найден или у него нет SHA256 издателя.')
   if '-of-' in filename:raise ValueError('Для этой первой версии выберите единый GGUF. Разделённые GGUF требуют ручной подготовки.')
+  existing=next((m for m in self.catalog if m['kind']=='chat' and any(f.get('sha256')==file['sha256'] for f in m['files'])),None)
+  if existing:return existing
   ident='hf-'+uuid.uuid4().hex[:12];size=file['bytes'];item={'id':ident,'name':pathlib.PurePosixPath(filename).stem[:100],'kind':'chat','quantization':'GGUF · Hugging Face','context':65536,'recommended_ram_gb':max(8,math.ceil(size/GIB)+5),'recommended_vram_gb':math.ceil(size/GIB)+2,'source':'https://huggingface.co/'+meta['repo'],'license':meta['license'],'files':[{'name':'model.gguf','bytes':size,'sha256':file['sha256'],'url':'https://huggingface.co/'+meta['repo']+'/resolve/'+meta['revision']+'/'+urllib.parse.quote(filename)}]}
-  self.catalog.append(item);write(ROOT/'data/custom-models.json',[m for m in self.catalog if m['id'].startswith(('import-','hf-'))]);return item
+  self.catalog.append(item);self.save_custom();return item
 
 library=Library()
 def register(app):
  async def get(request):return web.json_response({**library.snapshot(),'model_ready':bool(request.app.get('runtime',{}).get('metrics',{}).get('model_ready'))})
- async def scan(request):return web.json_response(await asyncio.to_thread(library.scan))
+ async def scan(request):
+  value=await request.json();return web.json_response(await asyncio.to_thread(library.scan,value.get('task','code')))
  async def download(request):library.download((await request.json())['id']);return web.json_response({'ok':True})
  async def pause(request):
   event=library.cancel.get((await request.json())['id'])
   if event:event.set()
   return web.json_response({'ok':True})
- async def activate(request):library.activate((await request.json())['id']);return web.json_response({'ok':True})
+ async def activate(request):
+  from video import videos
+  if videos.busy():raise ValueError('Дождитесь завершения видео перед переключением модели.')
+  library.activate((await request.json())['id']);return web.json_response({'ok':True})
  async def imported(request):
   value=await request.json();return web.json_response(await asyncio.to_thread(library.import_local,value['path'],value.get('name')))
  async def hf(request):return web.json_response(await asyncio.to_thread(library.hf_files,(await request.json())['repo']))
  async def hf_add(request):
   value=await request.json();return web.json_response(await asyncio.to_thread(library.add_hf,value['repo'],value['filename']))
  async def connect(request):
+  from video import videos
+  if videos.busy():raise ValueError('Дождитесь завершения видео перед переключением модели.')
   value=await request.json();return web.json_response(await asyncio.to_thread(library.connect_local,value['url'],value['model'],value.get('context',65536)))
  app.router.add_get('/api/library',get)
+ async def discovery_get(request):return web.json_response(library.discovery.snapshot())
+ async def discovery_start(request):
+  data=await request.json();return web.json_response(library.discovery.start(data.get('query',''),data.get('provider','all'),data.get('task','chat')))
+ async def discovery_add(request):
+  item=await asyncio.to_thread(library.discovery.add,(await request.json())['key']);return web.json_response({'id':item['id']})
+ app.router.add_get('/api/library/search',discovery_get)
+ app.router.add_post('/api/library/search',discovery_start)
+ app.router.add_post('/api/library/search/add',discovery_add)
  for path,handler in [('scan',scan),('download',download),('pause',pause),('activate',activate),('import',imported),('hf',hf),('hf-add',hf_add),('connect',connect)]:app.router.add_post('/api/library/'+path,handler)

@@ -17,6 +17,7 @@ def main():
  DEST.mkdir(parents=True,exist_ok=True)
  for name in ['updater.py','apply_update.py','update_protocol.py','version.json','update-key.pub','README.txt','bootstrap.py','init-project-memory.py','gguf_info.py','launch.py','stop.py','server.py','library.py','engine_supervisor.py','generate-image-request.py','catalog.json','freedom.ico','Start-FreedomGPT.cmd','Stop-FreedomGPT.cmd']:
   copy(APP/name,DEST/name)
+ for name in ['discovery.py','video.py']:copy(APP/name,DEST/'runtime/freedom'/name)
  tree(APP/'dist',DEST/'dist');tree(APP/'public',DEST/'public')
  tree(PYBASE,DEST/'runtime/python')
  # No venv absolute redirector, user .pth, token cache or editable-install path.

@@ -33,10 +33,22 @@ def image():
   files.append(file_record(repo,meta,item));revisions[repo]=meta['sha']
  return dict(id='qwen-image21',name='Qwen Image 2.1 Turbo',kind='image',quantization='Q5_K_M · 8 шагов',default=True,
              recommended_vram_gb=12,recommended_ram_gb=32,source='https://huggingface.co/unsloth/Qwen-Image-2.1-Turbo-GGUF',license='see component model cards',revisions=revisions,files=files)
+
+def video():
+ parts=[('Comfy-Org/Wan_2.1_ComfyUI_repackaged','split_files/diffusion_models/wan2.1_t2v_1.3B_fp16.safetensors'),
+        ('city96/umt5-xxl-encoder-gguf','umt5-xxl-encoder-Q4_K_M.gguf'),
+        ('Comfy-Org/Wan_2.1_ComfyUI_repackaged','split_files/vae/wan_2.1_vae.safetensors')]
+ files=[]
+ for repo,name in parts:
+  meta=metadata(repo);item=next(i for i in meta['siblings'] if i['rfilename']==name)
+  files.append(file_record(repo,meta,item))
+ return dict(id='wan21-t2v-13b',name='Wan 2.1 · Text to Video 1.3B',kind='video',quantization='FP16 · T5 Q4_K_M',default=False,
+             recommended_vram_gb=8,recommended_ram_gb=24,source='https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B',
+             license='apache-2.0; see component model cards',files=files,adapter='wan21-t2v',free=True,resolution='480p',supports_image_input=False)
 if __name__=='__main__':
  items=[];failures=[]
  with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
-  work=[pool.submit(chat,s) for s in SPECS]+[pool.submit(image)]
+  work=[pool.submit(chat,s) for s in SPECS]+[pool.submit(image),pool.submit(video)]
   for future in work:
    try:items.append(future.result())
    except Exception as exc:failures.append(str(exc))

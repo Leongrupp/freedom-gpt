@@ -8,11 +8,11 @@ HOME=pathlib.Path(PRIVATE['home']) if PRIVATE.get('home') else STACK/'hermes-run
 SOURCE=ROOT/'runtime/hermes'
 for item in ['data','logs','.tmp','.cache','workspaces','uploads','output','archive','stack/models','stack/logs','stack/.tmp','stack/.cache','stack/creative-kit/models','stack/creative-kit/.tmp','stack/creative-kit/logs']:(ROOT/item).mkdir(parents=True,exist_ok=True)
 HOME.mkdir(parents=True,exist_ok=True)
-os.environ.update(HERMES_HOME=str(HOME),PYTHONPATH=os.pathsep.join([str(SOURCE),str(ROOT/'runtime/python/Lib/site-packages'),str(ROOT)]),
+os.environ.update(HERMES_HOME=str(HOME),PYTHONPATH=os.pathsep.join([str(SOURCE),str(ROOT/'runtime/python/Lib/site-packages'),str(ROOT/'runtime/freedom'),str(ROOT)]),
     FREEDOM_ROOT=str(ROOT),FREEDOM_STACK=str(STACK),FREEDOM_HERMES_SOURCE=str(SOURCE),TEMP=str(ROOT/'.tmp'),TMP=str(ROOT/'.tmp'),
     PYTHONDONTWRITEBYTECODE='1',PYTHONIOENCODING='utf-8',HF_HUB_DISABLE_IMPLICIT_TOKEN='1',HF_HUB_DISABLE_TELEMETRY='1')
 os.environ['PATH']=str(ROOT/'runtime/cuda')+os.pathsep+os.environ.get('PATH','')
-sys.path[:0]=[str(SOURCE),str(ROOT/'runtime/python/Lib/site-packages')]
+sys.path[:0]=[str(SOURCE),str(ROOT/'runtime/python/Lib/site-packages'),str(ROOT/'runtime/freedom')]
 def read(path,default=None):
  try:return json.loads(path.read_text(encoding='utf-8-sig'))
  except (OSError,ValueError):return default

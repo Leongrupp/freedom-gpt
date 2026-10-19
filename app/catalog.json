@@ -1,9 +1,9 @@
 [
   {
     "id": "huihui-qwen38-coder",
-    "name": "Qwen 3.8 Coder · Huihui",
+    "name": "Qwen 3.8 Coder В· Huihui",
     "kind": "chat",
-    "quantization": "27B · IQ3_S3",
+    "quantization": "27B В· IQ3_S3",
     "context": 65536,
     "recommended_vram_gb": 16,
     "recommended_ram_gb": 32,
@@ -31,9 +31,9 @@
   },
   {
     "id": "qwen35-4b",
-    "name": "Qwen 3.5 · 4B",
+    "name": "Qwen 3.5 В· 4B",
     "kind": "chat",
-    "quantization": "4B · Q4_K_M",
+    "quantization": "4B В· Q4_K_M",
     "context": 65536,
     "recommended_vram_gb": 6,
     "recommended_ram_gb": 12,
@@ -54,9 +54,9 @@
   },
   {
     "id": "qwen35-08b",
-    "name": "Qwen 3.5 · 0.8B",
+    "name": "Qwen 3.5 В· 0.8B",
     "kind": "chat",
-    "quantization": "0.8B · Q4_K_M",
+    "quantization": "0.8B В· Q4_K_M",
     "context": 65536,
     "recommended_vram_gb": 2,
     "recommended_ram_gb": 8,
@@ -79,7 +79,7 @@
     "id": "qwen-image21",
     "name": "Qwen Image 2.1 Turbo",
     "kind": "image",
-    "quantization": "Q5_K_M · 8 шагов",
+    "quantization": "Q5_K_M В· 8 С€Р°РіРѕРІ",
     "default": true,
     "recommended_vram_gb": 12,
     "recommended_ram_gb": 32,
@@ -113,5 +113,46 @@
         "publisher_file": "vae/qwen_image_2.1_vae_bf16.safetensors"
       }
     ]
+  },
+  {
+    "id": "wan21-t2v-13b",
+    "name": "Wan 2.1 · Text to Video 1.3B",
+    "kind": "video",
+    "quantization": "FP16 · T5 Q4_K_M",
+    "default": false,
+    "recommended_vram_gb": 8,
+    "recommended_ram_gb": 24,
+    "source": "https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B",
+    "license": "apache-2.0; see component model cards",
+    "files": [
+      {
+        "name": "wan2.1_t2v_1.3B_fp16.safetensors",
+        "bytes": 2838303560,
+        "sha256": "be531024cd9018cb5b48c40cfbb6a6191645b1c792eb8bf4f8c1c6e10f924dc5",
+        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/123acf1cc74bccbb9bfff8ac1ee72edc08c2341d/split_files/diffusion_models/wan2.1_t2v_1.3B_fp16.safetensors",
+        "publisher_file": "split_files/diffusion_models/wan2.1_t2v_1.3B_fp16.safetensors",
+        "revision": "123acf1cc74bccbb9bfff8ac1ee72edc08c2341d"
+      },
+      {
+        "name": "umt5-xxl-encoder-Q4_K_M.gguf",
+        "bytes": 3655145312,
+        "sha256": "17cf97a5bbbc60a646d6105b832b6f657ce904a8a1ad970e4b59df0c67584a40",
+        "url": "https://huggingface.co/city96/umt5-xxl-encoder-gguf/resolve/b535255bee98c2b0a59ea7c0ae2dcd0c6657b3b7/umt5-xxl-encoder-Q4_K_M.gguf",
+        "publisher_file": "umt5-xxl-encoder-Q4_K_M.gguf",
+        "revision": "b535255bee98c2b0a59ea7c0ae2dcd0c6657b3b7"
+      },
+      {
+        "name": "wan_2.1_vae.safetensors",
+        "bytes": 253815318,
+        "sha256": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b",
+        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/123acf1cc74bccbb9bfff8ac1ee72edc08c2341d/split_files/vae/wan_2.1_vae.safetensors",
+        "publisher_file": "split_files/vae/wan_2.1_vae.safetensors",
+        "revision": "123acf1cc74bccbb9bfff8ac1ee72edc08c2341d"
+      }
+    ],
+    "adapter": "wan21-t2v",
+    "free": true,
+    "resolution": "480p",
+    "supports_image_input": false
   }
 ]

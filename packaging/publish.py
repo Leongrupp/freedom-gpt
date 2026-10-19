@@ -1,7 +1,7 @@
 """Build and publish a signed Freedom GPT release from reviewed public sources."""
 import argparse,ast,json,os,pathlib,re,shutil,subprocess,sys
 ROOT=pathlib.Path(__file__).resolve().parent.parent
-SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','BUILD.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','app','packaging','site','assets','licenses']
+SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','BUILD.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt','deploy','app','packaging','site','assets','licenses']
 def run(args,**kw):
  kw.setdefault('cwd',ROOT);subprocess.run([str(a) for a in args],check=True,**kw)
 def github_env():

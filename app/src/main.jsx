@@ -10,6 +10,9 @@ import '@fontsource/inter/latin-400.css';
 import '@fontsource/inter/latin-500.css';
 import './style.css';
 import { ModelLibrary } from './ModelLibrary.jsx';
+import { ModelSearch } from './ModelSearch.jsx';
+import { VideoStudio } from './VideoStudio.jsx';
+import { Video } from 'lucide-react';
 import { api, CONNECTION_ERROR } from './api.js';
 import { copyText } from './clipboard.js';
 const prettyBytes = n => !Number.isFinite(n) ? '—' : n >= 1024 ** 3 ? (n / 1024 ** 3).toFixed(1) + t(" ГБ") : n >= 1024 ** 2 ? (n / 1024 ** 2).toFixed(1) + t(" МБ") : (n / 1024).toFixed(0) + t(" КБ");
@@ -601,7 +604,7 @@ function App() {
           setMode('image');
           textarea.current?.focus();
           if (!images.ready) setModal('library');
-        }}><ImagePlus size={17} /><span>{t("Создать изображение")}</span><span className={'tiny-dot ' + (images.ready ? 'green' : 'amber')} /></button></nav>
+        }}><ImagePlus size={17} /><span>{t("Создать изображение")}</span><span className={'tiny-dot ' + (images.ready ? 'green' : 'amber')} /></button><button onClick={()=>setModal('video')}><Video size={17}/><span>{t("Создать видео")}</span><span className="nav-free">{t("Бесплатно")}</span></button><button onClick={()=>setModal('model-search')}><Search size={17}/><span>{t("Найти нейросеть")}</span></button></nav>
    <div className="sidebar-section"><div className="section-heading"><span>{t("Проекты")}</span><button className="icon-button" title={t("Выбрать проект")} onClick={chooseProject}><Plus size={14} /></button></div><button className="project-row" onClick={chooseProject}><Folder size={16} /><span>{shortPath(project)}</span><ChevronRight size={13} /></button></div>
    <div className="chat-heading"><button onClick={() => setShowArchive(v => !v)}>{showArchive ? t("Архив") : t("Недавние")}<ChevronDown size={13} /></button><span>{filtered.length}</span></div>
    <div className="chat-list">{filtered.map(chat => <div key={chat.id} className={'chat-row ' + (sid === chat.id ? 'selected' : '')}><button className="chat-select" onClick={() => selectChat(chat.id)}>{chat.pinned ? <Pin size={13} /> : <MessageSquare size={14} />}<span>{chat.title}</span>{chat.running && <span className="tiny-dot green pulse" />}</button><button className="chat-more icon-button" aria-label={t("Действия: ") + chat.title} onClick={() => setChatMenu(chatMenu === chat.id ? null : chat.id)}><MoreHorizontal size={16} /></button>{chatMenu === chat.id && <div className="chat-menu"><button onClick={() => {
@@ -693,7 +696,8 @@ function App() {
       e.target.value = '';
     }} />
   {toast && <div role="status" className="toast"><Check size={15} />{toast}</div>}
-  {modal === 'library' && <ModelLibrary onClose={() => setModal(null)} onActivated={() => window.location.reload()} />}
+  {['library','library-video','model-search'].includes(modal) && <ModelLibrary initialKind={modal==='library-video'?'video':'all'} initialTab={modal==='model-search'||boot?.first_run?'search':'catalog'} onClose={() => setModal(modal==='library-video'?'video':null)} onActivated={() => window.location.reload()} />}
+  {modal==='video'&&<VideoStudio onClose={()=>setModal(null)} onModels={()=>setModal('library-video')}/>}
   {modal === 'projects' && <Modal title={t("Выбрать проект")} subtitle={t("Рабочие папки Freedom GPT")} onClose={() => setModal(null)}><div className="modal-search"><Search size={16} /><input autoFocus placeholder={t("Найти папку…")} value={projectSearch} onChange={e => setProjectSearch(e.target.value)} /></div><div className="project-list">{projects.filter(p => p.name.toLowerCase().includes(projectSearch.toLowerCase())).map(p => <button key={p.path} onClick={() => {
           if (sid) {
             newChat();

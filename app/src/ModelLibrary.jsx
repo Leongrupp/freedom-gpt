@@ -2,16 +2,20 @@ import { t } from './i18n.js';
 import { LocaleSwitch } from './Preferences.jsx';
 import React, { useEffect, useState, useRef } from 'react';
 import { X, Cpu, HardDrive, Download, Check, Pause, RefreshCw, Plus, FolderOpen, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
-import { api } from './api.js';
+import { api, CONNECTION_ERROR } from './api.js';
+import { ModelSearch } from './ModelSearch.jsx';
 const gb = n => (n / 1024 ** 3).toFixed(1) + t(" ГБ");
 export function ModelLibrary({
   onClose,
-  onActivated
+  onActivated,
+  initialKind='all',
+  initialTab='catalog'
 }) {
   const [data, setData] = useState(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(''),
-    [tab, setTab] = useState('catalog');
+    [tab, setTab] = useState(initialTab);
+  const [kind,setKind]=useState(initialKind);
   const [path, setPath] = useState(''),
     [repo, setRepo] = useState(''),
     [remote, setRemote] = useState(null),
@@ -27,6 +31,7 @@ export function ModelLibrary({
         const next = await api('/library');
         if (disposed) return;
         setData(next);
+        setError(value=>value===CONNECTION_ERROR?'':value);
         if (requested.current && next.activation?.state === 'ready') onActivated();
       } catch (e) {
         if (!disposed) setError(e.message);
@@ -61,7 +66,7 @@ export function ModelLibrary({
         setPath('');
         setTab('catalog');
       }
-      if (type === 'scan') setData(next);else setData(await api('/library'));
+      if (type === 'scan') {setData(next);setTab('search')}else setData(await api('/library'));
     } catch (e) {
       setError(e.message);
       requested.current = false;
@@ -70,21 +75,22 @@ export function ModelLibrary({
     }
   }
   const hw = data?.hardware || {},
-    models = data?.models || [];
+    models = (data?.models || []).filter(m=>kind==='all'||m.kind===kind);
   return <div className="modal-backdrop"><section role="dialog" aria-modal="true" aria-label={t("Модели Freedom GPT")} className="modal library-modal"><header><LocaleSwitch /><div><div className="library-eyebrow">{t("FREEDOM GPT · ВАШ КОМПЬЮТЕР")}</div><h2>{data?.first_run ? t("Начнём с вашего ПК") : t("Модели и загрузки")}</h2><p>{t("Выберите модель под своё железо. После загрузки она работает без интернета.")}</p></div><button className="icon-button" aria-label={t("Закрыть")} onClick={onClose}><X size={18} /></button></header>
  <div className="hardware-summary"><div><Cpu size={18} /><strong>{hw.cpu || t("Определяем процессор…")}</strong><span>{hw.physical_cores || '—'}{t(" ядер · ")}{hw.ram_gb || '—'}{t(" ГБ RAM")}</span></div><div><Sparkles size={18} /><strong>{hw.gpus?.map(g => g.name).join(', ') || t("Определяем видеокарту…")}</strong><span>{hw.vram_gb ? hw.vram_gb + t(" ГБ VRAM") : t("CPU / видеопамять не определена")}</span></div><div><HardDrive size={18} /><strong>{hw.free_disk_gb || '—'}{t(" ГБ свободно")}</strong><span title={hw.storage}>{hw.storage || t("Папка приложения")}</span></div></div>
- <div className="library-toolbar"><div className="segmented"><button className={tab === 'catalog' ? 'active' : ''} onClick={() => setTab('catalog')}>{t("Каталог")}</button><button className={tab === 'import' ? 'active' : ''} onClick={() => setTab('import')}>{t("Другие модели")}</button></div><button className="icon-text" disabled={!!busy} onClick={() => action('scan')}><RefreshCw size={14} />{t("Проверить ПК")}</button></div>
+ <div className="library-toolbar"><div className="segmented"><button className={tab === 'catalog' ? 'active' : ''} onClick={() => setTab('catalog')}>{t("Мои модели")}</button><button className={tab === 'search' ? 'active' : ''} onClick={() => setTab('search')}>{t("Найти модели")}</button><button className={tab === 'import' ? 'active' : ''} onClick={() => setTab('import')}>{t("Другие модели")}</button></div><button className="icon-text" disabled={!!busy} onClick={() => action('scan',{task:kind==='video'?'video':'code'})}><RefreshCw size={14} />{t("Проверить ПК")}</button></div>
+ {tab==='catalog'&&<div className="library-kind-filter">{[['all','Все'],['chat','Чат и код'],['image','Изображения'],['video','Видео']].map(([value,label])=><button key={value} className={kind===value?'active':''} onClick={()=>setKind(value)}>{t(label)}</button>)}</div>}
  {error && <div role="alert" className="library-error"><AlertCircle size={16} />{t(error)}</div>}
  {data?.activation?.state === 'loading' && <div role="status" className="library-notice"><RefreshCw className="spin" size={15} />{t("Загружаем модель в память. Это может занять несколько минут.")}</div>}
  {data?.activation?.state === 'error' && <div role="alert" className="library-error">{t(data.activation.error)}</div>}
- {tab === 'catalog' ? <div className="library-models">{models.map(model => {
+ {tab==='search'?<ModelSearch initialTask={kind==='video'?'video':'code'} onAdded={()=>{setKind('chat');setTab('catalog');api('/library').then(setData)}} onCatalog={value=>{setKind(value||'all');setTab('catalog')}}/>:tab === 'catalog' ? <div className="library-models">{models.map(model => {
           const job = model.job || {},
             working = ['downloading', 'verifying'].includes(job.state);
-          return <article className="library-model" key={model.id}><div className="library-model-top"><div><div className="library-badges">{model.default && <span>{t("СТАНДАРТНЫЙ НАБОР")}</span>}{model.id === data.recommended && <span className="fit">{t("РЕКОМЕНДУЕМ ДЛЯ ПК")}</span>}{model.kind === 'image' && <span>{t("ИЗОБРАЖЕНИЯ")}</span>}</div><h3>{model.name}</h3><p>{t(model.quantization)} · {gb(model.total)}</p></div>{model.installed ? <Check size={20} className="library-ready" /> : <Download size={19} />}</div><p className={'fit-text ' + model.recommendation.level}>{t(model.recommendation.reason)}</p><div className="library-source"><a href={model.source.startsWith('https:') ? model.source : undefined} target="_blank" rel="noreferrer">{model.source.startsWith('https:') ? t("Источник и лицензия ↗") : t("Локальный импорт")}</a><span>{String(model.license)}</span></div>
+          return <article className="library-model" key={model.id}><div className="library-model-top"><div><div className="library-badges">{model.default && <span>{t("СТАНДАРТНЫЙ НАБОР")}</span>}{model.id === data.recommended && <span className="fit">{t("РЕКОМЕНДУЕМ ДЛЯ ПК")}</span>}{model.kind === 'image' && <span>{t("ИЗОБРАЖЕНИЯ")}</span>}{model.kind === 'video' && <span>{t("ВИДЕО · БЕСПЛАТНО")}</span>}</div><h3>{model.name}</h3><p>{t(model.quantization)} · {gb(model.total)}</p></div>{model.installed ? <Check size={20} className="library-ready" /> : <Download size={19} />}</div><p className={'fit-text ' + model.recommendation.level}>{t(model.recommendation.reason)}</p><div className="library-source"><a href={model.source.startsWith('https:') ? model.source : undefined} target="_blank" rel="noreferrer">{model.source.startsWith('https:') ? t("Источник и лицензия ↗") : t("Локальный импорт")}</a><span>{String(model.license)}</span></div>
  {(model.bytes > 0 || working) && !model.installed && <><div className="download-summary"><span>{gb(model.bytes)} / {gb(model.total)}{job.speed ? ' · ' + (job.speed / 1024 ** 2).toFixed(1) + t(" МБ/с") : ''}</span><strong>{model.percent}%</strong></div><div className="download-progress"><i style={{
                   width: model.percent + '%'
                 }} /></div></>}
- {job.error && <p className="library-error">{t(job.error)}</p>}<div className="library-actions">{model.installed ? model.kind === 'image' ? <span>{t("Готово для кнопки «Создать изображение»")}</span> : <button className={data.active === model.id ? 'installed-button' : 'primary-button'} disabled={data.active === model.id && data.model_ready || data.activation?.state === 'loading' || !!busy} onClick={() => action('activate', {
+ {job.error && <p className="library-error">{t(job.error)}</p>}<div className="library-actions">{model.installed ? model.kind !== 'chat' ? <span>{model.kind==='video'?t("Готово для кнопки «Создать видео»"):t("Готово для кнопки «Создать изображение»")}</span> : <button className={data.active === model.id ? 'installed-button' : 'primary-button'} disabled={data.active === model.id && data.model_ready || data.activation?.state === 'loading' || !!busy} onClick={() => action('activate', {
                 id: model.id
               })}>{data.active === model.id ? data.model_ready ? t("Активна") : t("Запустить модель") : t("Использовать модель")}<ChevronRight size={14} /></button> : working ? <button onClick={() => action('pause', {
                 id: model.id

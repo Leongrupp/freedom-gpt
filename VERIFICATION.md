@@ -52,3 +52,17 @@ fast generation does not mean every answer is correct.
 Signing proves possession of the release signing key, not absence of software
 defects. Preserve the key and baseline privately, review changes and verify
 updates before publishing. Source commits alone do not update installed clients.
+
+## Version 1.3 model discovery and video gates
+
+Live Hugging Face and Ollama searches, GGUF architecture/context inspection,
+catalog additions, deduplication, token protection, the free video endpoint and
+preservation of 24 personal sessions were checked on the development PC.
+An isolated 1.2 client accepted the signed 1.3 update using its original verifier;
+the upgraded clean application started with the new search/video modules.
+
+The public 1.3 release is gated on a real Wan generation after all three weights
+finish downloading: full WebM decode, HTTP Range delivery, restored coding-model
+health and a subsequent local model response. An incomplete model download or a
+working interface alone does not satisfy that gate. Memory recommendations for
+other GPUs remain estimates. No subscription or payment service is connected.

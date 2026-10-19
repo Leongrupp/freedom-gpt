@@ -15,6 +15,8 @@ You choose what runs on your hardware. No cloud API subscription is required.
 - **Three modes:** Fast code, Think and Image. Image generation hands the GPU back to the coding model when finished.
 - **Your files:** attach documents and images. Photo analysis needs a compatible vision model.
 - **Model library:** inspect hardware, download verified models, resume interrupted downloads, import compatible GGUF files or connect an existing local API.
+- **Model discovery:** search Hugging Face and the public Ollama registry, compare memory estimates, inspect GGUF family/context, and keep cached results offline.
+- **Free local video:** a separate Wan 2.1 studio with text prompts, quality settings, WebM preview/downloads and saved video history. Video weights download separately.
 - **RU / EN:** choose your language in the installer and switch it in the application.
 - **Automatic updates:** signed published versions download automatically and install between tasks, preserving chats, settings, models and workspaces. You can turn this off in Settings.
 - **Portable folder:** keep the application and its data together on an internal or external SSD.
@@ -23,7 +25,7 @@ You choose what runs on your hardware. No cloud API subscription is required.
 
 <img src="assets/first-run-en.jpg" alt="Freedom GPT first-run hardware check and model library in English" width="100%">
 
-1. Open [Releases](https://github.com/Leongrupp/freedom-gpt/releases/latest) and download **FreedomGPT-Setup-1.2.0.exe**.
+1. Open [Releases](https://github.com/Leongrupp/freedom-gpt/releases/latest) and download **FreedomGPT-Setup-1.3.0.exe**.
 2. Run the installer, choose **English** or **Русский**, and select a new empty folder on an SSD. Allow several GB for the application and additional space for models.
 3. Start **FreedomGPT.exe** or the desktop shortcut. The first-run screen checks CPU, RAM, NVIDIA VRAM and free disk space.
 4. Choose a model, click **Download model**, wait for SHA256 verification, then **Use model**.
@@ -41,6 +43,7 @@ security protections to install software.
 |---|---|---|
 | Standard coding | Huihui Qwen3.8 Coder 27B · IQ3_S3, with vision projector | 32 GB RAM, NVIDIA 16 GB VRAM |
 | Image generation | Qwen Image 2.1 Turbo · Q5_K_M, encoder and VAE | NVIDIA 12–16 GB VRAM; shares GPU with the coding model |
+| Optional video | Wan 2.1 T2V 1.3B FP16, UMT5 Q4_K_M and VAE, about 6.75 GB | 24 GB RAM, NVIDIA 8 GB+ VRAM; 12 GB+ for larger modes |
 | Lighter coding | Qwen3.5 4B · Q4_K_M | 12–16 GB RAM; less capable than the standard model |
 | Smallest option | Qwen3.5 0.8B · Q4_K_M | 8 GB RAM; limited coding and tool use |
 
@@ -53,6 +56,14 @@ Model weights are **not** inside the installer. Sources and model licenses are
 shown in the library. Import currently supports single-file GGUF models with
 native context of at least 64K and an architecture supported by the bundled
 engine. Arbitrary training packages and image generators are not installed automatically.
+
+### Model search and video
+
+Open **Find an AI model** after the hardware check. Public metadata is fetched from the selected source; memory comparisons stay local. Inspect the model card and choose what to download. Unconfirmed architectures and insufficient native context are excluded from automatic installation. Memory estimates do not guarantee speed, answer quality or tool support; actual compatibility needs a successful load.
+
+**Create video → Check PC and choose a model** opens the supported Wan pack. After SHA256 verification, enter a prompt and choose resolution, frames and steps. Generated WebM files stay local, with preview, downloads and history. This first adapter supports text-to-video without audio. The coding model releases GPU memory during video generation and returns afterwards. The feature is free, with no payment or subscription required. Other video architectures need an adapter; arbitrary search results cannot be loaded as video models automatically.
+
+Allow **45 GB or more** of free SSD space for the standard pack plus optional video, temporary files and updates. The 256×144/9-frame preset is a load check, not a quality benchmark.
 
 ## Offline and private by default
 

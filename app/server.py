@@ -5,6 +5,7 @@ import asyncio, base64, contextlib, datetime, hashlib, io, json, logging, mimety
 ROOT=pathlib.Path(__file__).resolve().parent
 import bootstrap as portable
 from library import library, register as register_library
+from video import videos, register as register_video
 STACK=portable.STACK
 PROJECTS=portable.workspace_root() if portable.PRIVATE else ROOT.resolve()
 CREATIVE=STACK/'creative-kit'
@@ -319,6 +320,7 @@ async def chat_meta(request):
     return web.json_response({'ok':True})
 
 async def submit(request):
+    if videos.busy():return error('Сейчас создаётся видео. Дождитесь возврата модели кода или остановите видео.',409)
     sid=request.match_info['sid'];data=await body_json(request)
     text=str(data.get('text') or '').strip()
     if not text or len(text)>100000:return error('Сообщение должно содержать от 1 до 100 000 символов.')
@@ -486,6 +488,7 @@ def create_app():
     app=web.Application(middlewares=[security],client_max_size=55*1024**2)
     app['runtime']={'metrics':{}}
     register_library(app)
+    register_video(app,bridge)
     app.router.add_get('/api/updates',lambda r:web.json_response(updates.status()))
     app.router.add_post('/api/updates/check',update_check)
     app.router.add_post('/api/updates/settings',update_settings)

@@ -82,6 +82,8 @@ class Updates:
  async def try_apply(self,app,bridge):
   if not self.package or not self.payload or app.get('prompt_admissions',0):return
   from library import library
+  from video import videos
+  if videos.busy():return
   if any(v.get('active') for v in bridge.live.values()):return
   if any(j.get('state') in {'downloading','verifying'} for j in library.jobs.values()):return
   if (library.activation or {}).get('state')=='loading':return
