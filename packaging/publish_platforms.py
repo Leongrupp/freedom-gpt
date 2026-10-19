@@ -81,7 +81,8 @@ Choose your OS asset below. See README for commands and SHA256SUMS.txt for check
  release=api(release_path)
  if a.phase=='upload':
   if not release.get('draft'):raise RuntimeError('Refusing to change already-public release assets')
-  run([gh,'release','edit',tag,'--repo',repo,'--notes-file',notes])
+  commit=run(['git','rev-parse','HEAD']).stdout.strip()
+  run([gh,'release','edit',tag,'--repo',repo,'--notes-file',notes,'--target',commit])
   for number,file in enumerate(assets):
    release=api(release_path);existing=next((x for x in release['assets'] if x['name']==file.name),None);good=existing and existing.get('state')=='uploaded' and existing['size']==expected[file.name]['bytes'] and existing.get('digest')=='sha256:'+expected[file.name]['sha256']
    if not good:
