@@ -70,12 +70,14 @@ Choose your OS asset below. See README for commands and SHA256SUMS.txt for check
  if result.returncode:
   if a.phase!='upload':raise RuntimeError('Create and upload a draft first')
   commit=run(['git','rev-parse','HEAD']).stdout.strip();run([gh,'release','create',tag,'--repo',repo,'--draft','--target',commit,'--title','Freedom GPT '+v+' · Windows / Ubuntu / macOS candidate','--notes-file',notes])
- release=api('repos/'+repo+'/releases/tags/'+tag)
+ release_id=json.loads(run([gh,'release','view',tag,'--repo',repo,'--json','databaseId']).stdout)['databaseId']
+ release_path='repos/'+repo+'/releases/'+str(release_id)
+ release=api(release_path)
  if a.phase=='upload':
   if not release.get('draft'):raise RuntimeError('Refusing to change already-public release assets')
   run([gh,'release','edit',tag,'--repo',repo,'--notes-file',notes])
   for number,file in enumerate(assets):
-   release=api('repos/'+repo+'/releases/tags/'+tag);existing=next((x for x in release['assets'] if x['name']==file.name),None);good=existing and existing.get('state')=='uploaded' and existing['size']==expected[file.name]['bytes'] and existing.get('digest')=='sha256:'+expected[file.name]['sha256']
+   release=api(release_path);existing=next((x for x in release['assets'] if x['name']==file.name),None);good=existing and existing.get('state')=='uploaded' and existing['size']==expected[file.name]['bytes'] and existing.get('digest')=='sha256:'+expected[file.name]['sha256']
    if not good:
     if existing:run([gh,'api','--method','DELETE','repos/'+repo+'/releases/assets/'+str(existing['id'])])
     for attempt in range(3):
@@ -83,7 +85,7 @@ Choose your OS asset below. See README for commands and SHA256SUMS.txt for check
      r=run([gh,'release','upload',tag,file,'--repo',repo],timeout=3600,check=False)
      if not r.returncode:break
      if attempt==2:raise RuntimeError('Upload failed: '+file.name+' '+r.stderr[-500:])
-     current=api('repos/'+repo+'/releases/tags/'+tag);partial=next((x for x in current['assets'] if x['name']==file.name),None)
+     current=api(release_path);partial=next((x for x in current['assets'] if x['name']==file.name),None)
      if partial:run([gh,'api','--method','DELETE','repos/'+repo+'/releases/assets/'+str(partial['id'])])
   state(draft_uploaded=True,total=len(assets));return
  uploaded={f['name']:f for f in release['assets']}
