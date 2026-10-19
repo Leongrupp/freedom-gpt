@@ -1,0 +1,28 @@
+{
+  "product": "Freedom GPT",
+  "version": "1.2.0",
+  "date": "2026-10-19",
+  "platform": "Windows 10/11 x64",
+  "files": [
+    {
+      "name": "FreedomGPT-Setup-1.2.0.exe",
+      "bytes": 1402244528,
+      "sha256": "d990ad1ffba163d0b0df89f59e59c84c5dc496e8a38b242cadd4fb07d8cfb34f",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.2.0/FreedomGPT-Setup-1.2.0.exe"
+    },
+    {
+      "name": "FreedomGPT-1.2.0-Windows-x64.zip",
+      "bytes": 1402210160,
+      "sha256": "9f3ce0e819b1234fbed95e33eb2ff3e195a477e2600b8beb26342d5390e4ad62",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.2.0/FreedomGPT-1.2.0-Windows-x64.zip"
+    }
+  ],
+  "default_models": [
+    "huihui-qwen38-coder",
+    "qwen-image21"
+  ],
+  "models_included": false,
+  "public": true,
+  "signed": false,
+  "update_manifest_signed": true
+}

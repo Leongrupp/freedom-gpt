@@ -10,5 +10,6 @@
 *.cs text eol=lf
 *.cmd text eol=crlf
 *.png binary
+*.jpg binary
 *.ico binary
 *.woff2 binary

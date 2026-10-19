@@ -19,6 +19,8 @@
 
 ## Установка
 
+<img src="assets/first-run-ru.jpg" alt="Freedom GPT: проверка компьютера и выбор модели на русском" width="100%">
+
 1. Откройте [последний релиз](https://github.com/Leongrupp/freedom-gpt/releases/latest) и скачайте **FreedomGPT-Setup-1.2.0.exe**.
 2. Выберите **Русский** или **English** и новую пустую папку на внутреннем или внешнем SSD.
 3. Запустите **FreedomGPT.exe** или созданный ярлык.

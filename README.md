@@ -21,6 +21,8 @@ You choose what runs on your hardware. No cloud API subscription is required.
 
 ## Getting started
 
+<img src="assets/first-run-en.jpg" alt="Freedom GPT first-run hardware check and model library in English" width="100%">
+
 1. Open [Releases](https://github.com/Leongrupp/freedom-gpt/releases/latest) and download **FreedomGPT-Setup-1.2.0.exe**.
 2. Run the installer, choose **English** or **Русский**, and select a new empty folder on an SSD. Allow several GB for the application and additional space for models.
 3. Start **FreedomGPT.exe** or the desktop shortcut. The first-run screen checks CPU, RAM, NVIDIA VRAM and free disk space.

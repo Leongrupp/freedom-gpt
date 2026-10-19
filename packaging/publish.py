@@ -1,7 +1,7 @@
 """Build and publish a signed Freedom GPT release from reviewed public sources."""
 import argparse,ast,json,os,pathlib,re,shutil,subprocess,sys
 ROOT=pathlib.Path(__file__).resolve().parent.parent
-SAFE=['.gitignore','.github','README.md','README.ru.md','BUILD.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','app','packaging','site','assets','licenses']
+SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','BUILD.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','app','packaging','site','assets','licenses']
 def run(args,**kw):
  kw.setdefault('cwd',ROOT);subprocess.run([str(a) for a in args],check=True,**kw)
 def github_env():
@@ -33,7 +33,13 @@ def main():
  if args.runtime_from.resolve()==(ROOT/'build'/('FreedomGPT-'+args.version)).resolve():raise RuntimeError('Use a previous clean runtime, not the current output folder')
  run([sys.executable,ROOT/'packaging/sign_update.py'])
  run([sys.executable,ROOT/'packaging/bundle.py','--runtime-from',args.runtime_from])
- run([sys.executable,ROOT/'packaging/release.py']);run([sys.executable,ROOT/'packaging/source_archive.py'])
+ run([sys.executable,ROOT/'packaging/release.py'])
+ manifest=json.loads((ROOT/'release/release.json').read_text());manifest['public']=True
+ manifest['files']=[{**f,'url':f'https://github.com/{meta["repository"]}/releases/download/v{args.version}/{f["name"]}'} for f in manifest['files'] if f['name'].endswith('.exe') or 'Windows-x64.zip' in f['name']]
+ (ROOT/'site/release.json').write_text(json.dumps(manifest,indent=2))
+ for name in ['README.md','README.ru.md']:
+  path=ROOT/name;text=path.read_text(encoding='utf8');text=re.sub(r'FreedomGPT-Setup-\d+\.\d+\.\d+\.exe','FreedomGPT-Setup-'+args.version+'.exe',text);path.write_text(text,encoding='utf8')
+ run([sys.executable,ROOT/'packaging/source_archive.py'])
  if args.prepare_only:return
  if not (ROOT/'.git').exists():raise RuntimeError('Initialize and review the source repository first')
  run(['git','add','--',*SAFE]);run(['git','commit','-m','Release Freedom GPT '+args.version]);run(['git','push','origin','main'],env=env)
