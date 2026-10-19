@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Freedom GPT public release periodically
+
+[Timer]
+OnBootSec=1m
+OnUnitActiveSec=3m
+RandomizedDelaySec=10s
+Unit=freedom-gpt-release-refresh.service
+
+[Install]
+WantedBy=timers.target

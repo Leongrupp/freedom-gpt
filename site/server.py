@@ -17,6 +17,7 @@ async def release(request):
  value=load(PROJECT/'release/release.json',None) or load(ROOT/'release.json',None)
  return web.json_response(value or {'error':'Установщик ещё собирается'},status=200 if value else 503)
 async def catalog(request):return web.json_response(load(PROJECT/'app/catalog.json',[]))
+async def models(request):return web.json_response({'models':[]})
 async def download(request):
  name=request.match_info['name'];manifest=load(PROJECT/'release/release.json',{})
  allowed={f['name'] for f in manifest.get('files',[])}|{'SHA256SUMS.txt','FreedomGPT-source-1.1.0.zip'}
@@ -26,6 +27,7 @@ async def download(request):
  return web.FileResponse(file,headers={'Content-Type':'application/octet-stream','Content-Disposition':'attachment; filename="'+name+'"'})
 def create_app():
  app=web.Application(middlewares=[headers]);app.router.add_get('/',index);app.router.add_get('/en/',index);app.router.add_get('/api/release',release);app.router.add_get('/api/catalog',catalog);app.router.add_get('/downloads/{name}',download)
+ app.router.add_get('/api/models',models)
  for name in ['style.css','app.js','freedom.svg']:app.router.add_get('/'+name,lambda request,n=name:web.FileResponse(ROOT/n))
  app.router.add_static('/fonts/',ROOT/'fonts');app.router.add_static('/media/',PROJECT/'assets');return app
 if __name__=='__main__':web.run_app(create_app(),host='127.0.0.1',port=PORT,access_log=None)

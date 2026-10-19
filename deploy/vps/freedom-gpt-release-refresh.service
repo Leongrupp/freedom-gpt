@@ -1,0 +1,23 @@
+[Unit]
+Description=Freedom GPT public release metadata
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/freedom-gpt
+ExecStart=/usr/bin/python3 /var/www/freedom-gpt/current/bin/refresh_release.py
+Environment=PYTHONDONTWRITEBYTECODE=1
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/www/freedom-gpt/shared/metadata
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=100M
+CPUQuota=20%
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=45
