@@ -20,7 +20,7 @@ async def catalog(request):return web.json_response(load(PROJECT/'app/catalog.js
 async def models(request):return web.json_response({'models':[]})
 def platform_folder():return PROJECT/'release/platforms'/load(PROJECT/'app/version.json',{'version':'1.4.0'})['version']
 async def platforms(request):
- value=load(platform_folder()/'platforms.json',None)
+ value=load(platform_folder()/'platforms.json',None) or load(ROOT/'platforms.json',None)
  if not value:return web.json_response({'platforms':[]})
  # Public metadata never exposes local filesystem paths.
  return web.json_response({'version':value['version'],'local_only':not value.get('published',False),'platforms':value['platforms']})

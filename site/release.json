@@ -1,20 +1,20 @@
 {
   "product": "Freedom GPT",
-  "version": "1.2.0",
-  "date": "2026-10-19",
+  "version": "1.4.1",
+  "date": "2026-10-20",
   "platform": "Windows 10/11 x64",
   "files": [
     {
-      "name": "FreedomGPT-Setup-1.2.0.exe",
-      "bytes": 1402698253,
-      "sha256": "fd6f8f9234529e1210092632b6300cddc997e0840b2102a71bf0d40ea889d793",
-      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.2.0/FreedomGPT-Setup-1.2.0.exe"
+      "name": "FreedomGPT-Setup-1.4.1.exe",
+      "bytes": 1610783719,
+      "sha256": "aa93a76f18638f40cf2456513198b64f185a8612659ea16d805f07ed08b6342e",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1.exe"
     },
     {
-      "name": "FreedomGPT-1.2.0-Windows-x64.zip",
-      "bytes": 1402663885,
-      "sha256": "0e1cbc8cea0c62aa569b8897d5326b2d036498b91bd5c8654ee01028e905e7b2",
-      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.2.0/FreedomGPT-1.2.0-Windows-x64.zip"
+      "name": "FreedomGPT-1.4.1-Windows-x64.zip",
+      "bytes": 1610749351,
+      "sha256": "3d4850373061062b957acb03cca4b8804a6051d0d0936098232864bbd5cbd30c",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Windows-x64.zip"
     }
   ],
   "default_models": [
