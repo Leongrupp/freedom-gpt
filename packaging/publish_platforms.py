@@ -23,9 +23,9 @@ def main():
  def run(args,timeout=180,check=True):
   for attempt in range(3):
    r=subprocess.run(list(map(str,args)),cwd=ROOT,env=env,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=timeout)
-   network=any(s in r.stderr.lower() for s in ['error connecting','i/o timeout','tls handshake timeout','connection reset','temporary failure','unexpected eof'])
-   readonly=str(args[0])==str(gh) and (args[1:3]==['release','view'] or args[1:2]==['api'] and '--method' not in args)
-   if not r.returncode or not network or not readonly or attempt==2:break
+   network=any(s in r.stderr.lower() for s in ['error connecting','i/o timeout','tls handshake timeout','connection reset','temporary failure','unexpected eof','could not resolve host'])
+   retry_safe=str(args[0])==str(gh) and (args[1:3] in [['release','view'],['release','edit'],['repo','edit']] or args[1:2]==['api'] and '--method' not in args) or args[:2]==['git','push']
+   if not r.returncode or not network or not retry_safe or attempt==2:break
    time.sleep(2+attempt*3)
   if check and r.returncode:raise RuntimeError('Command failed: '+str(args[:3])+' '+r.stderr[-900:])
   return r
