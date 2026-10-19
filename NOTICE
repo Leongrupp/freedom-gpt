@@ -1,0 +1,9 @@
+Freedom GPT application code is distributed under the MIT license in LICENSE.
+
+Bundled third-party software retains its own copyright and license terms.
+Original third-party notices are preserved in licenses/ and in the runtime
+distribution. The project license does not replace their terms. Model weights
+are downloaded separately from the original publishers; each model has its
+own license and hardware requirements. No model weights, personal chats,
+credentials, browser profiles or private signing keys are in the public source
+or clean installer.

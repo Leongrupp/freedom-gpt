@@ -1,0 +1,25 @@
+Freedom GPT 1.1.0
+
+The Freedom GPT interface, launcher, installer and integration code are provided
+under the included MIT license. This does not relicense bundled third-party code.
+
+Hermes Agent: Nous Research, MIT. Original license in Hermes-MIT.txt and
+runtime/hermes/LICENSE. This distribution uses an unchanged allowlisted subset
+of the installed upstream source at commit recorded in freedom-bundle.json.
+
+CPython: Python Software Foundation license, included in Python.txt.
+Python package license notices are retained in runtime/python/Lib/site-packages.
+llama.cpp, GGML and their vendor licenses are retained in runtime/llama.
+stable-diffusion.cpp, GGML and vendor notices are retained in runtime/sd.
+NVIDIA CUDA runtime and cuBLAS components retain their own NVIDIA terms; see
+NVIDIA-CUDA-EULA.html and notices shipped with their official distributions.
+Microsoft runtime components are licensed separately from Freedom GPT.
+Windows, Microsoft Edge and NVIDIA display drivers are not included.
+
+Model weights are NOT included in the application installer. Downloads are from
+the model publishers, pinned to revisions and SHA256 hashes in catalog.json.
+Each model card and license is linked in the model catalog. A model's license
+does not change when it is selected in Freedom GPT.
+
+The public installer does not contain the author's chats, browser profile,
+authentication data, API credentials or personal runtime configuration.
