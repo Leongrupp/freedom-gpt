@@ -6,7 +6,7 @@ The ready-made packages include Python, Node.js and engines. Model weights downl
 
 ## Windows
 
-**[Download](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe)**
+**[Download for Windows](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe)**
 
 1. **Download the app.** Click “Download for Windows” above. Open the downloaded EXE file.
 2. **Choose a folder.** Select your language and a new empty SSD folder, then click Install.
@@ -14,7 +14,7 @@ The ready-made packages include Python, Node.js and engines. Model weights downl
 
 ### Terminal download and installation
 
-Open a terminal in a folder for downloads and paste the full block. The installer is verified against the release SHA256. Windows asks for a new empty SSD folder and creates a portable installation.
+Open PowerShell in a folder for downloads and paste the full block. The file is verified against the release SHA256. Enter a new empty SSD folder when prompted. This creates a portable installation.
 
 ```powershell
 & {
@@ -37,7 +37,7 @@ Open a terminal in a folder for downloads and paste the full block. The installe
 
 ## macOS · Apple Silicon
 
-**[Download](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip)**
+**[Download for Mac](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip)**
 
 1. **Check your Mac.** The preview requires Apple Silicon M1+ and macOS 26.2+. Intel Mac is not supported.
 2. **Unpack the ZIP.** Click “Download for Mac”, unpack the ZIP and move Freedom GPT.app into Applications.
@@ -47,7 +47,7 @@ Mac preview: native execution and these commands remain unverified; manual OS ap
 
 ### Terminal download and installation
 
-Open a terminal in a folder for downloads and paste the full block. The installer is verified against the release SHA256. Windows asks for a new empty SSD folder and creates a portable installation.
+Open Terminal in a folder for downloads and paste the full block. The file is verified against the release SHA256.
 
 ```sh
 (
@@ -69,7 +69,7 @@ Open a terminal in a folder for downloads and paste the full block. The installe
 
 ## Ubuntu Linux
 
-**[Download](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run)**
+**[Download for Ubuntu](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run)**
 
 1. **Download the installer.** Click “Download for Ubuntu”. The recommended file ends in .run.
 2. **Run it in Terminal.** Open Terminal in the folder containing the file. Copy and run the short command below.
@@ -81,7 +81,7 @@ sh ./FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
 
 ### Terminal download and installation
 
-Open a terminal in a folder for downloads and paste the full block. The installer is verified against the release SHA256. Windows asks for a new empty SSD folder and creates a portable installation.
+Open Terminal in a folder for downloads and paste the full block. The file is verified against the release SHA256. If curl is missing, use the download button and the short command above.
 
 ```sh
 (
