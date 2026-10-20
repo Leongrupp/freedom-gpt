@@ -1,4 +1,4 @@
-import {copyText} from './premium.js?v=platforms-1.4.2-r2';
+import {copyText} from './premium.js?v=install-guide-1.4.2-r3';
 const en=document.documentElement.lang==='en';
 const repository='https://github.com/Leongrupp/freedom-gpt';
 const size=n=>(n/1024**3).toFixed(2)+(en?' GB':' ГБ');
@@ -18,8 +18,8 @@ async function release(){try{
  const checksum=document.getElementById('checksum-download');if(checksum)checksum.href=data.public?repository+'/releases/latest/download/SHA256SUMS.txt':'/downloads/SHA256SUMS.txt';
 }catch{/* The verified release links in HTML remain available without metadata. */}}
 function label(file){
- if(file.name.endsWith('.exe'))return en?'Download EXE':'Скачать EXE';
- if(file.name.endsWith('.run'))return en?'Download installer':'Скачать установщик';
+ if(file.name.endsWith('.exe'))return en?'Download for Windows':'Скачать для Windows';
+ if(file.name.endsWith('.run'))return en?'Download for Ubuntu':'Скачать для Ubuntu';
  if(file.name.includes('macOS'))return en?'Download for Mac':'Скачать для Mac';
  if(file.name.endsWith('.deb'))return en?'DEB package':'Пакет DEB';
  if(file.name.endsWith('.tar.gz'))return en?'Portable TAR.GZ':'Переносимый TAR.GZ';
@@ -60,3 +60,17 @@ document.getElementById('copy-donation')?.addEventListener('click',async event=>
  document.getElementById('copy-status').textContent=success?copied:(en?'Select the address and press Ctrl+C':'Выделите адрес и нажмите Ctrl+C');
 });
 function refresh(){return Promise.allSettled([release(),platforms(),mirrors()])}refresh();setInterval(refresh,60000);
+for(const link of document.querySelectorAll('[data-guide-link]'))link.addEventListener('click',()=>{const guide=document.getElementById(link.dataset.guideLink);if(guide instanceof HTMLDetailsElement)guide.open=true});
+function openLinkedGuide(){const guide=document.getElementById(location.hash.slice(1));if(guide?.classList.contains('installation-system'))guide.open=true}openLinkedGuide();window.addEventListener('hashchange',openLinkedGuide);
+for(const button of document.querySelectorAll('[data-copy-command]'))button.addEventListener('click',async()=>{
+ const code=document.getElementById(button.dataset.copyCommand);if(!code)return;
+ const okay=await copyText(code.textContent);const status=button.closest('.install-command')?.querySelector('.command-copy-status');
+ if(status)status.textContent=okay?(en?'Copied. Paste into your terminal.':'Скопировано. Вставьте в свой терминал.'):(en?'Select the commands and copy them manually.':'Выделите команды и скопируйте вручную.');
+ button.textContent=okay?(en?'Copied ✓':'Скопировано ✓'):(en?'Select and copy':'Выделите и скопируйте');
+});
+
+for(const button of document.querySelectorAll('[data-select-command]'))button.addEventListener('click',()=>{
+ const code=document.getElementById(button.dataset.selectCommand);if(!code)return;
+ code.focus();const range=document.createRange();range.selectNodeContents(code);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+ const status=button.closest('.install-command')?.querySelector('.command-copy-status');if(status)status.textContent=en?'Selected. Press Ctrl+C (or Cmd+C on Mac).':'Выделено. Нажмите Ctrl+C (или Cmd+C на Mac).';
+});

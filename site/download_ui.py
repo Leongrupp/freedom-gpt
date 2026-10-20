@@ -22,8 +22,8 @@ def quick_downloads(lang,version,repo):
         links.append(f'<a class="system-download" data-platform-download="{target}" href="{url}" aria-label="{label}">{brand(mark)}<span><strong>{title}</strong><small>{detail}</small></span>{arrow()}</a>')
     return '<div class="hero-platforms" aria-label="'+('Download for your operating system' if lang=='en' else 'Скачать для своей системы')+'">'+''.join(links)+'</div>'
 def file_label(name,lang,primary=False):
-    if name.endswith('.exe'):return 'Download EXE' if lang=='en' else 'Скачать EXE'
-    if name.endswith('.run'):return 'Download installer' if lang=='en' else 'Скачать установщик'
+    if name.endswith('.exe'):return 'Download for Windows' if lang=='en' else 'Скачать для Windows'
+    if name.endswith('.run'):return 'Download for Ubuntu' if lang=='en' else 'Скачать для Ubuntu'
     if 'macOS' in name:return 'Download for Mac' if lang=='en' else 'Скачать для Mac'
     if name.endswith('.deb'):return 'DEB package' if lang=='en' else 'Пакет DEB'
     if name.endswith('.tar.gz'):return 'Portable TAR.GZ' if lang=='en' else 'Переносимый TAR.GZ'
@@ -46,5 +46,6 @@ def platform_cards(lang,version,repo):
         }[target]
         note=item['note_en' if en else 'note_ru']
         links=''.join(file_link(f,lang,repo,version,i==0) for i,f in enumerate(files))
-        cards.append(f'<article class="platform-card" data-platform-card="{target}"><div class="platform-card-top"><span class="platform-mark">{brand(mark)}</span><span class="platform-status {"preview" if target=="macos-arm64" else ""}">{badge}</span></div><h4>{title}</h4><div class="platform-system">{detail}</div><p class="platform-summary">{summary}</p><div class="platform-files">{links}</div><p class="platform-note">{note}</p></article>')
+        help_link=f'<a class="platform-guide-link" href="#install-{target}" data-guide-link="install-{target}">{"First time? How to install" if en else "Первый раз? Как установить"}<span aria-hidden="true">↗</span></a>'
+        cards.append(f'<article class="platform-card" data-platform-card="{target}"><div class="platform-card-top"><span class="platform-mark">{brand(mark)}</span><span class="platform-status {"preview" if target=="macos-arm64" else ""}">{badge}</span></div><h4>{title}</h4><div class="platform-system">{detail}</div><p class="platform-summary">{summary}</p><div class="platform-files">{links}</div>{help_link}<p class="platform-note">{note}</p></article>')
     return '<div class="platform-section-heading"><h3>'+('Choose your operating system' if en else 'Выберите свою систему')+'</h3><span>'+('One project. Three platforms.' if en else 'Один проект. Три платформы.')+'</span></div><div class="platform-grid">'+''.join(cards)+'</div>'

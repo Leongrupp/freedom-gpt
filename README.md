@@ -13,6 +13,8 @@
 </tr></table>
 <p align="center">Need a hand? <a href="https://t.me/AI1rus">Telegram @AI1rus</a> · Explore <a href="https://aionpc.ru">aionpc.ru</a> · Help the project grow with a star 💛</p>
 
+[📘 Step-by-step installation, automatic terminal commands and first model](INSTALL.md)
+
 ## ✨ What you can do
 
 - Chat locally, stream code, attach files and analyze photos with a compatible vision model.

@@ -3,7 +3,7 @@ import hashlib,json,pathlib,zipfile
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 def main():
  version=json.loads((ROOT/'app/version.json').read_text())['version'];output=ROOT/'release'/('FreedomGPT-source-'+version+'.zip');files=[]
- for name in ['.gitignore','.gitattributes','README.md','README.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt']:
+ for name in ['.gitignore','.gitattributes','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt']:
   files.append(ROOT/name)
  for name in ['src','public','creative']:
   files.extend(p for p in (ROOT/'app'/name).rglob('*') if p.is_file())
