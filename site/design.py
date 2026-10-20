@@ -1,7 +1,7 @@
 """Freedom GPT graphite and silver presentation, shared by both languages."""
 import html,json,pathlib
 
-VERSION = 'community-1.4.1'
+VERSION = 'https-1.4.2'
 PROJECT=json.loads((pathlib.Path(__file__).parent/'project.json').read_text(encoding='utf-8'))
 SITE=PROJECT['support']['website']
 TELEGRAM=PROJECT['support']['telegram']

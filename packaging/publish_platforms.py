@@ -50,7 +50,7 @@ def main():
   if staged.returncode==1:run(['git','commit','-m','Release Freedom GPT '+v+' for Windows, Ubuntu and Apple Silicon'])
   elif staged.returncode!=0:raise RuntimeError('Cannot inspect staged source')
   commit=run(['git','rev-parse','HEAD']).stdout.strip();run(['git','push','origin','main'],timeout=300)
-  run([gh,'repo','edit',repo,'--description','Free local AI workspace: code, chat, files and images. Windows, Ubuntu and an experimental Apple Silicon build. English / Русский.','--homepage','http://aionpc.ru'])
+  run([gh,'repo','edit',repo,'--description','Free local AI workspace: code, chat, files and images. Windows, Ubuntu and an experimental Apple Silicon build. English / Русский.','--homepage','https://aionpc.ru'])
   state(source_pushed=True,commit=commit);return
  for kind in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification']:
   if not json.loads((ROOT/'logs'/(kind+'-'+v+'.json')).read_text()).get('passed'):raise ValueError('Verification required: '+kind)
@@ -67,7 +67,7 @@ Windows EXE/ZIP and Ubuntu .run/DEB/TAR.GZ include Python, Node.js, agent librar
 **macOS candidate:** Apple Silicon M1+, macOS 26.2+. Unsigned, not notarized; native Mac execution is not verified. **Video Studio is experimental.** Windows 11 / RTX 4080 passed a real 512x288, 33-frame, 20-step generation in 52.68 s including coder restoration, plus full decode and local HTTP Range checks. Video rendering on other hardware and operating systems remains unverified. No universal generation-speed guarantee.
 
 Choose your OS asset below. See README for commands and SHA256SUMS.txt for checksums.
-[Website](http://aionpc.ru) · [Telegram support](https://t.me/AI1rus) · [English guide](https://github.com/{repo}#readme)
+[Website](https://aionpc.ru) · [Telegram support](https://t.me/AI1rus) · [English guide](https://github.com/{repo}#readme)
 
 ## Русский
 Бесплатные локальные чаты, код, файлы, изображения и поиск моделей.

@@ -2,7 +2,7 @@
 
 <h1 align="center">Freedom GPT 💛</h1>
 <p align="center"><strong>A free local AI workspace. Your models, your projects, your computer.</strong></p>
-<p align="center"><a href="http://aionpc.ru">🌐 Website</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Downloads</a> · <a href="README.ru.md">🇷🇺 Русский</a> · <a href="https://t.me/AI1rus">💬 Telegram support</a></p>
+<p align="center"><a href="https://aionpc.ru">🌐 Website</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Downloads</a> · <a href="README.ru.md">🇷🇺 Русский</a> · <a href="https://t.me/AI1rus">💬 Telegram support</a></p>
 <p align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-silver" alt="MIT license"></a> <a href="https://github.com/Leongrupp/freedom-gpt/releases"><img src="https://img.shields.io/github/v/release/Leongrupp/freedom-gpt?color=647789" alt="Latest release"></a> <img src="https://img.shields.io/badge/interface-English%20%2F%20Русский-647789" alt="English and Russian"></p>
 
 ## ✨ What you can do
@@ -107,4 +107,4 @@ bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6
 Application source: [MIT](LICENSE). Third-party components retain their own notices in [licenses/](licenses/) and [NOTICE](NOTICE). Public installers exclude the author's chats, accounts, API keys, browser profiles and model weights. There are no paid API charges required for local inference; your hardware and electricity are your own.
 
 ### Video verified on Windows (1.4.2)
-Wan 2.1 generated a 512×288 silent clip (33 frames, 16 fps, 20 steps) on an RTX 4080. End-to-end: 50.24 s including model switching; native rendering: 30.76 s. Full decode, local HTTP Range and a coder reply after GPU restoration passed. CUDA VAE is selected conservatively on 16 GB NVIDIA GPUs; other configurations use CPU, with memory-allocation fallback. Video remains experimental on other hardware and operating systems.
+Wan 2.1 generated a 512×288 silent clip (33 frames, 16 fps, 20 steps) on an RTX 4080. The final 1.4.2 repeat took 52.68 s end to end, including model switching. Full decode, local HTTP Range and a coder reply after GPU restoration passed. CUDA VAE is selected conservatively on 16 GB NVIDIA GPUs; other configurations use CPU, with memory-allocation fallback. Video remains experimental on other hardware and operating systems.
