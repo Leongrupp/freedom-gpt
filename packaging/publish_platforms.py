@@ -64,7 +64,7 @@ def main():
 Free local AI workspace: chat, code, files, images and model discovery.
 Windows EXE/ZIP and Ubuntu .run/DEB/TAR.GZ include Python, Node.js, agent libraries and engines. Model weights download separately. Signed updates preserve chats and models.
 
-**macOS candidate:** Apple Silicon M1+, macOS 26.2+. Unsigned, not notarized; native Mac execution is not verified. **Video Studio is experimental** and full rendering validation remains pending. No universal generation-speed guarantee.
+**macOS candidate:** Apple Silicon M1+, macOS 26.2+. Unsigned, not notarized; native Mac execution is not verified. **Video Studio is experimental.** Windows 11 / RTX 4080 passed a real 512x288, 33-frame, 20-step generation in 52.68 s including coder restoration, plus full decode and local HTTP Range checks. Video rendering on other hardware and operating systems remains unverified. No universal generation-speed guarantee.
 
 Choose your OS asset below. See README for commands and SHA256SUMS.txt for checksums.
 [Website](http://aionpc.ru) · [Telegram support](https://t.me/AI1rus) · [English guide](https://github.com/{repo}#readme)
@@ -73,7 +73,7 @@ Choose your OS asset below. See README for commands and SHA256SUMS.txt for check
 Бесплатные локальные чаты, код, файлы, изображения и поиск моделей.
 В пакетах Windows и Ubuntu уже есть Python, Node.js, библиотеки агента и движки. Модели скачиваются отдельно. Подписанные обновления сохраняют чаты и модели.
 
-**macOS — кандидат:** M1+, macOS 26.2+, без подписи и нотарификации; запуск на Mac ещё не проверен. **Видеостудия экспериментальная**, полная проверка генерации впереди. Скорость зависит от компьютера и задачи.
+**macOS — кандидат:** M1+, macOS 26.2+, без подписи и нотарификации; запуск на Mac ещё не проверен. **Видеостудия экспериментальная.** На Windows 11 / RTX 4080 проверен реальный ролик 512x288, 33 кадра, 20 шагов: 52,68 с с возвратом модели кода, полное декодирование и HTTP Range. Генерация видео на других ПК и ОС ещё не проверена. Скорость зависит от компьютера и задачи.
 
 [Установка на русском](https://github.com/{repo}/blob/main/README.ru.md) · [Поддержка](https://t.me/AI1rus)
 
