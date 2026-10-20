@@ -1,8 +1,8 @@
-# Freedom GPT 1.4.1: платформы / platforms
+# Freedom GPT 1.4.2: платформы / platforms
 
 Сборки Windows и Ubuntu проверены локально. macOS распространяется как
 экспериментальный кандидат с явно указанными ограничениями. Модели
-скачиваются отдельно; загрузки весов автора остаются на паузе.
+скачиваются отдельно; видеокомплект автора проверен, другие новые загрузки на паузе.
 
 | Система | Формат | Проверка |
 | --- | --- | --- |
@@ -45,13 +45,13 @@ Blender, SDK устройств, браузеры для автоматизац�
 **Ubuntu:**
 
 ```sh
-sh FreedomGPT-Setup-1.4.1-Ubuntu-x64.run
+sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
 ```
 
 Без запуска, в выбранную папку SSD:
 
 ```sh
-FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT-Setup-1.4.1-Ubuntu-x64.run --install-only
+FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run --install-only
 ```
 
 Root не требуется. По умолчанию: `~/.local/share/FreedomGPT`, ярлык в
@@ -69,21 +69,21 @@ Root не требуется. По умолчанию: `~/.local/share/FreedomGP
 
 ## Доказательства проверок
 
-- `logs/windows-clean-pc-verification-1.4.1.json`: 11 проверок ядра, запуска,
+- `logs/windows-clean-pc-verification-1.4.2.json`: 11 проверок ядра, запуска,
   повторного запуска, истории и восстановления отсутствующей библиотеки.
-- `logs/ubuntu-clean-pc-verification-1.4.1.json`: 15 проверок без системного Python
+- `logs/ubuntu-clean-pc-verification-1.4.2.json`: 15 проверок без системного Python
   и сети, включая Node, pip, повторную установку и сохранение данных.
 - `logs/ubuntu-cuda-model-verification.json`: Linux CUDA в Docker/WSL2
   загрузил существующий Huihui GGUF, ответил `OK` и написал Python-функцию.
   Контекст теста 1024, без MTP: это проверка работоспособности, не обещание
   скорости на физической Ubuntu или при 65K-контексте.
-- `logs/macos-all-native-audit-1.4.1.json`: ARM64 и зависимости 104 нативных файлов.
+- `logs/macos-all-native-audit-1.4.2.json`: ARM64 и зависимости 104 нативных файлов.
   Статическая проверка не заменяет запуск на Mac.
 - Конечные архивы и установщики имеют отдельные отчёты в `logs/`.
 
 API слушают только loopback. Существующие веса для теста подключены только
-для чтения. Новые модели не скачивались. Новый видеорендер ещё не проверен:
-загрузка его весов остаётся на паузе.
+для чтения. Комплект Wan скачан и проверен SHA-256. Реальная генерация видео
+на Windows/RTX 4080 проверена; на macOS и физической Ubuntu она ещё не проверена.
 
 ## Повторная сборка локально
 
@@ -122,3 +122,6 @@ Windows and clean offline Ubuntu core tests passed. Linux CUDA also generated
 Python code from existing weights in a 1024-context smoke test.
 The Mac candidate requires Apple Silicon/macOS 26.2+, is unsigned, not notarized
 and has not run on a Mac. Intel Mac is not included. Everything stays local.
+
+## Обновление проверки видео — 1.4.2
+Веса Wan на ПК автора полностью скачаны и проверены SHA-256. Исправлен конфликт записи состояния Windows. Реальная генерация 512×288 / 33 кадра / 20 шагов проверена на RTX 4080: 50,24 с с возвратом к модели кода. Декодирование WebM, HTTP Range и ответ модели кода после видео проверены. На macOS и физической Ubuntu генерация видео ещё не проверена.

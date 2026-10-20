@@ -1,20 +1,28 @@
 {
   "product": "Freedom GPT",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "date": "2026-10-20",
   "platform": "Windows 10/11 x64",
   "files": [
     {
-      "name": "FreedomGPT-Setup-1.4.1.exe",
-      "bytes": 1610783719,
-      "sha256": "aa93a76f18638f40cf2456513198b64f185a8612659ea16d805f07ed08b6342e",
-      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1.exe"
+      "name": "FreedomGPT-Setup-1.4.2.exe",
+      "bytes": 1610894120,
+      "sha256": "c7862b0c5e90ebcf454b405fa84047c76c966cd2346e1dae25392574dcd4317a"
     },
     {
-      "name": "FreedomGPT-1.4.1-Windows-x64.zip",
-      "bytes": 1610749351,
-      "sha256": "3d4850373061062b957acb03cca4b8804a6051d0d0936098232864bbd5cbd30c",
-      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Windows-x64.zip"
+      "name": "FreedomGPT-1.4.2-Windows-x64.zip",
+      "bytes": 1610859752,
+      "sha256": "2530733fbe54dfc38800219ed731c21d104dbf65c21b17a71b8e335f306b6db3"
+    },
+    {
+      "name": "FreedomGPT-update-1.4.2.zip",
+      "bytes": 208358190,
+      "sha256": "9741fec5db63dc30e566ac4f87b67a0ee5413416dbe41eb1f484bfa74dbb8596"
+    },
+    {
+      "name": "update.json",
+      "bytes": 378982,
+      "sha256": "824981838e35f713257a4c01461c88fc6390871f0ae418e7c7ddf3bc08c4f76c"
     }
   ],
   "default_models": [
@@ -22,7 +30,6 @@
     "qwen-image21"
   ],
   "models_included": false,
-  "public": true,
-  "signed": false,
-  "update_manifest_signed": true
+  "public": false,
+  "signed": false
 }

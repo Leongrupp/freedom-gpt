@@ -68,7 +68,7 @@ working interface alone does not satisfy that gate. Memory recommendations for
 other GPUs remain estimates. No subscription or payment service is connected.
 
 
-## Version 1.4.1 platform release
+## Version 1.4.2 platform release
 
 Windows: a clean copy runs with PATH restricted to Windows system folders and
 its private Python. Startup, empty history, chat creation, restart persistence,
@@ -89,10 +89,16 @@ A real code response through the updated personal Windows UI and copy/paste
 were checked. Public support links appear in Settings; the personal installation
 suppresses that section. Project chats and personal model routing are preserved.
 
-Video remains experimental. Model downloads are paused by the owner. A new
-successful rendering test is not claimed. No universal 100+ tokens/s claim is
-made. Public packages do not include personal chats, secrets or model weights.
+Video remains experimental on other hardware and operating systems. The Wan
+pack and real Windows rendering were verified for 1.4.2 as detailed below.
+Other model transfers remain paused. No universal 100+ tokens/s claim is made.
+Public packages do not include personal chats, secrets or model weights.
 
 Website domain: aionpc.ru. HTTP domain routing is prepared. DNS is pending the
 owner's change. HTTPS and shared VPN-port routing are deferred by owner choice;
 the VPN port, configuration and processes are preserved.
+
+## 1.4.2 video and Windows file-sharing fix
+Real rendering found WinError 5 when a progress JSON destination was briefly held open on Windows. State writes now use unique temporary files, bounded sharing-violation retries and a writer lock; reads retry short sharing violations too. Video progress only writes when it changes. A real Windows destination-lock test and 400 concurrent writes with a reader passed.
+The corrected candidate rendered Wan 2.1 512x288, 33 frames, 16 fps and 20 steps: 30.76 s native engine, 50.24 s including GPU handoff and coder restoration. WebM VP8, 33 decoded frames, HTTP 206 and a subsequent local coder reply passed. Contact sheets were visually reviewed. VAE CUDA decode took 8.73 s; CPU decode had taken about 63 s per tile. Native macOS rendering remains untested.
+The final 1.4.2 application repeated the same test in 52.68 s while packaging was running. Its clip was byte-identical to the visually reviewed candidate. A UI code reply and copy/paste after video, application restart and video-history recovery passed too.

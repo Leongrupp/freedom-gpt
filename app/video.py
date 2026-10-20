@@ -1,5 +1,5 @@
 """Offline text-to-video jobs using the bundled native diffusion engine."""
-import asyncio,concurrent.futures,contextlib,importlib.util,json,os,pathlib,re,subprocess,threading,time,uuid
+import asyncio,concurrent.futures,contextlib,importlib.util,json,os,pathlib,re,shutil,subprocess,threading,time,uuid
 from aiohttp import web
 from bootstrap import ROOT,STACK,PRIVATE,config,read,write
 from library import library
@@ -64,6 +64,26 @@ class Videos:
             self.process.terminate()
             try:self.process.wait(timeout=15)
             except subprocess.TimeoutExpired:self.process.kill();self.process.wait(timeout=10)
+    def gpu_vae(self,job):
+        if not library.device.get('cuda') or library.device.get('vram_gb',0)<15.9 or job['width']*job['height']>512*288 or job['frames']>33:return False
+        try:
+            free=subprocess.check_output(['nvidia-smi','--query-gpu=memory.free','--format=csv,noheader,nounits'],text=True,timeout=8,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            return float(free.splitlines()[0])>=12*1024
+        except (OSError,ValueError,subprocess.SubprocessError):return False
+    def run_engine(self,args,job,lease,started):
+        from gpu_lease import add_child
+        with open(job['log'],'wb') as log:
+            child=subprocess.Popen(args,cwd=ROOT,env=native_environment(ROOT,args[0]),stdout=log,stderr=log,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            self.process=child;add_child(lease,child.pid)
+            while child.poll() is None:
+                if self.stop.wait(1):raise InterruptedError()
+                if time.monotonic()-started>3500:raise TimeoutError('Лимит одного задания — 55 минут.')
+                with open(job['log'],'rb') as reader:
+                    reader.seek(0,2);reader.seek(max(0,reader.tell()-8000));text=reader.read().decode('utf8','replace')
+                steps=re.findall(r'(\d+)\s*/\s*'+str(job['steps'])+r'\b',text)
+                progress=min(95,round(int(steps[-1])/job['steps']*95)) if steps else 0
+                if progress>self.current.get('progress',0):self.save(state='generating',progress=progress)
+            return child.returncode
     def generate(self,item,job):
         started=time.monotonic();success=False
         try:
@@ -77,19 +97,17 @@ class Videos:
                     '-p',job['prompt'],'-n','blurry, distorted, watermark, text, low quality',
                     '-W',str(job['width']),'-H',str(job['height']),'--video-frames',str(job['frames']),'--fps',str(job['fps']),
                     '--steps',str(job['steps']),'--cfg-scale','6.0','--flow-shift','3.0','--sampling-method','euler',
-                    '--offload-to-cpu','--clip-on-cpu','--vae-on-cpu','--vae-tiling','--temporal-tiling','--diffusion-fa',
+                    '--offload-to-cpu','--clip-on-cpu','--vae-tiling','--temporal-tiling','--diffusion-fa',
                     '-t',str(max(1,min(16,library.device.get('physical_cores') or 4))),'-s',str(job['seed']),'-o',job['output']]
-                with open(job['log'],'wb') as log:
-                    child=subprocess.Popen(args,cwd=ROOT,env=native_environment(ROOT,module.engine()),stdout=log,stderr=log,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-                    self.process=child;add_child(lease,child.pid)
-                    while child.poll() is None:
-                        if self.stop.wait(1):raise InterruptedError()
-                        if time.monotonic()-started>3500:raise TimeoutError('Лимит одного задания — 55 минут.')
-                        with open(job['log'],'rb') as reader:
-                            reader.seek(0,2);reader.seek(max(0,reader.tell()-8000));text=reader.read().decode('utf8','replace')
-                        steps=re.findall(r'(\d+)\s*/\s*'+str(job['steps'])+r'\b',text)
-                        if steps:self.save(state='generating',progress=min(95,round(int(steps[-1])/job['steps']*95)))
-                    if child.returncode:raise RuntimeError('Видеодвижок завершился с кодом '+str(child.returncode)+'. Журнал: '+job['log'])
+                gpu_vae=self.gpu_vae(job)
+                if not gpu_vae:args.append('--vae-on-cpu')
+                self.save(vae_backend='cuda' if gpu_vae else 'cpu')
+                code=self.run_engine(args,job,lease,started)
+                if code and gpu_vae and re.search(r'out of memory|failed to allocate|cudaMalloc|CUDA.*alloc',pathlib.Path(job['log']).read_text(encoding='utf8',errors='replace'),re.I):
+                    shutil.copy2(job['log'],job['log']+'.gpu-attempt')
+                    self.save(state='loading',progress=0,vae_backend='cpu_fallback')
+                    code=self.run_engine([*args,'--vae-on-cpu'],job,lease,started)
+                if code:raise RuntimeError('Видеодвижок завершился с кодом '+str(code)+'. Журнал: '+job['log'])
                 output=pathlib.Path(job['output'])
                 if not output.is_file() or output.stat().st_size<1000:raise RuntimeError('Видеодвижок не создал файл WebM.')
                 with output.open('rb') as stream:

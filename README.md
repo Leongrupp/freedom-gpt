@@ -21,9 +21,9 @@
 
 | Platform | Download | Requirements and status |
 |---|---|---|
-| Windows | [EXE installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1.exe) · [Portable ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Windows-x64.zip) | Windows 10/11 x64; verified on Windows 11 |
-| Ubuntu Linux | [`.run` installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; clean offline container and Linux CUDA smoke tests |
-| macOS candidate | [Apple Silicon `.app` ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-1.4.1-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Unsigned, not notarized; native Mac execution is not yet verified. Intel Mac is not included. |
+| Windows | [EXE installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe) · [Portable ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip) | Windows 10/11 x64; verified on Windows 11 |
+| Ubuntu Linux | [`.run` installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; clean offline container and Linux CUDA smoke tests |
+| macOS candidate | [Apple Silicon `.app` ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Unsigned, not notarized; native Mac execution is not yet verified. Intel Mac is not included. |
 
 [All releases and notes](https://github.com/Leongrupp/freedom-gpt/releases) · [SHA256 checksums](https://github.com/Leongrupp/freedom-gpt/releases/latest/download/SHA256SUMS.txt) · [Source](https://github.com/Leongrupp/freedom-gpt/releases/latest)
 
@@ -34,14 +34,14 @@ Run the EXE, choose English/Russian and an empty SSD folder, then open **Freedom
 Prefer a terminal? Open PowerShell in your chosen download folder:
 
 ```powershell
-curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1.exe
+curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe
 .\FreedomGPT-Setup.exe
 ```
 
 ### Ubuntu — no Python installation
 
 ```sh
-curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.1/FreedomGPT-Setup-1.4.1-Ubuntu-x64.run
+curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
 sh FreedomGPT.run
 ```
 
@@ -105,3 +105,6 @@ bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6
 ## Licenses
 
 Application source: [MIT](LICENSE). Third-party components retain their own notices in [licenses/](licenses/) and [NOTICE](NOTICE). Public installers exclude the author's chats, accounts, API keys, browser profiles and model weights. There are no paid API charges required for local inference; your hardware and electricity are your own.
+
+### Video verified on Windows (1.4.2)
+Wan 2.1 generated a 512×288 silent clip (33 frames, 16 fps, 20 steps) on an RTX 4080. End-to-end: 50.24 s including model switching; native rendering: 30.76 s. Full decode, local HTTP Range and a coder reply after GPU restoration passed. CUDA VAE is selected conservatively on 16 GB NVIDIA GPUs; other configurations use CPU, with memory-allocation fallback. Video remains experimental on other hardware and operating systems.

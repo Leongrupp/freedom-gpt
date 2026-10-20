@@ -1,5 +1,5 @@
 """Install-relative configuration. No account, model weights or personal history in the release."""
-import json,os,pathlib,sys,sysconfig
+import json,os,pathlib,sys,sysconfig,threading,time,uuid
 sys.dont_write_bytecode=True
 ROOT=pathlib.Path(__file__).resolve().parent
 try:PRIVATE=json.loads((ROOT/'data/private-runtime.json').read_text(encoding='utf8'))
@@ -26,10 +26,28 @@ if os.name=='nt' and hasattr(os,'add_dll_directory'):
  for directory in [ROOT/'runtime/python',ROOT/'runtime/system/lib']:
   if directory.is_dir():_DLL_DIRECTORIES.append(os.add_dll_directory(str(directory)))
 def read(path,default=None):
- try:return json.loads(path.read_text(encoding='utf-8-sig'))
- except (OSError,ValueError):return default
+ for attempt in range(6):
+  try:return json.loads(path.read_text(encoding='utf-8-sig'))
+  except PermissionError:
+   if attempt==5:return default
+   time.sleep(min(.1,.01*2**attempt))
+  except (OSError,ValueError):return default
+_WRITE_LOCK=threading.RLock()
 def write(path,data):
- path.parent.mkdir(parents=True,exist_ok=True);tmp=path.with_suffix('.new');tmp.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf8');os.replace(tmp,path)
+ path=pathlib.Path(path);path.parent.mkdir(parents=True,exist_ok=True)
+ # Readers and antivirus can briefly hold the destination open on Windows.
+ # A unique sibling also prevents concurrent writers from sharing a .new file.
+ with _WRITE_LOCK:
+  tmp=path.with_name('.'+path.name+'.'+uuid.uuid4().hex+'.new')
+  try:
+   tmp.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf8')
+   for attempt in range(10):
+    try:os.replace(tmp,path);break
+    except PermissionError:
+     if attempt==9:raise
+     time.sleep(min(.5,.02*2**attempt))
+  finally:
+   tmp.unlink(missing_ok=True)
 def config():return {'active':None,'model_port':19135,'ui_port':19166,**read(ROOT/'data/settings.json',{})}
 def workspace_root():return pathlib.Path(PRIVATE.get('workspace_root') or ROOT/'workspaces').resolve()
 def ensure_private_model():

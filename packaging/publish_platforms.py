@@ -15,13 +15,21 @@ def main():
  meta=json.loads((ROOT/'app/version.json').read_text());v=meta['version'];repo=meta['repository'];tag='v'+v
  if a.approved_version!=v or not re.fullmatch(r'\d+\.\d+\.\d+',v):raise ValueError('Exact approved version required')
  approval=ROOT/'.private'/('publication-approval-'+v+'.json')
- if not approval.is_file() or json.loads(approval.read_text()).get('version')!=v:raise RuntimeError('Version-scoped owner authorization is required. Older holds are preserved.')
+ def permitted():
+  value=json.loads(approval.read_text()) if approval.is_file() else {}
+  if value.get('version')!=v or value.get('enabled') is not True or (ROOT/'.private'/('release-stop-'+v)).exists():raise RuntimeError('Version-scoped publication approval is disabled. Older holds are preserved.')
+  gate=ROOT/'.private'/('publish-after-video-test-'+v+'.json')
+  if gate.is_file():
+   decision=json.loads(gate.read_text())
+   if decision.get('required') and not (decision.get('passed') and decision.get('visual_review_passed')):raise RuntimeError('Real video generation and visual review must pass before publication.')
+ permitted()
  out=ROOT/'release/platforms'/v;status=ROOT/'logs'/('publication-'+v+'.json');env=github_env();gh=shutil.which('gh')
  if not gh:
   gh=next((pathlib.Path(os.environ['LOCALAPPDATA'])/'Microsoft/WinGet/Packages').glob('GitHub.cli_*/bin/gh.exe'),None)
  if not gh:raise RuntimeError('GitHub CLI unavailable')
  def run(args,timeout=180,check=True):
   for attempt in range(3):
+   permitted()
    r=subprocess.run(list(map(str,args)),cwd=ROOT,env=env,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=timeout)
    network=any(s in r.stderr.lower() for s in ['error connecting','i/o timeout','tls handshake timeout','connection reset','temporary failure','unexpected eof','could not resolve host'])
    retry_safe=str(args[0])==str(gh) and (args[1:3] in [['release','view'],['release','edit'],['repo','edit']] or args[1:2]==['api'] and '--method' not in args) or args[:2]==['git','push']
