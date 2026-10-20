@@ -1,7 +1,7 @@
 <p align="center"><img src="assets/cover-platforms.png" alt="Freedom GPT — ваш ИИ на вашем компьютере" width="100%"></p>
 
 <h1 align="center">Freedom GPT 💛</h1>
-<p align="center"><strong>Бесплатное пространство для локального ИИ, ваших моделей и проектов.</strong></p>
+<p align="center"><strong>Бесплатные локальные нейросети на вашем ПК. Чат, код и изображения без подписки.</strong></p>
 <p align="center"><a href="https://aionpc.ru">🌐 Сайт</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Скачать</a> · <a href="README.md">🇬🇧 English</a> · <a href="https://t.me/AI1rus">💬 Поддержка в Telegram</a></p>
 
 <p align="center"><strong>Бесплатно скачивайте и пользуйтесь. Выберите свою систему.</strong></p>
@@ -13,6 +13,14 @@
 <p align="center">Нужна помощь? <a href="https://t.me/AI1rus">Telegram @AI1rus</a> · Наш сайт <a href="https://aionpc.ru">aionpc.ru</a> · Поддержите проект звездой 💛</p>
 
 [📘 Пошаговая установка, автоматические команды и первая модель](INSTALL.ru.md)
+
+## 🏠 Ваш ИИ на вашем компьютере
+
+Freedom GPT — приложение с открытым исходным кодом под MIT для запуска совместимых локальных моделей. Локальные запросы не требуют платного API, подписки или оплаты за токены. Нужны ваш компьютер, электричество и место для весов; лицензии моделей и компонентов проверяются отдельно. После загрузки моделей локальная работа доступна офлайн. Сетевые инструменты и новые загрузки требуют интернета.
+
+**Практические инструкции:** [Windows](https://aionpc.ru/install/windows/) · [Ubuntu Linux](https://aionpc.ru/install/ubuntu/) · [Mac: тестовая сборка](https://aionpc.ru/install/macos/) · [Как работает ИИ без интернета](https://aionpc.ru/guides/local-ai/) · [Как выбрать модель по памяти ПК](https://aionpc.ru/guides/choose-model/).
+
+Это независимый проект: он не предоставляет бесплатный доступ к закрытым облачным моделям. Возможности и скорость зависят от модели и железа.
 
 ## ✨ Возможности
 

@@ -42,6 +42,15 @@ def create_app():
  app=web.Application(middlewares=[headers]);app.router.add_get('/',index);app.router.add_get('/en/',index);app.router.add_get('/api/release',release);app.router.add_get('/api/catalog',catalog);app.router.add_get('/downloads/{name}',download)
  app.router.add_get('/api/models',models)
  app.router.add_get('/api/platforms',platforms);app.router.add_get('/downloads/platform/{name}',platform_download)
+ from seo import PAGES,generated_files
+ async def seo_file(request):
+  relative=request.path.lstrip('/')
+  if relative.endswith('/'):relative+='index.html'
+  if relative not in generated_files():return web.Response(status=404)
+  return web.FileResponse(ROOT/'generated'/relative)
+ for name in ['robots.txt','sitemap.xml','llms.txt']:app.router.add_get('/'+name,seo_file)
+ for lang in ['ru','en']:
+  for path in PAGES:app.router.add_get('/'+('en/' if lang=='en' else '')+path,seo_file)
  for name in ['style.css','premium.css','premium.js','app.js','freedom.svg']:app.router.add_get('/'+name,lambda request,n=name:web.FileResponse(ROOT/n))
  app.router.add_static('/fonts/',ROOT/'fonts');app.router.add_static('/media/',PROJECT/'assets');return app
 if __name__=='__main__':web.run_app(create_app(),host='127.0.0.1',port=PORT,access_log=None)

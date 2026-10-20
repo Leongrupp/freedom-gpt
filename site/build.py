@@ -38,9 +38,13 @@ COPY={
 }
 from design import build,PROJECT
 from install_guide import markdown
+from seo import build_extra
 
 if __name__=='__main__':
  for lang,c in COPY.items():
+  c['faq']=[(('Is Freedom GPT really free?' if lang=='en' else 'Freedom GPT действительно бесплатный?'),('Yes. The application is free, its source code is MIT-licensed, and local inference has no subscription or per-token charge. You provide hardware, electricity and storage. Models have separate licenses.' if lang=='en' else 'Да. Приложение бесплатно, исходный код открыт под MIT. У локальных запросов нет подписки и оплаты за токены. Нужны ваше железо, электричество и место на диске. У моделей отдельные лицензии.'))]+c['faq']
+ for lang,c in COPY.items():
   (ROOT/('index.html' if lang=='ru' else 'en.html')).write_text(build(lang,c),encoding='utf8')
   (ROOT.parent/('INSTALL.ru.md' if lang=='ru' else 'INSTALL.md')).write_text(markdown(lang,PROJECT['version'],'https://github.com/Leongrupp/freedom-gpt'),encoding='utf-8')
- print('RU/EN WEBSITE BUILT')
+ extra=build_extra()
+ print('RU/EN WEBSITE BUILT; SEO FILES:',len(extra))

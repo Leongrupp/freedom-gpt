@@ -1,0 +1,18 @@
+# Freedom GPT
+
+> Free, MIT-licensed local AI workspace for Windows and Ubuntu, with an experimental Apple Silicon Mac build. No subscription or per-token charge for local inference.
+
+Model weights download separately and have their own licenses. Hardware, electricity, storage and initial internet access are required. Downloaded local models can run offline; web tools and updates need internet. This is an independent project, not free access to proprietary cloud services. Mac native execution and video on other hardware remain unverified.
+
+## Public documentation
+
+- [Free local AI for Windows](https://aionpc.ru/en/install/windows/): Install Freedom GPT on Windows 10/11. Free local AI with no subscription, bundled Python, EXE or portable ZIP, and verified PowerShell commands.
+- [Free local AI for Ubuntu Linux](https://aionpc.ru/en/install/ubuntu/): Download Freedom GPT for Ubuntu 24.04 x64: .run installer, DEB and TAR.GZ. Bundled Python and engines, with model selection for your hardware.
+- [Freedom GPT for Mac: Apple Silicon preview](https://aionpc.ru/en/install/macos/): Open-source local AI preview for Apple Silicon M1+ and macOS 26.2+. Download the app ZIP and read requirements and unverified-platform limitations.
+- [Your AI on your computer. No subscription.](https://aionpc.ru/en/guides/local-ai/): Run AI locally for chat, coding and images without per-token API fees. Learn what works offline, what hardware you need and what free really means.
+- [Choose an AI model for your hardware](https://aionpc.ru/en/guides/choose-model/): Compare the Freedom GPT model library: small Qwen models, Huihui Coder 27B, image generation and experimental video. File sizes and memory trade-offs.
+- [Русский](https://aionpc.ru/): приложение, модели и инструкции.
+- [Source code](https://github.com/Leongrupp/freedom-gpt): MIT source and component notices.
+- [Releases](https://github.com/Leongrupp/freedom-gpt/releases/tag/v1.4.2): installers and SHA256 checksums.
+- [Verification](https://github.com/Leongrupp/freedom-gpt/blob/main/VERIFICATION.md): actual checks and limitations.
+- [Support](https://t.me/AI1rus): author support.

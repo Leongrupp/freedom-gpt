@@ -1,5 +1,5 @@
 """Package only the website design; never publish an application or model."""
-import hashlib,json,pathlib,shutil,subprocess,sys,tarfile,time
+import hashlib,json,pathlib,secrets,shutil,subprocess,sys,tarfile,time
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 
 def main():
@@ -13,10 +13,24 @@ def main():
   'public/media/site/creative-world.webp':'assets/site/creative-world.webp',
   'public/media/site/project-cover.png':'assets/cover-platforms.png',
  }
- manifest={'type':'website-design-only','version':'community-'+json.loads((ROOT/'app/version.json').read_text())['version'],'files':[]}
+ sys.path.insert(0,str(ROOT/'site'))
+ from seo import generated_files
+ files.update({'public/'+name:'site/generated/'+name for name in generated_files()})
+ manifest={'type':'website-design-only','version':'seo-'+json.loads((ROOT/'app/version.json').read_text())['version'],'files':[]}
  for name,source in files.items():
   target=folder/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/source,target)
   manifest['files'].append({'path':name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest()})
+ # This public verification file grants only IndexNow URL submission for this
+ # host. Keep its identifier out of the source repository and model catalogs.
+ config=ROOT/'.private/seo-indexnow.json'
+ if not config.exists():
+  config.parent.mkdir(exist_ok=True)
+  config.write_text(json.dumps({'host':'aionpc.ru','key':secrets.token_hex(16)},indent=2),encoding='utf-8')
+ indexnow=json.loads(config.read_text(encoding='utf-8'));key=indexnow['key']
+ import re
+ if indexnow['host']!='aionpc.ru' or not re.fullmatch('[a-f0-9]{32}',key):raise ValueError('Unexpected IndexNow configuration')
+ name='public/'+key+'.txt';target=folder/name;target.write_text(key,encoding='ascii')
+ manifest['files'].append({'path':name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest()})
  (folder/'design-manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
  archive=ROOT/'.tmp'/('site-design-'+stamp+'.tar.gz')
  with tarfile.open(archive,'w:gz') as tar:

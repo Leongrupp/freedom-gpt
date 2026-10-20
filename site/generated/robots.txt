@@ -1,0 +1,10 @@
+# Public pages are open to search engines and AI search crawlers.
+# Googlebot, Yandex, Bingbot, OAI-SearchBot and PerplexityBot use this policy.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /models/
+Disallow: /downloads/
+Disallow: /.private/
+Disallow: /.git/
+Sitemap: https://aionpc.ru/sitemap.xml

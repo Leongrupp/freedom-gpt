@@ -2,6 +2,14 @@
 import hashlib,json,os,pathlib,re,shutil,subprocess,sys,tarfile,time,urllib.request
 BASE=pathlib.Path('/var/www/freedom-gpt');WORK=pathlib.Path('/root/freedom-gpt-deploy')
 ALLOWED={'public/index.html','public/en/index.html','public/premium.css','public/premium.js','public/app.js','public/freedom.svg','public/media/site/core-hero.webp','public/media/site/creative-world.webp','public/media/site/project-cover.png'}
+ALLOWED|={'public/robots.txt','public/sitemap.xml','public/llms.txt'}
+ALLOWED|={'public/'+lang+path+'index.html' for lang in ['', 'en/'] for path in ['install/windows/','install/ubuntu/','install/macos/','guides/local-ai/','guides/choose-model/']}
+
+def allowed_files(manifest):
+ declared={item['path'] for item in manifest['files']}
+ extra=declared-ALLOWED
+ if len(declared)!=len(manifest['files']) or not ALLOWED.issubset(declared) or len(extra)>1 or any(not re.fullmatch(r'public/[a-f0-9]{32}\.txt',name) for name in extra):raise ValueError('Unexpected design manifest')
+ return declared
 
 def run(args):
  result=subprocess.run(args,capture_output=True,text=True,timeout=25)
@@ -12,12 +20,12 @@ def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
 def state():
  files={}
- for name in ['/etc/nginx','/etc/ipsec.conf','/etc/ipsec.secrets','/etc/strongswan.conf','/etc/strongswan.d','/etc/accel-ppp.conf','/etc/ppp','/etc/xl2tpd','/etc/openvpn']:
+ for name in ['/etc/nginx','/etc/freedom-gpt-tls','/etc/ipsec.conf','/etc/ipsec.secrets','/etc/strongswan.conf','/etc/strongswan.d','/etc/accel-ppp.conf','/etc/ppp','/etc/xl2tpd','/etc/openvpn']:
   path=pathlib.Path(name)
   for file in sorted(path.rglob('*')) if path.is_dir() else [path]:
    if file.is_file():files[str(file)]=digest(file)
  services={}
- for name in ['nginx','accel-ppp','strongswan-starter']:
+ for name in ['nginx','freedom-gpt-tls','accel-ppp','strongswan-starter']:
   result=subprocess.run(['systemctl','show',name,'--property=ActiveState,MainPID','--value'],capture_output=True,text=True,timeout=10)
   services[name]=sorted(result.stdout.splitlines())
  return {'configuration_hashes':files,'services':services,'release_version':json.loads((BASE/'shared/metadata/release.json').read_text()).get('version')}
@@ -40,12 +48,15 @@ def main():
  shutil.copytree(old,folder,symlinks=True)
  with tarfile.open(archive,'r:gz') as tar:
   names=tar.getnames()
-  if len(names)!=len(set(names)) or set(names)!=ALLOWED|{'design-manifest.json'}:raise ValueError('Unexpected files in design archive')
+  data=tar.extractfile('design-manifest.json')
+  if data is None:raise ValueError('Missing design manifest')
+  declared=allowed_files(json.load(data))
+  if len(names)!=len(set(names)) or set(names)!=declared|{'design-manifest.json'}:raise ValueError('Unexpected files in design archive')
   for member in tar.getmembers():
    if not member.isfile() or not (folder/member.name).resolve().is_relative_to(folder):raise ValueError('Unsafe archive member')
   tar.extractall(folder,filter='data')
  manifest=json.loads((folder/'design-manifest.json').read_text())
- if {item['path'] for item in manifest['files']}!=ALLOWED:raise ValueError('Unexpected design manifest')
+ allowed_files(manifest)
  for item in manifest['files']:
   file=folder/item['path']
   if file.stat().st_size!=item['bytes'] or digest(file)!=item['sha256']:raise ValueError('Extracted design mismatch')

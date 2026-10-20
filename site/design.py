@@ -2,8 +2,9 @@
 import html,json,pathlib
 from download_ui import brand,quick_downloads,platform_cards
 from install_guide import guides
+from seo import metadata,home_resources
 
-VERSION = 'install-guide-1.4.2-r3'
+VERSION = 'seo-20261020-r1'
 PROJECT=json.loads((pathlib.Path(__file__).parent/'project.json').read_text(encoding='utf-8'))
 SITE=PROJECT['support']['website']
 TELEGRAM=PROJECT['support']['telegram']
@@ -12,8 +13,8 @@ BTC = 'bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6'
 TEXT = {
  'ru': {
   'nav': ['Пространство', 'Возможности', 'Модели', 'Установка'], 'menu': 'Открыть меню', 'skip': 'К содержимому',
-  'eyebrow': 'БЕСПЛАТНЫЙ ЛОКАЛЬНЫЙ ИИ', 'title': 'Свобода<br>создавать.', 'titleSub': 'На вашем компьютере.',
-  'intro': 'От первой идеи до работающего кода. Чаты, файлы и генерация изображений — в одном локальном пространстве.',
+  'eyebrow': 'БЕСПЛАТНО · ОТКРЫТЫЙ ИСХОДНЫЙ КОД', 'title': 'Бесплатный ИИ.<br>На вашем ПК.', 'titleSub': 'Код. Чаты. Изображения. Без подписки.',
+  'intro': 'Запускайте совместимые нейросети на своём компьютере. Пишите код, работайте с файлами и создавайте изображения без оплаты за локальные токены. После загрузки моделей — даже без интернета.',
   'explore': 'Познакомиться ближе', 'heroAlt': 'Скульптурное ядро из тёмного титана и светящегося стекла',
   'heroNote': 'ВАШ КОМПЬЮТЕР. ВАШ ИНТЕЛЛЕКТ.', 'heroSmall': 'Локальные модели · Полный контроль',
   'principles': [('Всё начинается с вашего ПК', 'Модели работают на вашем CPU и GPU.'), ('Данные остаются у вас', 'Локальные чаты, файлы и история проектов.'), ('Свобода выбора', 'Бесплатное приложение. Открытый код.')],
@@ -47,8 +48,8 @@ TEXT = {
  },
  'en': {
   'nav': ['Workspace', 'Features', 'Models', 'Get started'], 'menu': 'Open navigation', 'skip': 'Skip to content',
-  'eyebrow': 'FREE LOCAL AI · OPEN SOURCE', 'title': 'Freedom<br>to create.', 'titleSub': 'On your computer.',
-  'intro': 'From a first idea to working code. Chats, files and image generation, together in one local workspace.',
+  'eyebrow': 'FREE · OPEN SOURCE · NO SUBSCRIPTION', 'title': 'Free AI.<br>On your PC.', 'titleSub': 'Code. Chat. Images. No subscription.',
+  'intro': 'Run compatible AI models on your own computer. Write code, work with files and create images without paying for local tokens. Once models are downloaded, local work can run offline.',
   'explore': 'Explore the workspace', 'heroAlt': 'A sculptural core of dark titanium and luminous glass',
   'heroNote': 'YOUR COMPUTER. YOUR INTELLIGENCE.', 'heroSmall': 'Local models · Your control',
   'principles': [('Built around your PC', 'Models run on your own CPU and GPU.'), ('Your data stays with you', 'Local chats, files and project history.'), ('The freedom to choose', 'A free application. Open source code.')],
@@ -114,8 +115,8 @@ def build(lang, c):
  thanks='Спасибо каждому за отзывы, идеи и поддержку 💛' if lang=='ru' else 'Thank you for every idea, bug report and contribution 💛'
  return f'''<!doctype html>
 <html lang="{lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark">
-<title>Freedom GPT — {c['title']}</title><meta name="description" content="{html.escape(d['intro'])}"><meta property="og:title" content="Freedom GPT — {c['title']}"><meta property="og:description" content="{html.escape(d['intro'])}"><meta property="og:image" content="{SITE}/media/site/project-cover.png"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="{SITE}{"/" if lang=="ru" else "/en/"}"><link rel="alternate" hreflang="ru" href="{SITE}/"><link rel="alternate" hreflang="en" href="{SITE}/en/"><link rel="icon" href="/freedom.svg?v={VERSION}"><link rel="preload" as="image" href="/media/site/core-hero.webp"><link rel="stylesheet" href="/premium.css?v={VERSION}"><script type="module" src="/app.js?v={VERSION}"></script></head>
+{metadata(lang)}
+<link rel="icon" href="/freedom.svg?v={VERSION}"><link rel="preload" as="image" href="/media/site/core-hero.webp"><link rel="stylesheet" href="/premium.css?v={VERSION}"><script type="module" src="/app.js?v={VERSION}"></script></head>
 <body><a class="skip-link" href="#main">{d['skip']}</a>
 <header class="header" id="top"><div class="header-inner"><a class="brand" href="{'/' if lang=='ru' else '/en/'}" aria-label="Freedom GPT"><img src="/freedom.svg?v={VERSION}" width="32" height="32" alt=""><span>Freedom <b>GPT</b></span></a><nav class="desktop-nav" aria-label="{'Навигация' if lang=='ru' else 'Navigation'}">{nav}</nav><div class="header-actions"><a class="header-repository" href="{REPO}" target="_blank" rel="noopener noreferrer" aria-label="GitHub · Freedom GPT">{brand("github")}<span>GitHub</span></a><div class="site-languages" aria-label="Language"><a href="/" {'aria-current="page"' if lang=='ru' else ''}>RU</a><a href="/en/" {'aria-current="page"' if lang=='en' else ''}>EN</a></div><a class="header-download" href="#download">{icon('download')}<span>{'Скачать' if lang=='ru' else 'Download'}</span></a><button class="menu-toggle" aria-label="{d['menu']}" aria-expanded="false" aria-controls="mobile-nav">{icon('menu')}</button></div></div><nav id="mobile-nav" class="mobile-nav" aria-label="{'Мобильная навигация' if lang=='ru' else 'Mobile navigation'}" hidden>{nav}</nav></header>
 <main id="main">
@@ -149,6 +150,7 @@ def build(lang, c):
 
 <section class="download-section" id="download"><div class="download-inner wrap"><div class="download-orbit" aria-hidden="true"></div><div class="eyebrow">{d['downloadStamp']}</div><h2>{d['downloadTitle']}</h2><p>{'Choose your OS and download the app. Python and engines are included; models download separately.' if lang=='en' else 'Выберите систему и скачайте приложение. Python и движки уже внутри; модели скачиваются отдельно.'}</p><div class="download-free"><span class="status-dot"></span>{'Free to download and use · English / Русский' if lang=='en' else 'Бесплатно скачивать и пользоваться · Русский / English'}</div><div class="download-details" id="download-details" aria-live="polite">v{version} · Windows / macOS / Ubuntu</div><section class="platform-downloads" id="platform-downloads" aria-label="Operating systems">{platform_cards(lang,version,REPO)}</section>{guides(lang,version,REPO)}<div class="download-footer-links"><a href="{REPO}/releases">{brand('github')}{'All releases on GitHub' if lang=='en' else 'Все релизы на GitHub'}{icon('arrow')}</a><a id="checksum-download" href="{REPO}/releases/latest/download/SHA256SUMS.txt">{c['hashes']}{icon('arrow')}</a><a href="{TELEGRAM}" target="_blank" rel="noopener noreferrer">{brand('telegram')}{'Installation help' if lang=='en' else 'Помощь с установкой'}{icon('arrow')}</a></div><p class="requirements">{'Check each build’s requirements above. Model weights download separately. For the standard coder, plan around 32 GB RAM, 16 GB VRAM and 35 GB+ SSD space. GPU drivers are installed separately.' if lang=='en' else 'Требования и ограничения каждой сборки указаны выше. Веса моделей скачиваются отдельно. Ориентир для стандартной модели кода: 32 ГБ RAM, 16 ГБ VRAM и от 35 ГБ на SSD. Видеодрайвер устанавливается отдельно.'}</p></div></section>
 
+{home_resources(lang)}
 <section class="section wrap support-section" id="support"><div><div class="eyebrow">{d['supportLabel']}</div><h2>{c['support']}</h2><p>{c['supportText']}</p><div class="community-links"><a href="{TELEGRAM}" target="_blank" rel="noopener noreferrer">{contact} ↗</a><a href="{REPO}" target="_blank" rel="noopener noreferrer">☆ {star}</a></div><small class="community-thanks">{thanks}</small></div><div class="donation-box"><div class="donation-top"><span class="btc-mark" aria-hidden="true">₿</span><span>BITCOIN<span>BTC · ON-CHAIN</span></span></div><code>{BTC}</code><button class="button secondary" id="copy-donation" data-copied="{c['copied']}">{icon('copy')}{c['copy']}</button><span id="copy-status" role="status" aria-live="polite"></span></div></section>
 <section class="section wrap faq"><div class="eyebrow">FAQ</div><h2>{d['faq']}</h2><div class="faq-list">{faq}</div><p class="roadmap">{d['roadmap']}</p></section>
 </main><footer class="footer wrap"><div><a class="brand" href="#top"><img src="/freedom.svg?v={VERSION}" width="30" height="30" alt=""><span>Freedom <b>GPT</b></span></a><p>{d['footer']}</p></div><div class="footer-links"><a href="{TELEGRAM}">Telegram ↗</a><a href="{REPO}">{d['codeLink']} ↗</a><a href="{REPO}/blob/main/NOTICE">{d['licenses']} ↗</a><a href="{'/en/' if lang=='ru' else '/'}">{'English' if lang=='ru' else 'Русский'}</a><span>© 2026 Freedom GPT</span></div></footer></body></html>'''

@@ -15,6 +15,14 @@
 
 [📘 Step-by-step installation, automatic terminal commands and first model](INSTALL.md)
 
+## 🏠 Your AI on your computer
+
+Freedom GPT is a free, MIT-licensed local AI workspace for compatible models. Local inference requires no paid API, subscription or per-token payment. You provide hardware, electricity and storage; models and components keep their own licenses. Downloaded models can run offline. Web tools and new downloads require internet.
+
+**Practical guides:** [Windows](https://aionpc.ru/en/install/windows/) · [Ubuntu Linux](https://aionpc.ru/en/install/ubuntu/) · [Mac preview](https://aionpc.ru/en/install/macos/) · [How offline AI works](https://aionpc.ru/en/guides/local-ai/) · [Choose a model for your hardware](https://aionpc.ru/en/guides/choose-model/).
+
+This independent project does not provide free access to proprietary cloud models. Quality and speed depend on the model and hardware.
+
 ## ✨ What you can do
 
 - Chat locally, stream code, attach files and analyze photos with a compatible vision model.

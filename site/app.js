@@ -1,4 +1,4 @@
-import {copyText} from './premium.js?v=install-guide-1.4.2-r3';
+import {copyText} from './premium.js?v=seo-20261020-r1';
 const en=document.documentElement.lang==='en';
 const repository='https://github.com/Leongrupp/freedom-gpt';
 const size=n=>(n/1024**3).toFixed(2)+(en?' GB':' ГБ');
@@ -8,8 +8,9 @@ const safeURL=file=>{
 };
 function versionLabel(version){
  if(!/^\d+\.\d+\.\d+$/.test(version||''))return;
- document.getElementById('hero-release').textContent='v'+version+' · Windows / macOS / Ubuntu · RU / EN';
- document.getElementById('download-details').textContent='v'+version+' · '+(en?'Free to use · models download separately':'Бесплатное приложение · модели скачиваются отдельно');
+ const hero=document.getElementById('hero-release'),details=document.getElementById('download-details');
+ if(hero)hero.textContent='v'+version+' · Windows / macOS / Ubuntu · RU / EN';
+ if(details)details.textContent='v'+version+' · '+(en?'Free to use · models download separately':'Бесплатное приложение · модели скачиваются отдельно');
 }
 async function release(){try{
  const response=await fetch('/api/release',{cache:'no-store'});if(!response.ok)return;
@@ -59,7 +60,7 @@ document.getElementById('copy-donation')?.addEventListener('click',async event=>
  const success=await copyText('bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6');
  document.getElementById('copy-status').textContent=success?copied:(en?'Select the address and press Ctrl+C':'Выделите адрес и нажмите Ctrl+C');
 });
-function refresh(){return Promise.allSettled([release(),platforms(),mirrors()])}refresh();setInterval(refresh,60000);
+function refresh(){return Promise.allSettled([release(),platforms(),mirrors()])}if(document.getElementById('platform-downloads')){refresh();setInterval(refresh,60000)}
 for(const link of document.querySelectorAll('[data-guide-link]'))link.addEventListener('click',()=>{const guide=document.getElementById(link.dataset.guideLink);if(guide instanceof HTMLDetailsElement)guide.open=true});
 function openLinkedGuide(){const guide=document.getElementById(location.hash.slice(1));if(guide?.classList.contains('installation-system'))guide.open=true}openLinkedGuide();window.addEventListener('hashchange',openLinkedGuide);
 for(const button of document.querySelectorAll('[data-copy-command]'))button.addEventListener('click',async()=>{

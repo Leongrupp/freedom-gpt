@@ -4,7 +4,12 @@ ROOT=pathlib.Path(__file__).resolve().parent.parent
 SYSTEMS=['windows-x64','macos-arm64','ubuntu-x64']
 TITLES={'windows-x64':'Windows','macos-arm64':'macOS · Apple Silicon','ubuntu-x64':'Ubuntu Linux'}
 def release_files(version):
-    files=json.loads((ROOT/'release/platforms'/version/'release.json').read_text())['files']
+    manifest=ROOT/'release/platforms'/version/'release.json'
+    if manifest.is_file():files=json.loads(manifest.read_text(encoding='utf-8'))['files']
+    else:
+        snapshot=json.loads((ROOT/'site/platforms.json').read_text(encoding='utf-8'))
+        if snapshot['version']!=version:raise ValueError('Published platform snapshot version mismatch')
+        files=[dict(file,url=f'https://github.com/Leongrupp/freedom-gpt/releases/download/v{version}/'+file['name']) for platform in snapshot['platforms'] for file in platform['files']]
     return {f['name']:f for f in files}
 def commands(target,version,repo):
     names={'windows-x64':f'FreedomGPT-Setup-{version}.exe','ubuntu-x64':f'FreedomGPT-Setup-{version}-Ubuntu-x64.run','macos-arm64':f'FreedomGPT-{version}-macOS-AppleSilicon.zip'}

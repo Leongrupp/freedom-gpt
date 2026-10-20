@@ -34,7 +34,9 @@ def file_link(file,lang,repo,version,primary=False):
     return f'<a class="{cls}" href="{url}"><span>{file_label(file["name"],lang,primary)}<small>{size}</small></span>{arrow()}</a>'
 def platform_cards(lang,version,repo):
     en=lang=='en'
-    data=json.loads((ROOT.parent/'release/platforms'/version/'platforms.json').read_text(encoding='utf-8'))
+    manifest=ROOT.parent/'release/platforms'/version/'platforms.json'
+    data=json.loads((manifest if manifest.is_file() else ROOT/'platforms.json').read_text(encoding='utf-8'))
+    if data['version']!=version:raise ValueError('Published platform snapshot version mismatch')
     matrix={p['id']:p for p in data['platforms']};cards=[]
     for target,mark,title,detail,pattern in SYSTEMS:
         item=matrix[target];primary=pattern.format(v=version);files=sorted(item['files'],key=lambda f:(f['name']!=primary,f['name']))

@@ -50,7 +50,7 @@ def main():
   if staged.returncode==1:run(['git','commit','-m','Release Freedom GPT '+v+' for Windows, Ubuntu and Apple Silicon'])
   elif staged.returncode!=0:raise RuntimeError('Cannot inspect staged source')
   commit=run(['git','rev-parse','HEAD']).stdout.strip();run(['git','push','origin','main'],timeout=300)
-  run([gh,'repo','edit',repo,'--description','Free local AI workspace: code, chat, files and images. Windows, Ubuntu and an experimental Apple Silicon build. English / Русский.','--homepage','https://aionpc.ru'])
+  run([gh,'repo','edit',repo,'--description','Free, open-source local AI on your PC. Chat, coding and images without a subscription or local token fees. Windows, Ubuntu and a Mac preview. English / Русский.','--homepage','https://aionpc.ru'])
   state(source_pushed=True,commit=commit);return
  for kind in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification']:
   if not json.loads((ROOT/'logs'/(kind+'-'+v+'.json')).read_text()).get('passed'):raise ValueError('Verification required: '+kind)
