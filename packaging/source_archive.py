@@ -5,11 +5,12 @@ def main():
  version=json.loads((ROOT/'app/version.json').read_text())['version'];output=ROOT/'release'/('FreedomGPT-source-'+version+'.zip');files=[]
  for name in ['.gitignore','.gitattributes','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt']:
   files.append(ROOT/name)
+ files.extend(ROOT/name for name in ['SUPPORT.md','CODE_OF_CONDUCT.md'])
  files.extend(ROOT/'packaging'/name for name in ['audit_site_seo.py','submit_indexnow.py'])
  for name in ['src','public','creative']:
   files.extend(p for p in (ROOT/'app'/name).rglob('*') if p.is_file())
  files.extend(p for p in (ROOT/'app').iterdir() if p.is_file() and p.suffix.lower() in {'.py','.json','.js','.html','.cmd','.ico','.txt','.pub'})
- for name in ['site','licenses','assets','.github','deploy']:
+ for name in ['site','licenses','assets','.github','deploy','docs']:
   files.extend(p for p in (ROOT/name).rglob('*') if p.is_file() and '__pycache__' not in p.parts)
  for name in ['bundle.py','release.py','catalog.py','source_archive.py','sign_update.py','publish.py','publish_platforms.py','site_design.py','archive_utils.py','platform_bundle.py','release_platform.py','platform_index.py','portable_install.py','entrypoint.py','fetch_platforms.py','fetch_wheels.py','macho.py','native-lock.json','requirements-portable.lock','posix-launch.sh','posix-stop.sh','posix-install.sh','export_ssd.py','Installer.cs','Launcher.cs']:
   files.append(ROOT/'packaging'/name)

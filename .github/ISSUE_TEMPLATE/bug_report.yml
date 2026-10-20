@@ -1,0 +1,51 @@
+name: Bug report / Ошибка
+description: Report a reproducible problem / Опишите ошибку, которую можно повторить.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Freedom GPT! English and Russian are welcome.
+        Спасибо за помощь! Не прикладывайте ключи, cookies, личные чаты и данные клиентов.
+  - type: input
+    id: version
+    attributes:
+      label: App version / Версия приложения
+      placeholder: "1.4.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system / Операционная система
+      options:
+        - Windows 10 / 11 x64
+        - Ubuntu 24.04 x64
+        - macOS Apple Silicon preview
+        - Other / Другое
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: CPU, RAM, GPU, VRAM / Железо
+      placeholder: Ryzen 7900X, 32 GB RAM, RTX 4080 16 GB
+  - type: input
+    id: model
+    attributes:
+      label: Model and quantization / Модель и квантование
+      placeholder: Huihui Coder 27B IQ3_S3
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Как повторить
+      description: Include the expected result and what happened / Что ожидали и что произошло.
+      placeholder: "1. Open ... / Открыть ..."
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshot / Фрагмент журнала или скриншот
+      description: Remove private data before posting. A short excerpt is enough / Удалите личные данные.

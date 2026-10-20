@@ -2,7 +2,7 @@
 import argparse,hashlib,json,os,pathlib,re,shutil,subprocess,time
 from publish import github_env
 ROOT=pathlib.Path(__file__).resolve().parent.parent
-SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt','deploy','app','packaging','site','assets','licenses']
+SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','SUPPORT.md','CODE_OF_CONDUCT.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt','deploy','app','packaging','site','assets','licenses','docs']
 
 def sha(p):
  h=hashlib.sha256()

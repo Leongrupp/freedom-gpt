@@ -1,0 +1,27 @@
+name: Feature idea / Идея
+description: Suggest a practical improvement / Предложите полезное улучшение.
+title: "[Idea]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve? / Какую задачу это решит?
+      description: A real workflow helps prioritize the idea / Опишите рабочий сценарий.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested solution / Предлагаемое решение
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Relevant platform or model / ОС или модель, если важно
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or references / Альтернативы и примеры
+      description: Public documentation links are useful / Можно приложить публичные ссылки.

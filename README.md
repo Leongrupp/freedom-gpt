@@ -35,6 +35,12 @@ This independent project does not provide free access to proprietary cloud model
 
 **Private Python, agent libraries, Node.js/npm and inference engines are included.** No preinstalled Python, Ollama or paid API is needed for local chat. Model weights download separately. GPU drivers and optional specialist tools are managed separately.
 
+### A look inside
+
+![Freedom GPT first-run hardware check and model selection](assets/first-run-en.jpg)
+
+<sub>Actual first-run screen on an example PC. The hardware shown is not a minimum requirement for every model.</sub>
+
 ## ⬇ Choose your system
 
 | Platform | Download | Requirements and status |
@@ -100,6 +106,12 @@ I am building Freedom GPT further: better agents, more compatible models, cleare
 - [ ] More practical agent workflows and community contributions
 
 [Build instructions](BUILD.md) · [Platform details and verification limits](CROSS-PLATFORM.md) · [Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/Leongrupp/freedom-gpt/issues)
+
+## 🤝 Join the project
+
+[Discussions and ideas](https://github.com/Leongrupp/freedom-gpt/discussions) · [Report a bug](https://github.com/Leongrupp/freedom-gpt/issues/new/choose) · [Support guide](SUPPORT.md) · [Share the project](docs/SHARE.md)
+
+Built in the open by [Leongrupp](https://github.com/Leongrupp). Hardware/model reports, translations and focused contributions are welcome. Read [Contributing](CONTRIBUTING.md) and our [community guidelines](CODE_OF_CONDUCT.md).
 
 <a id="support-development"></a>
 ## 💛 Support development

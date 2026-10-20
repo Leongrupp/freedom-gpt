@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Installation / Установка
+    url: https://aionpc.ru/#installation
+    about: Windows, Ubuntu, Mac preview and terminal commands / Пошаговые инструкции.
+  - name: Questions and ideas / Вопросы и идеи
+    url: https://github.com/Leongrupp/freedom-gpt/discussions
+    about: Ask the community, share a workflow or suggest a model / Обсуждения проекта.
+  - name: Telegram support / Поддержка
+    url: https://t.me/AI1rus
+    about: Contact the author / Написать автору.
