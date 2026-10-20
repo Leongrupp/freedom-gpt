@@ -11,6 +11,7 @@ def main():
   'public/app.js':'site/app.js','public/freedom.svg':'site/freedom.svg',
   'public/media/site/core-hero.webp':'assets/site/core-hero.webp',
   'public/media/site/creative-world.webp':'assets/site/creative-world.webp',
+  'public/media/site/project-cover.png':'assets/cover-platforms.png',
  }
  manifest={'type':'website-design-only','version':'community-'+json.loads((ROOT/'app/version.json').read_text())['version'],'files':[]}
  for name,source in files.items():

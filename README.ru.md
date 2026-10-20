@@ -1,8 +1,16 @@
-<p align="center"><img src="assets/cover.png" alt="Freedom GPT — ваш ИИ на вашем компьютере" width="100%"></p>
+<p align="center"><img src="assets/cover-platforms.png" alt="Freedom GPT — ваш ИИ на вашем компьютере" width="100%"></p>
 
 <h1 align="center">Freedom GPT 💛</h1>
 <p align="center"><strong>Бесплатное пространство для локального ИИ, ваших моделей и проектов.</strong></p>
 <p align="center"><a href="https://aionpc.ru">🌐 Сайт</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Скачать</a> · <a href="README.md">🇬🇧 English</a> · <a href="https://t.me/AI1rus">💬 Поддержка в Telegram</a></p>
+
+<p align="center"><strong>Бесплатно скачивайте и пользуйтесь. Выберите свою систему.</strong></p>
+<table><tr>
+<td width="33%" align="center"><img src="assets/platforms/windows.svg" width="40" alt="Windows"><br><strong>Windows</strong><br><sub>Windows 10 / 11 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe">Скачать EXE ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip">Переносимый ZIP</a></td>
+<td width="33%" align="center"><img src="assets/platforms/apple.svg" width="40" alt="macOS"><br><strong>macOS · экспериментальная</strong><br><sub>Apple Silicon · macOS 26.2+</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip">Скачать приложение ↗</a><br><sub>Без подписи; запуск на Mac ещё не проверен.</sub></td>
+<td width="33%" align="center"><img src="assets/platforms/ubuntu.svg" width="40" alt="Ubuntu Linux"><br><strong>Ubuntu Linux</strong><br><sub>Ubuntu 24.04 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run">Скачать установщик ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb">DEB</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz">TAR.GZ</a></td>
+</tr></table>
+<p align="center">Нужна помощь? <a href="https://t.me/AI1rus">Telegram @AI1rus</a> · Наш сайт <a href="https://aionpc.ru">aionpc.ru</a> · Поддержите проект звездой 💛</p>
 
 ## ✨ Возможности
 

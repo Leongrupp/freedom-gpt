@@ -1,9 +1,17 @@
-<p align="center"><img src="assets/cover.png" alt="Freedom GPT — Your AI. Your computer." width="100%"></p>
+<p align="center"><img src="assets/cover-platforms.png" alt="Freedom GPT — Your AI. Your computer." width="100%"></p>
 
 <h1 align="center">Freedom GPT 💛</h1>
 <p align="center"><strong>A free local AI workspace. Your models, your projects, your computer.</strong></p>
 <p align="center"><a href="https://aionpc.ru">🌐 Website</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Downloads</a> · <a href="README.ru.md">🇷🇺 Русский</a> · <a href="https://t.me/AI1rus">💬 Telegram support</a></p>
 <p align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-silver" alt="MIT license"></a> <a href="https://github.com/Leongrupp/freedom-gpt/releases"><img src="https://img.shields.io/github/v/release/Leongrupp/freedom-gpt?color=647789" alt="Latest release"></a> <img src="https://img.shields.io/badge/interface-English%20%2F%20Русский-647789" alt="English and Russian"></p>
+
+<p align="center"><strong>Free to download. Free to use. Choose your platform.</strong></p>
+<table><tr>
+<td width="33%" align="center"><img src="assets/platforms/windows.svg" width="40" alt="Windows"><br><strong>Windows</strong><br><sub>Windows 10 / 11 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe">Download EXE ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip">Portable ZIP</a></td>
+<td width="33%" align="center"><img src="assets/platforms/apple.svg" width="40" alt="macOS"><br><strong>macOS · Preview</strong><br><sub>Apple Silicon · macOS 26.2+</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip">Download app ZIP ↗</a><br><sub>Unsigned; native Mac run not yet verified.</sub></td>
+<td width="33%" align="center"><img src="assets/platforms/ubuntu.svg" width="40" alt="Ubuntu Linux"><br><strong>Ubuntu Linux</strong><br><sub>Ubuntu 24.04 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run">Download installer ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb">DEB</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz">TAR.GZ</a></td>
+</tr></table>
+<p align="center">Need a hand? <a href="https://t.me/AI1rus">Telegram @AI1rus</a> · Explore <a href="https://aionpc.ru">aionpc.ru</a> · Help the project grow with a star 💛</p>
 
 ## ✨ What you can do
 

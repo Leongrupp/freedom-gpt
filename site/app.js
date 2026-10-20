@@ -1,54 +1,62 @@
-import {copyText} from './premium.js?v=community-1.4.1';
+import {copyText} from './premium.js?v=platforms-1.4.2-r2';
 const en=document.documentElement.lang==='en';
+const repository='https://github.com/Leongrupp/freedom-gpt';
 const size=n=>(n/1024**3).toFixed(2)+(en?' GB':' ГБ');
-const originalDownloads=new Map([...document.querySelectorAll('.download-link,#portable-download,#checksum-download')].map(link=>[link,link.innerHTML]));
-function downloadState(ready){for(const [link,label] of originalDownloads){
- if(ready){link.removeAttribute('aria-disabled');link.innerHTML=label}
- else{link.setAttribute('aria-disabled','true');link.removeAttribute('href');if(link.classList.contains('download-link'))link.textContent=en?'Installer is uploading':'Установщик загружается'}
-}}
+const safeURL=file=>{
+ const value=file.url||'';
+ return value.startsWith('/downloads/platform/')||value.startsWith('/downloads/')||value.startsWith(repository+'/releases/download/')?value:null;
+};
+function versionLabel(version){
+ if(!/^\d+\.\d+\.\d+$/.test(version||''))return;
+ document.getElementById('hero-release').textContent='v'+version+' · Windows / macOS / Ubuntu · RU / EN';
+ document.getElementById('download-details').textContent='v'+version+' · '+(en?'Free to use · models download separately':'Бесплатное приложение · модели скачиваются отдельно');
+}
 async function release(){try{
  const response=await fetch('/api/release',{cache:'no-store'});if(!response.ok)return;
- const data=await response.json(),exe=data.files.find(f=>f.name.endsWith('.exe')),zip=data.files.find(f=>f.name.includes('Windows-x64.zip'));
- if(data.status==='pending'||!exe){downloadState(false);document.getElementById('hero-release').textContent=en?'Windows installer upload in progress':'Установщик Windows загружается в GitHub';document.getElementById('download-details').textContent=en?'Downloads will become available automatically after verification.':'Скачивание появится автоматически после проверки файлов.';return}
- downloadState(true);
- const url=file=>file.url||'/downloads/'+encodeURIComponent(file.name);
- if(exe){for(const link of document.querySelectorAll('.download-link'))link.href=url(exe);document.getElementById('hero-release').textContent='v'+data.version+' · '+size(exe.bytes)+' · Windows x64';document.getElementById('download-details').textContent='v'+data.version+' · '+size(exe.bytes)+' · '+(en?'models download separately':'модели скачиваются отдельно')}
- if(zip)document.getElementById('portable-download').href=url(zip);
- document.getElementById('checksum-download').href=data.public?'https://github.com/Leongrupp/freedom-gpt/releases/latest/download/SHA256SUMS.txt':'/downloads/SHA256SUMS.txt';
-}catch{/* Downloads remain linked to the repository if the local metadata is absent. */}}
-
+ const data=await response.json();if(data.status==='pending')return;
+ versionLabel(data.version);
+ const checksum=document.getElementById('checksum-download');if(checksum)checksum.href=data.public?repository+'/releases/latest/download/SHA256SUMS.txt':'/downloads/SHA256SUMS.txt';
+}catch{/* The verified release links in HTML remain available without metadata. */}}
+function label(file){
+ if(file.name.endsWith('.exe'))return en?'Download EXE':'Скачать EXE';
+ if(file.name.endsWith('.run'))return en?'Download installer':'Скачать установщик';
+ if(file.name.includes('macOS'))return en?'Download for Mac':'Скачать для Mac';
+ if(file.name.endsWith('.deb'))return en?'DEB package':'Пакет DEB';
+ if(file.name.endsWith('.tar.gz'))return en?'Portable TAR.GZ':'Переносимый TAR.GZ';
+ return en?'Portable ZIP':'Переносимый ZIP';
+}
+const arrows=new Map([...document.querySelectorAll('[data-platform-card]')].map(card=>[card.dataset.platformCard,card.querySelector('.platform-primary svg')?.cloneNode(true)]));
+async function platforms(){try{
+ const response=await fetch('/api/platforms',{cache:'no-store'});if(!response.ok)return;
+ const data=await response.json();if(!data.platforms?.length)return;
+ for(const item of data.platforms){
+  const card=[...document.querySelectorAll('[data-platform-card]')].find(node=>node.dataset.platformCard===item.id);if(!card)continue;
+  const rank=file=>file.name.endsWith('.exe')||file.name.endsWith('.run')||file.name.includes('macOS')?0:file.name.endsWith('.zip')||file.name.endsWith('.deb')?1:2;
+  const files=(item.files||[]).filter(file=>safeURL(file)&&Number.isFinite(file.bytes)&&file.bytes>0).sort((a,b)=>rank(a)-rank(b));if(!files.length)continue;
+  const container=card.querySelector('.platform-files');const fragment=document.createDocumentFragment();
+  files.forEach((file,index)=>{
+   const link=document.createElement('a');link.href=safeURL(file);link.className=index===0?'platform-primary':'platform-alternative';
+   const caption=document.createElement('span');caption.append(document.createTextNode(label(file)));const bytes=document.createElement('small');bytes.textContent=size(file.bytes);caption.append(bytes);link.append(caption);
+   const arrow=arrows.get(item.id);if(arrow)link.append(arrow.cloneNode(true));fragment.append(link);
+  });container.replaceChildren(fragment);
+  const note=en?item.note_en:item.note_ru;if(note)card.querySelector('.platform-note').textContent=note;
+  for(const quick of document.querySelectorAll('[data-platform-download]'))if(quick.dataset.platformDownload===item.id)quick.href=safeURL(files[0]);
+ }
+ versionLabel(data.version);
+}catch{/* Static OS cards link to the last verified public release. */}}
 async function mirrors(){try{
  const response=await fetch('/api/models',{cache:'no-store'});if(!response.ok)return;
  const data=await response.json(),container=document.getElementById('model-mirrors');if(!container)return;
  container.replaceChildren();let count=0;
- for(const model of data.models||[]){for(const file of model.files||[]){
+ for(const model of data.models||[])for(const file of model.files||[]){
   if(!file.url?.startsWith('/models/'))continue;
   const link=document.createElement('a');link.href=file.url;link.className='mirror-file';link.textContent=model.name+' · '+file.name+' · '+size(file.bytes);container.append(link);count++;
- }}
- if(count){const heading=document.createElement('h3');heading.textContent=en?'Download model files manually':'Скачать файлы моделей вручную';container.prepend(heading)}
- container.hidden=!count;
-}catch{/* The optional file mirror does not affect the model sources in the app. */}}
-document.getElementById('copy-donation').addEventListener('click',async event=>{
+ }
+ if(count){const title=document.createElement('h3');title.textContent=en?'Download model files manually':'Скачать файлы моделей вручную';container.prepend(title)}container.hidden=!count;
+}catch{/* A missing mirror does not affect official model download sources. */}}
+document.getElementById('copy-donation')?.addEventListener('click',async event=>{
  const copied=event.currentTarget.dataset.copied;
- const text='bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6';
- const success=await copyText(text);
+ const success=await copyText('bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6');
  document.getElementById('copy-status').textContent=success?copied:(en?'Select the address and press Ctrl+C':'Выделите адрес и нажмите Ctrl+C');
 });
-release();
-mirrors();
-async function platforms(){try{
- const r=await fetch('/api/platforms',{cache:'no-store'});if(!r.ok)return;
- const data=await r.json(),section=document.getElementById('platform-downloads');if(!section||!data.platforms?.length)return;
- section.replaceChildren();section.hidden=false;
- const title=document.createElement('h3');title.textContent=en?'Choose your operating system':'Выберите операционную систему';section.append(title);
- const grid=document.createElement('div');grid.className='platform-grid';section.append(grid);
- for(const item of data.platforms){
-  const card=document.createElement('article'),heading=document.createElement('h4'),note=document.createElement('p');heading.textContent=item.name;note.textContent=en?item.note_en:item.note_ru;card.append(heading,note);
-  for(const file of item.files||[]){if(!file.url?.startsWith('/downloads/platform/')&&!file.url?.startsWith('https://github.com/Leongrupp/freedom-gpt/releases/download/'))continue;
-   const a=document.createElement('a');a.href=file.url;a.textContent=file.format+' · '+size(file.bytes);a.className='platform-file';card.append(a);
-  }grid.append(card);
- }
- if(data.local_only){const p=document.createElement('p');p.className='platform-local-note';p.textContent=en?'Local build previews. These files have not been published.':'Локальные сборки для проверки. Эти файлы ещё не опубликованы.';section.append(p)}
-}catch{/* A platform is offered only after verified metadata is available. */}}
-platforms();
-setInterval(()=>{release();mirrors()},60000);
+function refresh(){return Promise.allSettled([release(),platforms(),mirrors()])}refresh();setInterval(refresh,60000);

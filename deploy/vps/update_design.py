@@ -1,7 +1,7 @@
 """Atomically overlay an allowlisted static design, retaining the old release."""
 import hashlib,json,os,pathlib,re,shutil,subprocess,sys,tarfile,time,urllib.request
 BASE=pathlib.Path('/var/www/freedom-gpt');WORK=pathlib.Path('/root/freedom-gpt-deploy')
-ALLOWED={'public/index.html','public/en/index.html','public/premium.css','public/premium.js','public/app.js','public/freedom.svg','public/media/site/core-hero.webp','public/media/site/creative-world.webp'}
+ALLOWED={'public/index.html','public/en/index.html','public/premium.css','public/premium.js','public/app.js','public/freedom.svg','public/media/site/core-hero.webp','public/media/site/creative-world.webp','public/media/site/project-cover.png'}
 
 def run(args):
  result=subprocess.run(args,capture_output=True,text=True,timeout=25)

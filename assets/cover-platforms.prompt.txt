@@ -1,0 +1,2 @@
+Built-in imagegen; edit/reference: assets/cover.png.
+Redesign the Freedom GPT GitHub cover as a1600x640 premium graphite-black and brushed-titanium banner. Preserve Freedom GPT and an F monogram. Metallic F on the right, large editorial text on the left: Freedom GPT; Free. Open source. Local. Add Windows, macOS and Ubuntu Linux symbols/labels, aionpc.ru and Support: t.me/AI1rus. No neon, screenshots, invented UI or watermark. Safe margins. Final output: assets/cover-platforms.png.
