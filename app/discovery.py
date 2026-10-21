@@ -2,6 +2,7 @@
 import concurrent.futures,hashlib,io,json,math,re,struct,time,urllib.parse
 from html.parser import HTMLParser
 import requests
+from hf_access import access as hf_access
 from bootstrap import ROOT,read,write
 
 GIB=1024**3
@@ -10,7 +11,7 @@ REGISTRY='https://registry.ollama.ai/v2/library/'
 ARCHITECTURES={'llama','qwen2','qwen2moe','qwen3','qwen3moe','qwen35','qwen35moe','gemma','gemma2','gemma3','phi3','mistral','deepseek2','gpt-oss'}
 
 def remote(url,params=None):
-    response=requests.get(url,params=params,headers={'User-Agent':'FreedomGPT model search','Accept':'application/json'},timeout=(8,20))
+    response=requests.get(url,params=params,headers=hf_access.headers(url,{'Accept':'application/json'}),timeout=(8,20))
     response.raise_for_status()
     if len(response.content)>8*1024**2:raise ValueError('Ответ каталога слишком большой.')
     return response.json()

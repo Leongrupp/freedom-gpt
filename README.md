@@ -1,15 +1,15 @@
-<p align="center"><img src="assets/cover-platforms.png" alt="Freedom GPT — Your AI. Your computer." width="100%"></p>
+<p align="center"><img src="assets/agent-cover.svg" alt="Freedom GPT — Your AI. Your computer." width="100%"></p>
 
 <h1 align="center">Freedom GPT 💛</h1>
-<p align="center"><strong>A free local AI workspace. Your models, your projects, your computer.</strong></p>
+<p align="center"><strong>A free, open-source AI agent. Your models, tools and project memory.</strong></p>
 <p align="center"><a href="https://aionpc.ru">🌐 Website</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Downloads</a> · <a href="README.ru.md">🇷🇺 Русский</a> · <a href="https://t.me/AI1rus">💬 Telegram support</a></p>
 <p align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-silver" alt="MIT license"></a> <a href="https://github.com/Leongrupp/freedom-gpt/releases"><img src="https://img.shields.io/github/v/release/Leongrupp/freedom-gpt?color=647789" alt="Latest release"></a> <img src="https://img.shields.io/badge/interface-English%20%2F%20Русский-647789" alt="English and Russian"></p>
 
 <p align="center"><strong>Free to download. Free to use. Choose your platform.</strong></p>
 <table><tr>
-<td width="33%" align="center"><img src="assets/platforms/windows.svg" width="40" alt="Windows"><br><strong>Windows</strong><br><sub>Windows 10 / 11 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe">Download EXE ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip">Portable ZIP</a></td>
-<td width="33%" align="center"><img src="assets/platforms/apple.svg" width="40" alt="macOS"><br><strong>macOS · Preview</strong><br><sub>Apple Silicon · macOS 26.2+</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip">Download app ZIP ↗</a><br><sub>Unsigned; native Mac run not yet verified.</sub></td>
-<td width="33%" align="center"><img src="assets/platforms/ubuntu.svg" width="40" alt="Ubuntu Linux"><br><strong>Ubuntu Linux</strong><br><sub>Ubuntu 24.04 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run">Download installer ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb">DEB</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz">TAR.GZ</a></td>
+<td width="33%" align="center"><img src="assets/platforms/windows.svg" width="40" alt="Windows"><br><strong>Windows</strong><br><sub>Windows 10 / 11 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe">Download EXE ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Windows-x64.zip">Portable ZIP</a></td>
+<td width="33%" align="center"><img src="assets/platforms/apple.svg" width="40" alt="macOS"><br><strong>macOS · Preview</strong><br><sub>Apple Silicon · macOS 26.2+</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip">Download app ZIP ↗</a><br><sub>Unsigned; native Mac run not yet verified.</sub></td>
+<td width="33%" align="center"><img src="assets/platforms/ubuntu.svg" width="40" alt="Ubuntu Linux"><br><strong>Ubuntu Linux</strong><br><sub>Ubuntu 24.04 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run">Download installer ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-amd64.deb">DEB</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz">TAR.GZ</a></td>
 </tr></table>
 <p align="center">Need a hand? <a href="https://t.me/AI1rus">Telegram @AI1rus</a> · Explore <a href="https://aionpc.ru">aionpc.ru</a> · Help the project grow with a star 💛</p>
 
@@ -22,6 +22,23 @@ Freedom GPT is a free, MIT-licensed local AI workspace for compatible models. Lo
 **Practical guides:** [Windows](https://aionpc.ru/en/install/windows/) · [Ubuntu Linux](https://aionpc.ru/en/install/ubuntu/) · [Mac preview](https://aionpc.ru/en/install/macos/) · [How offline AI works](https://aionpc.ru/en/guides/local-ai/) · [Choose a model for your hardware](https://aionpc.ru/en/guides/choose-model/).
 
 This independent project does not provide free access to proprietary cloud models. Quality and speed depend on the model and hardware.
+
+## 🎯 Freedom GPT — an agent for your projects
+
+**Model + tools + memory.** Delegate an outcome: the agent can work with files, the terminal and available applications. Capabilities and quality depend on the model you choose.
+
+### New in 1.5.0 · your local AI agent
+
+- Goals with acceptance criteria, continuation, pause, history and retry.
+- Editable and reorderable task queue, removal and urgent steering.
+- Project memory, chat branches, skills and compatible model switching.
+- Built-in website preview, screenshots, clickable links and media previews.
+- Available applications and Blender through installed tools.
+- Hardware suggestions, your GGUF files, optional GitHub / Hugging Face and APIs.
+- Achievements, levels and Freedom game points, with no promised cash value.
+- Updates start with Check for updates and apply when the agent is idle.
+
+Version **1.5.0** includes the agent features below. Updates are checked and downloaded only when you click **Check for updates**. Blender, browsers and specialist utilities need separate installation; public packages do not include the author's entire personal toolkit. [Agent guide](docs/AGENT.md) · [Website guide](https://aionpc.ru/en/guides/ai-agent/).
 
 ## ✨ What you can do
 
@@ -45,9 +62,9 @@ This independent project does not provide free access to proprietary cloud model
 
 | Platform | Download | Requirements and status |
 |---|---|---|
-| Windows | [EXE installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe) · [Portable ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip) | Windows 10/11 x64; verified on Windows 11 |
-| Ubuntu Linux | [`.run` installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; clean offline container and Linux CUDA smoke tests |
-| macOS candidate | [Apple Silicon `.app` ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Unsigned, not notarized; native Mac execution is not yet verified. Intel Mac is not included. |
+| Windows | [EXE installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe) · [Portable ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Windows-x64.zip) | Windows 10/11 x64; verified on Windows 11 |
+| Ubuntu Linux | [`.run` installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; clean offline container and Linux CUDA smoke tests |
+| macOS candidate | [Apple Silicon `.app` ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Unsigned, not notarized; native Mac execution is not yet verified. Intel Mac is not included. |
 
 [All releases and notes](https://github.com/Leongrupp/freedom-gpt/releases) · [SHA256 checksums](https://github.com/Leongrupp/freedom-gpt/releases/latest/download/SHA256SUMS.txt) · [Source](https://github.com/Leongrupp/freedom-gpt/releases/latest)
 
@@ -58,14 +75,14 @@ Run the EXE, choose English/Russian and an empty SSD folder, then open **Freedom
 Prefer a terminal? Open PowerShell in your chosen download folder:
 
 ```powershell
-curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe
+curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe
 .\FreedomGPT-Setup.exe
 ```
 
 ### Ubuntu — no Python installation
 
 ```sh
-curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
 sh FreedomGPT.run
 ```
 

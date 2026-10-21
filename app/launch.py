@@ -41,4 +41,7 @@ def main():
  open_browser(ROOT,url)
 if __name__=='__main__':
  try:main()
- except Exception as exc:show_error(str(exc));raise SystemExit(1)
+ except Exception as exc:
+  if '--no-browser' in sys.argv:print(str(exc),file=sys.stderr)
+  else:show_error(str(exc))
+  raise SystemExit(1)

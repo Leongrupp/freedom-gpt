@@ -102,3 +102,8 @@ the VPN port, configuration and processes are preserved.
 Real rendering found WinError 5 when a progress JSON destination was briefly held open on Windows. State writes now use unique temporary files, bounded sharing-violation retries and a writer lock; reads retry short sharing violations too. Video progress only writes when it changes. A real Windows destination-lock test and 400 concurrent writes with a reader passed.
 The corrected candidate rendered Wan 2.1 512x288, 33 frames, 16 fps and 20 steps: 30.76 s native engine, 50.24 s including GPU handoff and coder restoration. WebM VP8, 33 decoded frames, HTTP 206 and a subsequent local coder reply passed. Contact sheets were visually reviewed. VAE CUDA decode took 8.73 s; CPU decode had taken about 63 s per tile. Native macOS rendering remains untested.
 The final 1.4.2 application repeated the same test in 52.68 s while packaging was running. Its clip was byte-identical to the visually reviewed candidate. A UI code reply and copy/paste after video, application restart and video-history recovery passed too.
+
+## Release 1.5.0
+
+See [1.5.0 checks and remaining limits](docs/RELEASE-1.5.0-VERIFICATION.md). Windows and offline Ubuntu installation/runtime checks passed. Mac native execution remains unverified. Legacy automatic migration from 1.4.x is deliberately blocked; use the full installer once.
+

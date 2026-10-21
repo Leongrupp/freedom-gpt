@@ -1,0 +1,5 @@
+name: freedom-accounts
+version: 1.0.0
+description: Optional app-bound GitHub access without exposing credentials to prompts.
+provides_tools:
+  - github_workspace

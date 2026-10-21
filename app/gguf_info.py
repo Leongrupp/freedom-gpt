@@ -9,7 +9,9 @@ def model_context(path):
   def string():
    size=number('Q')
    if size>8*1024**2:raise ValueError('Слишком длинное поле GGUF.')
-   return stream.read(size).decode('utf8',errors='replace')
+   raw=stream.read(size)
+   if len(raw)!=size:raise ValueError('Неполные метаданные GGUF.')
+   return raw.decode('utf8',errors='replace')
   formats={0:'B',1:'b',2:'H',3:'h',4:'I',5:'i',6:'f',7:'?',10:'Q',11:'q',12:'d'}
   def value(kind,keep=True):
    if kind in formats:return number(formats[kind])

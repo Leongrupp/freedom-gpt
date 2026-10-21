@@ -1,14 +1,14 @@
-<p align="center"><img src="assets/cover-platforms.png" alt="Freedom GPT — ваш ИИ на вашем компьютере" width="100%"></p>
+<p align="center"><img src="assets/agent-cover.svg" alt="Freedom GPT — ваш ИИ на вашем компьютере" width="100%"></p>
 
 <h1 align="center">Freedom GPT 💛</h1>
-<p align="center"><strong>Бесплатные локальные нейросети на вашем ПК. Чат, код и изображения без подписки.</strong></p>
+<p align="center"><strong>Бесплатный локальный ИИ-агент. Ваши модели, инструменты и память проекта.</strong></p>
 <p align="center"><a href="https://aionpc.ru">🌐 Сайт</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Скачать</a> · <a href="README.md">🇬🇧 English</a> · <a href="https://t.me/AI1rus">💬 Поддержка в Telegram</a></p>
 
 <p align="center"><strong>Бесплатно скачивайте и пользуйтесь. Выберите свою систему.</strong></p>
 <table><tr>
-<td width="33%" align="center"><img src="assets/platforms/windows.svg" width="40" alt="Windows"><br><strong>Windows</strong><br><sub>Windows 10 / 11 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe">Скачать EXE ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip">Переносимый ZIP</a></td>
-<td width="33%" align="center"><img src="assets/platforms/apple.svg" width="40" alt="macOS"><br><strong>macOS · экспериментальная</strong><br><sub>Apple Silicon · macOS 26.2+</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip">Скачать приложение ↗</a><br><sub>Без подписи; запуск на Mac ещё не проверен.</sub></td>
-<td width="33%" align="center"><img src="assets/platforms/ubuntu.svg" width="40" alt="Ubuntu Linux"><br><strong>Ubuntu Linux</strong><br><sub>Ubuntu 24.04 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run">Скачать установщик ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb">DEB</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz">TAR.GZ</a></td>
+<td width="33%" align="center"><img src="assets/platforms/windows.svg" width="40" alt="Windows"><br><strong>Windows</strong><br><sub>Windows 10 / 11 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe">Скачать EXE ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Windows-x64.zip">Переносимый ZIP</a></td>
+<td width="33%" align="center"><img src="assets/platforms/apple.svg" width="40" alt="macOS"><br><strong>macOS · экспериментальная</strong><br><sub>Apple Silicon · macOS 26.2+</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip">Скачать приложение ↗</a><br><sub>Без подписи; запуск на Mac ещё не проверен.</sub></td>
+<td width="33%" align="center"><img src="assets/platforms/ubuntu.svg" width="40" alt="Ubuntu Linux"><br><strong>Ubuntu Linux</strong><br><sub>Ubuntu 24.04 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run">Скачать установщик ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-amd64.deb">DEB</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz">TAR.GZ</a></td>
 </tr></table>
 <p align="center">Нужна помощь? <a href="https://t.me/AI1rus">Telegram @AI1rus</a> · Наш сайт <a href="https://aionpc.ru">aionpc.ru</a> · Поддержите проект звездой 💛</p>
 
@@ -21,6 +21,23 @@ Freedom GPT — приложение с открытым исходным код
 **Практические инструкции:** [Windows](https://aionpc.ru/install/windows/) · [Ubuntu Linux](https://aionpc.ru/install/ubuntu/) · [Mac: тестовая сборка](https://aionpc.ru/install/macos/) · [Как работает ИИ без интернета](https://aionpc.ru/guides/local-ai/) · [Как выбрать модель по памяти ПК](https://aionpc.ru/guides/choose-model/).
 
 Это независимый проект: он не предоставляет бесплатный доступ к закрытым облачным моделям. Возможности и скорость зависят от модели и железа.
+
+## 🎯 Freedom GPT — агент для ваших проектов
+
+**Модель + инструменты + память.** Поручайте результат: агент может работать с файлами, терминалом и доступными приложениями, а не только выводить ответ. Совместимость и качество зависят от выбранной модели.
+
+### Новое в 1.5.0 · ваш локальный ИИ-агент
+
+- Цели с критериями, продолжением, паузой, историей и повтором.
+- Очередь: редактирование текста, порядок, удаление и срочные поправки.
+- Память проекта, ветки чата, навыки и смена совместимой модели.
+- Встроенный просмотр сайта, скриншоты, кликабельные ссылки и превью медиа.
+- Управление доступными приложениями и Blender через установленные инструменты.
+- Подбор моделей по ПК, свои GGUF, необязательные GitHub / Hugging Face и API.
+- Достижения, уровни и игровые баллы Freedom, без обещания денежной ценности.
+- Обновления по кнопке «Проверить обновления», когда агент свободен.
+
+Версия **1.5.0** включает перечисленные функции агента. Проверка и загрузка обновлений запускаются только кнопкой **«Проверить обновления»**. Blender, браузер и специализированные утилиты требуют установки; публичная сборка не включает весь личный набор автора. [Подробно об агенте](docs/AGENT.ru.md) · [Возможности на сайте](https://aionpc.ru/guides/ai-agent/).
 
 ## ✨ Возможности
 
@@ -44,9 +61,9 @@ Freedom GPT — приложение с открытым исходным код
 
 | Система | Скачать | Требования и статус |
 |---|---|---|
-| Windows | [Установщик EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip) | Windows 10/11 x64; проверено на Windows 11 |
-| Ubuntu Linux | [Установщик .run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; чистый контейнер без сети и пробный запуск модели через Linux CUDA |
-| Кандидат macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Без подписи и нотарификации. Запуск на настоящем Mac ещё не проверен. Intel Mac не включён. |
+| Windows | [Установщик EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Windows-x64.zip) | Windows 10/11 x64; проверено на Windows 11 |
+| Ubuntu Linux | [Установщик .run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; чистый контейнер без сети и пробный запуск модели через Linux CUDA |
+| Кандидат macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Без подписи и нотарификации. Запуск на настоящем Mac ещё не проверен. Intel Mac не включён. |
 
 [Все релизы](https://github.com/Leongrupp/freedom-gpt/releases) · [SHA256](https://github.com/Leongrupp/freedom-gpt/releases/latest/download/SHA256SUMS.txt)
 
@@ -57,14 +74,14 @@ Freedom GPT — приложение с открытым исходным код
 Можно скачать из PowerShell, открытого в выбранной папке:
 
 ```powershell
-curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe
+curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe
 .\FreedomGPT-Setup.exe
 ```
 
 ### Ubuntu — без установки Python
 
 ```sh
-curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
 sh FreedomGPT.run
 ```
 

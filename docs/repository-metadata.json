@@ -1,0 +1,22 @@
+{
+  "description": "Freedom GPT вЂ” free, open-source local AI agent: models, tools, goals, project memory and browser workflows. Windows, Ubuntu, Mac preview.",
+  "homepage": "https://aionpc.ru",
+  "topics": [
+    "ai-agent",
+    "local-ai",
+    "offline-ai",
+    "open-source",
+    "coding-agent",
+    "gguf",
+    "llama-cpp",
+    "project-memory",
+    "browser-automation",
+    "python",
+    "windows",
+    "ubuntu",
+    "macos",
+    "huggingface",
+    "qwen"
+  ],
+  "apply_after_owner_acceptance": false
+}

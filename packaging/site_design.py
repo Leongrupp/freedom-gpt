@@ -9,6 +9,7 @@ def main():
   'public/index.html':'site/index.html','public/en/index.html':'site/en.html',
   'public/premium.css':'site/premium.css','public/premium.js':'site/premium.js',
   'public/app.js':'site/app.js','public/freedom.svg':'site/freedom.svg',
+  'public/agent.css':'site/agent.css',
   'public/media/site/core-hero.webp':'assets/site/core-hero.webp',
   'public/media/site/creative-world.webp':'assets/site/creative-world.webp',
   'public/media/site/project-cover.png':'assets/cover-platforms.png',

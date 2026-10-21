@@ -1,4 +1,4 @@
-# Freedom GPT 1.4.2 — installation guide
+# Freedom GPT 1.5.0 — installation guide
 
 [Website](https://aionpc.ru/#download) · [Telegram @AI1rus](https://t.me/AI1rus) · [Русский](INSTALL.ru.md)
 
@@ -6,7 +6,7 @@ The ready-made packages include Python, Node.js and engines. Model weights downl
 
 ## Windows
 
-**[Download for Windows](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe)**
+**[Download for Windows](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe)**
 
 1. **Download the app.** Click “Download for Windows” above. Open the downloaded EXE file.
 2. **Choose a folder.** Select your language and a new empty SSD folder, then click Install.
@@ -22,10 +22,10 @@ Open PowerShell in a folder for downloads and paste the full block. The file is 
   $freedomInstallPath = Read-Host 'New empty SSD folder (for example D:\FreedomGPT)'
   if ([string]::IsNullOrWhiteSpace($freedomInstallPath)) { throw 'Choose an empty folder.' }
   $freedomInstallPath = [IO.Path]::GetFullPath($freedomInstallPath)
-  $freedomSetupPath = Join-Path (Get-Location) 'FreedomGPT-Setup-1.4.2.exe'
-  $freedomHash = 'c7862b0c5e90ebcf454b405fa84047c76c966cd2346e1dae25392574dcd4317a'
+  $freedomSetupPath = Join-Path (Get-Location) 'FreedomGPT-Setup-1.5.0.exe'
+  $freedomHash = '4fe922d80486aceb7a340f67c285001d88d33f375d10957b12642f6d492fd49f'
   if (!(Test-Path -LiteralPath $freedomSetupPath) -or (Get-FileHash -LiteralPath $freedomSetupPath -Algorithm SHA256).Hash -ne $freedomHash) {
-    curl.exe -fL -C - --retry 4 -o $freedomSetupPath 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe'
+    curl.exe -fL -C - --retry 4 -o $freedomSetupPath 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe'
     if ($LASTEXITCODE -ne 0) { throw 'Download failed. Run again to resume.' }
   }
   if ((Get-FileHash -LiteralPath $freedomSetupPath -Algorithm SHA256).Hash -ne $freedomHash) { throw 'SHA256 mismatch. Installation stopped.' }
@@ -37,7 +37,7 @@ Open PowerShell in a folder for downloads and paste the full block. The file is 
 
 ## macOS · Apple Silicon
 
-**[Download for Mac](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip)**
+**[Download for Mac](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip)**
 
 1. **Check your Mac.** The preview requires Apple Silicon M1+ and macOS 26.2+. Intel Mac is not supported.
 2. **Unpack the ZIP.** Click “Download for Mac”, unpack the ZIP and move Freedom GPT.app into Applications.
@@ -54,12 +54,12 @@ Open Terminal in a folder for downloads and paste the full block. The file is ve
   set -eu
   [ "$(uname -m)" = arm64 ] || { echo 'Apple Silicon is required.'; exit 1; }
   sw_vers -productVersion | awk -F. '{ exit !($1 > 26 || ($1 == 26 && $2 >= 2)) }' || { echo 'macOS26.2+ is required.'; exit 1; }
-  freedom_file='FreedomGPT-1.4.2-macOS-AppleSilicon.zip'
-  freedom_sha='361c4703cb45f5c44c8b9bd2a4a4cb9a817b1cb9380a16ab9fb52cd75caf1d71'
-  freedom_folder='./FreedomGPT-1.4.2-macOS'
+  freedom_file='FreedomGPT-1.5.0-macOS-AppleSilicon.zip'
+  freedom_sha='6a25cec10e906659c6f0106273ee63e3f3e0dc8bd11998e36cf129094d70908b'
+  freedom_folder='./FreedomGPT-1.5.0-macOS'
   [ ! -e "$freedom_folder" ] || { echo 'The extraction folder already exists. Choose a new folder.'; exit 1; }
   if ! printf '%s  %s\n' "$freedom_sha" "$freedom_file" | shasum -a 256 -c - >/dev/null 2>&1; then
-    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip'
+    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip'
   fi
   printf '%s  %s\n' "$freedom_sha" "$freedom_file" | shasum -a 256 -c -
   ditto -x -k "$freedom_file" "$freedom_folder"
@@ -69,14 +69,14 @@ Open Terminal in a folder for downloads and paste the full block. The file is ve
 
 ## Ubuntu Linux
 
-**[Download for Ubuntu](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run)**
+**[Download for Ubuntu](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run)**
 
 1. **Download the installer.** Click “Download for Ubuntu”. The recommended file ends in .run.
 2. **Run it in Terminal.** Open Terminal in the folder containing the file. Copy and run the short command below.
 3. **Choose a model.** Wait for the app to open. It checks your hardware and lets you choose a suitable model.
 
 ```sh
-sh ./FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+sh ./FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
 ```
 
 ### Terminal download and installation
@@ -86,10 +86,10 @@ Open Terminal in a folder for downloads and paste the full block. The file is ve
 ```sh
 (
   set -eu
-  freedom_file='FreedomGPT-Setup-1.4.2-Ubuntu-x64.run'
-  freedom_sha='c6e4100867c74ee963f32cddbeb2ad3191562f791ee22e2cd64bace82e684910'
+  freedom_file='FreedomGPT-Setup-1.5.0-Ubuntu-x64.run'
+  freedom_sha='4bcd48dac9d19735f9fd433b76b6e13e8ce6e535f6fbf2120b9aed5585e6855d'
   if ! printf '%s  %s\n' "$freedom_sha" "$freedom_file" | sha256sum -c - >/dev/null 2>&1; then
-    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run'
+    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run'
   fi
   printf '%s  %s\n' "$freedom_sha" "$freedom_file" | sha256sum -c -
   sh "./$freedom_file"
@@ -101,3 +101,7 @@ Open Terminal in a folder for downloads and paste the full block. The file is ve
 The application checks hardware and helps you select a model. Download the model, activate it, then start a chat. Search and new downloads need internet; installed local models can run offline. Keep free SSD space for weights and updates.
 
 [Telegram @AI1rus](https://t.me/AI1rus) · [Build from source](BUILD.md)
+
+## Upgrading from 1.4.x
+
+Stop the app, keep your backup and run the full 1.5.0 installer once in your existing Freedom GPT folder. Chats and models are preserved. The legacy automatic update channel does not install 1.5.0. From 1.5.0, updates start only after you click Check for updates.

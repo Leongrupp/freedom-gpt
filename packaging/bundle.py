@@ -101,6 +101,8 @@ def main():
  commit=json.loads((donor/'freedom-bundle.json').read_text())['hermes_commit'] if donor else subprocess.check_output(['git','-C',str(HERMES),'rev-parse','HEAD'],text=True).strip()
  marker={'product':'Freedom GPT','version':json.loads((APP/'version.json').read_text())['version'],'platform':'Windows x64','hermes_commit':commit,'personal_data_included':False,'model_weights_included':False}
  (DEST/'freedom-bundle.json').write_text(json.dumps(marker,indent=2),encoding='utf8')
+ from feature_payload import apply as stage_features
+ stage_features(DEST)
  # Publication is an allowlist operation: no source runtime directory is copied wholesale.
  forbidden=[]
  for p in DEST.rglob('*'):

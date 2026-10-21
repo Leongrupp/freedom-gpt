@@ -3,11 +3,11 @@ import {X,Video,Download,RefreshCw,Square,Play,Sparkles,ExternalLink} from 'luci
 import {api,CONNECTION_ERROR} from './api.js';
 import {t} from './i18n.js';
 const phases={queued:'В очереди',loading:'Загружаем видеомодель',generating:'Создаём видео',restoring:'Возвращаем модель кода',complete:'Готово',error:'Ошибка',cancelled:'Остановлено',interrupted:'Прервано'};
-export function VideoStudio({onClose,onModels}){
+export function VideoStudio({onClose,onModels,sid,onEnsureChat}){
  const[data,setData]=useState(null),[prompt,setPrompt]=useState(()=>localStorage.getItem('freedom-video-prompt')||''),[size,setSize]=useState('512x288'),[frames,setFrames]=useState(33),[steps,setSteps]=useState(20),[error,setError]=useState(''),[busy,setBusy]=useState('');
  useEffect(()=>{let off=false;const load=async()=>{try{const next=await api('/video');if(!off){setData(next);setError(prior=>prior===CONNECTION_ERROR?'':prior)}}catch(e){if(!off)setError(e.message)}};load();const id=setInterval(load,1600);return()=>{off=true;clearInterval(id)}},[]);
  useEffect(()=>{localStorage.setItem('freedom-video-prompt',prompt)},[prompt]);
- async function action(path,body={}){setError('');setBusy(path);try{await api(path,{method:'POST',body:JSON.stringify(body)});setData(await api('/video'))}catch(e){setError(e.message)}finally{setBusy('')}}
+ async function action(path,body={}){setError('');setBusy(path);try{if(path==='/video/generate')body={...body,session_id:sid||await onEnsureChat?.()};await api(path,{method:'POST',body:JSON.stringify(body)});setData(await api('/video'))}catch(e){setError(e.message)}finally{setBusy('')}}
  const job=data?.current,working=['queued','loading','generating','restoring'].includes(job?.state),results=(data?.history||[]).filter(j=>j.state==='complete'),[width,height]=size.split('x').map(Number);
  return <div className="modal-backdrop"><section className="modal video-studio" role="dialog" aria-modal="true" aria-label={t('Видео на вашем ПК')}><header><div><div className="library-eyebrow">FREEDOM GPT · VIDEO LAB</div><h2>{t('Видео на вашем ПК')} <span className="free-pill">{t('Бесплатно')}</span></h2><p>{t('Опишите сцену. Видеомодель создаст короткий ролик локально, без платного API.')}</p></div><button className="icon-button" aria-label={t('Закрыть')} onClick={onClose}><X size={18}/></button></header>
  <div className="video-layout"><div className="video-controls"><div className="video-model-card"><Video size={22}/><div><strong>{data?.model||'Wan 2.1'}</strong><span>{data?.ready?t('Модель скачана и проверена'):t('Комплект модели: ')+(data?.total?(data.total/1024**3).toFixed(2)+t(' ГБ'):'—')}</span></div><span className={'tiny-dot '+(data?.ready?'green':'amber')}/></div>

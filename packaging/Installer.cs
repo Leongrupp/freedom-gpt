@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 [assembly: AssemblyTitle("Freedom GPT Setup")]
-[assembly: AssemblyVersion("1.4.2.0")]
+[assembly: AssemblyVersion("1.5.0.0")]
 class SliceStream:Stream {
  Stream input;long start,length,position;
  public SliceStream(Stream source,long offset,long size){input=source;start=offset;length=size;Position=0;}

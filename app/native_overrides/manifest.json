@@ -1,0 +1,40 @@
+{
+  "source": "Reviewed local runtime delta against clean 1.4.2 donor",
+  "files": [
+    {
+      "path": "gateway/run_goals.py",
+      "sha256": "29ef9a13fcc34cfb8f4ad51d769675c23e5bda0d5ade1087625546524455b3fb",
+      "bytes": 30559
+    },
+    {
+      "path": "gateway/session_policy_refresh.py",
+      "sha256": "eb54e0fe70dcd6d4079f8a5128e77af5dcd0be42dd7c624abe46ad9ef662ca99",
+      "bytes": 15858
+    },
+    {
+      "path": "gateway/session_queued_controls.py",
+      "sha256": "964936f3380b4278778792eb6932b58c85e7256b62e3118053bdafadd579d4b6",
+      "bytes": 17156
+    },
+    {
+      "path": "gateway/session_worker_construct.py",
+      "sha256": "7424b694cd2d471fe206c1c35a7d1e25cbde0f3f8f9796c73593b1d1c907cdd0",
+      "bytes": 13864
+    },
+    {
+      "path": "hermes_cli/goal_command.py",
+      "sha256": "9842e16581ced3b2ea10d1eeadb57b4624be0aacaf9d611ae2e4c6ecad777ef3",
+      "bytes": 9524
+    },
+    {
+      "path": "hermes_cli/goals.py",
+      "sha256": "32930ea4239eafe88ac62b554651e3a7bc631c8b5d27e58b41e7ce7d2d362cff",
+      "bytes": 86834
+    },
+    {
+      "path": "tools/browser_use_cli.py",
+      "sha256": "eb13f6ef0399e8883c640d7231ec4d0211e9127627fd5bd5a28951debf117d34",
+      "bytes": 54171
+    }
+  ]
+}

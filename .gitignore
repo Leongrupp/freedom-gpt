@@ -7,6 +7,7 @@ dist/
 release/
 exports/
 logs/
+output/
 vendor/
 **/node_modules/
 **/__pycache__/

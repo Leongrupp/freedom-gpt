@@ -1,35 +1,33 @@
 {
   "product": "Freedom GPT",
-  "version": "1.4.2",
-  "date": "2026-10-20",
-  "platform": "Windows 10/11 x64",
+  "version": "1.5.0",
+  "public": true,
+  "date": "2026-10-21",
+  "platforms": [
+    "windows-x64",
+    "ubuntu-x64",
+    "macos-arm64"
+  ],
+  "macos_status": "unsigned candidate; native execution unverified",
+  "model_weights_included": false,
+  "updates_signed": true,
+  "updates_manual_only": true,
+  "legacy_update_migration": "1.4.x requires one deliberate full-installer upgrade; automatic migration is blocked",
+  "authenticode_signed": false,
+  "video_status": "Experimental, no new cross-platform rendering benchmark claimed",
   "files": [
     {
-      "name": "FreedomGPT-Setup-1.4.2.exe",
-      "bytes": 1610894120,
-      "sha256": "c7862b0c5e90ebcf454b405fa84047c76c966cd2346e1dae25392574dcd4317a"
+      "name": "FreedomGPT-Setup-1.5.0.exe",
+      "bytes": 1615156947,
+      "sha256": "4fe922d80486aceb7a340f67c285001d88d33f375d10957b12642f6d492fd49f",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe"
     },
     {
-      "name": "FreedomGPT-1.4.2-Windows-x64.zip",
-      "bytes": 1610859752,
-      "sha256": "2530733fbe54dfc38800219ed731c21d104dbf65c21b17a71b8e335f306b6db3"
-    },
-    {
-      "name": "FreedomGPT-update-1.4.2.zip",
-      "bytes": 208358190,
-      "sha256": "9741fec5db63dc30e566ac4f87b67a0ee5413416dbe41eb1f484bfa74dbb8596"
-    },
-    {
-      "name": "update.json",
-      "bytes": 378982,
-      "sha256": "824981838e35f713257a4c01461c88fc6390871f0ae418e7c7ddf3bc08c4f76c"
+      "name": "FreedomGPT-1.5.0-Windows-x64.zip",
+      "bytes": 1615122579,
+      "sha256": "1e3e1d8b1e2759d2e7be6e12cc59faf536cc8e646bb74fb38481ee8f520da39c",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Windows-x64.zip"
     }
   ],
-  "default_models": [
-    "huihui-qwen38-coder",
-    "qwen-image21"
-  ],
-  "models_included": false,
-  "public": false,
-  "signed": false
+  "status": "ready"
 }

@@ -41,55 +41,35 @@ def main():
  def state(**kw):
   status.write_text(json.dumps({'version':v,'phase':a.phase,'time':time.time(),**kw},indent=2));print(json.dumps(kw),flush=True)
  if a.phase=='source':
-  run(['git','add','--',*SAFE]);names=run(['git','diff','--cached','--name-only']).stdout.splitlines()
-  forbidden={'.private','.tmp','.cache','node_modules','vendor','runtime','data'}
-  for name in names:
-   path=pathlib.PurePosixPath(name)
-   if forbidden.intersection(path.parts) or path.name in {'auth.json','.env','state.db','interface.sqlite','private-runtime.json'} or path.suffix in {'.pem','.gguf','.safetensors','.pyc'}:raise ValueError('Private source path staged: '+name)
-  staged=run(['git','diff','--cached','--quiet'],check=False)
-  if staged.returncode==1:run(['git','commit','-m','Release Freedom GPT '+v+' for Windows, Ubuntu and Apple Silicon'])
-  elif staged.returncode!=0:raise RuntimeError('Cannot inspect staged source')
-  commit=run(['git','rev-parse','HEAD']).stdout.strip();run(['git','push','origin','main'],timeout=300)
-  run([gh,'repo','edit',repo,'--description','Free, open-source local AI on your PC. Chat, coding and images without a subscription or local token fees. Windows, Ubuntu and a Mac preview. English / Русский.','--homepage','https://aionpc.ru'])
-  state(source_pushed=True,commit=commit);return
+  pinned=json.loads(approval.read_text()).get('source_commit')
+  if not pinned:raise ValueError('Freeze the reviewed release source before uploading')
+  if not re.fullmatch('[0-9a-f]{40}',pinned):raise ValueError('Invalid pinned source commit')
+  run(['git','cat-file','-e',pinned+'^{commit}'])
+  run(['git','push','origin',pinned+':refs/heads/main'],timeout=300)
+  metadata=json.loads(run(['git','show',pinned+':docs/repository-metadata.json']).stdout)
+  run([gh,'repo','edit',repo,'--description',metadata['description'],'--homepage','https://aionpc.ru'])
+  topic_file=ROOT/'.tmp/release-topics.json';topic_file.write_text(json.dumps({'names':metadata['topics']}))
+  run([gh,'api','--method','PUT','repos/'+repo+'/topics','--input',topic_file])
+  state(source_pushed=True,commit=pinned);return
  for kind in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification']:
   if not json.loads((ROOT/'logs'/(kind+'-'+v+'.json')).read_text()).get('passed'):raise ValueError('Verification required: '+kind)
  manifest=json.loads((out/'release.json').read_text());assets=[out/f['name'] for f in manifest['files']]+[out/'release.json',out/'platforms.json',out/'SHA256SUMS.txt',out/'README-BUILDS.md']
  if len({f.name for f in assets})!=len(assets):raise ValueError('Duplicate release assets')
  expected={f.name:{'bytes':f.stat().st_size,'sha256':sha(f)} for f in assets}
+ if expected!=json.loads(approval.read_text()).get('assets'):raise ValueError('Frozen release assets changed; do not publish')
  notes=ROOT/'release'/('notes-'+tag+'.md')
- notes.write_text(f'''# Freedom GPT {v} 💛
-
-## English
-Free local AI workspace: chat, code, files, images and model discovery.
-Windows EXE/ZIP and Ubuntu .run/DEB/TAR.GZ include Python, Node.js, agent libraries and engines. Model weights download separately. Signed updates preserve chats and models.
-
-**macOS candidate:** Apple Silicon M1+, macOS 26.2+. Unsigned, not notarized; native Mac execution is not verified. **Video Studio is experimental.** Windows 11 / RTX 4080 passed a real 512x288, 33-frame, 20-step generation in 52.68 s including coder restoration, plus full decode and local HTTP Range checks. Video rendering on other hardware and operating systems remains unverified. No universal generation-speed guarantee.
-
-Choose your OS asset below. See README for commands and SHA256SUMS.txt for checksums.
-[Website](https://aionpc.ru) · [Telegram support](https://t.me/AI1rus) · [English guide](https://github.com/{repo}#readme)
-
-## Русский
-Бесплатные локальные чаты, код, файлы, изображения и поиск моделей.
-В пакетах Windows и Ubuntu уже есть Python, Node.js, библиотеки агента и движки. Модели скачиваются отдельно. Подписанные обновления сохраняют чаты и модели.
-
-**macOS — кандидат:** M1+, macOS 26.2+, без подписи и нотарификации; запуск на Mac ещё не проверен. **Видеостудия экспериментальная.** На Windows 11 / RTX 4080 проверен реальный ролик 512x288, 33 кадра, 20 шагов: 52,68 с с возвратом модели кода, полное декодирование и HTTP Range. Генерация видео на других ПК и ОС ещё не проверена. Скорость зависит от компьютера и задачи.
-
-[Установка на русском](https://github.com/{repo}/blob/main/README.ru.md) · [Поддержка](https://t.me/AI1rus)
-
-Спасибо за отзывы и звёзды 💛 Развиваю агента, новые модели и локальную генерацию видео. Добровольная поддержка: [страница проекта](https://github.com/{repo}#support-development).
-''',encoding='utf-8')
+ if not notes.is_file():raise ValueError('Reviewed bilingual release notes required')
  result=run([gh,'release','view',tag,'--repo',repo,'--json','isDraft,tagName'],check=False)
  if result.returncode:
   if not any(s in result.stderr.lower() for s in ['release not found','not found','http 404']):raise RuntimeError('Cannot inspect the existing release: '+result.stderr[-500:])
   if a.phase!='upload':raise RuntimeError('Create and upload a draft first')
-  commit=run(['git','rev-parse','HEAD']).stdout.strip();run([gh,'release','create',tag,'--repo',repo,'--draft','--target',commit,'--title','Freedom GPT '+v+' · Windows / Ubuntu / macOS candidate','--notes-file',notes])
+  commit=run(['git','rev-parse','origin/main']).stdout.strip();run([gh,'release','create',tag,'--repo',repo,'--draft','--target',commit,'--title','Freedom GPT '+v+' · Windows / Ubuntu / macOS candidate','--notes-file',notes])
  release_id=json.loads(run([gh,'release','view',tag,'--repo',repo,'--json','databaseId']).stdout)['databaseId']
  release_path='repos/'+repo+'/releases/'+str(release_id)
  release=api(release_path)
  if a.phase=='upload':
   if not release.get('draft'):raise RuntimeError('Refusing to change already-public release assets')
-  commit=run(['git','rev-parse','HEAD']).stdout.strip()
+  commit=run(['git','rev-parse','origin/main']).stdout.strip()
   run([gh,'release','edit',tag,'--repo',repo,'--notes-file',notes,'--target',commit])
   for number,file in enumerate(assets):
    release=api(release_path);existing=next((x for x in release['assets'] if x['name']==file.name),None);good=existing and existing.get('state')=='uploaded' and existing['size']==expected[file.name]['bytes'] and existing.get('digest')=='sha256:'+expected[file.name]['sha256']
@@ -108,7 +88,9 @@ Choose your OS asset below. See README for commands and SHA256SUMS.txt for check
   actual=uploaded.get(name)
   if not actual or actual.get('state')!='uploaded' or actual['size']!=info['bytes'] or actual.get('digest')!='sha256:'+info['sha256']:raise ValueError('GitHub asset verification failed: '+name)
  if set(uploaded)!=set(expected):raise ValueError('Unexpected release asset')
- run([gh,'release','edit',tag,'--repo',repo,'--draft=false','--latest']);latest=api('repos/'+repo+'/releases/latest')
+ commit=json.loads(approval.read_text()).get('source_commit')
+ if not commit or not re.fullmatch('[0-9a-f]{40}',commit):raise ValueError('Pinned source commit is required')
+ run([gh,'release','edit',tag,'--repo',repo,'--target',commit,'--draft=false','--latest']);latest=api('repos/'+repo+'/releases/latest')
  if latest['tag_name']!=tag or latest['draft']:raise RuntimeError('Published latest release differs')
  state(published=True,url=latest['html_url'],verified_assets=len(expected))
 if __name__=='__main__':main()

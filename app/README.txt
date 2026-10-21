@@ -3,7 +3,7 @@ FREEDOM GPT 1.4
 
 RU
 Windows 10/11 x64: запустите установщик EXE или FreedomGPT.exe из полного ZIP.
-Ubuntu 24.04 x64: sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+Ubuntu 24.04 x64: sh FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
 Для установки без запуска добавьте --install-only. Есть также DEB и TAR.GZ.
 macOS: распакуйте ZIP, перенесите Freedom GPT.app в Applications и откройте.
 Текущая сборка Mac требует Apple Silicon M1+ и macOS 26.2+.
@@ -27,14 +27,14 @@ Python, библиотеки агента, Node.js и локальные дви�
 Храните всю папку приложения вместе. Данные, чаты и модели находятся рядом
 с установленным runtime. POSIX-установщик сохраняет их при обновлении.
 
-Эта локальная сборка ещё не опубликована. Mac ZIP не подписан Developer ID
+Freedom GPT 1.5.0 — публичная сборка агента. Mac ZIP не подписан Developer ID
 и не notarized; проверка запуска на реальном Mac пока не выполнена.
-Автообновления требуют опубликованного подписанного канала вашей платформы.
+Подписанные обновления проверяются и загружаются только по кнопке «Проверить обновления».
 Используйте доверенный источник, не отключайте защиту ОС глобально.
 
 EN
 Windows: run the EXE installer, or FreedomGPT.exe from the complete ZIP.
-Ubuntu 24.04 x64: sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+Ubuntu 24.04 x64: sh FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
 Add --install-only to install without launching. DEB and TAR.GZ are provided.
 macOS Apple Silicon M1+, macOS 26.2+: unzip, move Freedom GPT.app to
 Applications, then open. This build does not support Intel or older macOS.

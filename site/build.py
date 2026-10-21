@@ -36,7 +36,10 @@ COPY={
  'faq':[('Does it work offline?','Yes, for local chat and files after the models are downloaded. Search, websites, downloads and update checks need internet.'),('How do updates arrive?','Automatically after a new signed release is published. Installation waits for idle tasks, checks signatures and hashes, preserves user data and backs up replaced app files. You can disable automatic updates.'),('Will it always generate 100+ tokens per second?','No. Speed depends on hardware, model and context length. One tested long code answer on an RTX 4080 measured 100.85 tokens/s. This is a case-specific result, not a guarantee. Review code and run tests.'),('What about licenses?','Application source is MIT. Bundled components retain their licenses and notices; model licenses are separate. The clean installer includes no personal history or credentials from the author.')],
  'footer':'Your computer. Your models. Your choice.','local':'Local website · server hosting will be configured separately'}
 }
-from design import build,PROJECT
+from design import build as original_build,PROJECT,TEXT
+from agent_content import configure,decorate
+configure(TEXT,COPY)
+def build(lang,c):return decorate(original_build(lang,c),lang)
 from install_guide import markdown
 from seo import build_extra
 

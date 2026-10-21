@@ -1,6 +1,7 @@
 """Local hardware assessment, verified resumable downloads and owned model processes."""
 import asyncio,concurrent.futures,hashlib,json,math,os,pathlib,shutil,subprocess,sys,threading,time,urllib.parse,uuid
 import psutil,requests
+from hf_access import access as hf_access
 from aiohttp import web
 from bootstrap import ROOT,STACK,HOME,config,read,write,write_hermes
 from platform_support import PROCESS_FLAGS,file_lock,hardware as platform_hardware,native_binary
@@ -20,12 +21,13 @@ class Library:
   self.catalog=read(ROOT/'catalog.json',[])+read(ROOT/'data/custom-models.json',[])
   self.device=read(ROOT/'data/hardware.json',{})
   self.jobs={};self.cancel={};self.pool=concurrent.futures.ThreadPoolExecutor(max_workers=2)
-  self.transition=threading.Lock();self.activation=None;self.download_locks={}
+  self.transition=threading.Lock();self.activation=None;self.download_locks={};self.catalog_lock=threading.RLock()
   from discovery import Discovery
   self.discovery=Discovery(self)
  def save_custom(self):
-  bundled={m['id'] for m in read(ROOT/'catalog.json',[])}
-  write(ROOT/'data/custom-models.json',[m for m in self.catalog if m['id'] not in bundled])
+  with self.catalog_lock:
+   bundled={m['id'] for m in read(ROOT/'catalog.json',[])}
+   write(ROOT/'data/custom-models.json',[m for m in self.catalog if m['id'] not in bundled])
  def model(self,ident):
   return next((item for item in self.catalog if item['id']==ident),None)
  def folder(self,item):return STACK/'creative-kit/models' if item['kind']=='image' else STACK/'models'/item['id']
@@ -52,8 +54,13 @@ class Library:
   item=self.model(ident)
   if not item:raise ValueError('Модель не найдена.')
   if self.jobs.get(ident,{}).get('state') in ['downloading','verifying']:return
-  missing=sum(max(0,f['bytes']-((self.folder(item)/(f['name']+'.part')).stat().st_size if (self.folder(item)/(f['name']+'.part')).exists() else f['bytes'] if (self.folder(item)/f['name']).exists() else 0)) for f in item['files'])
-  if shutil.disk_usage(ROOT).free<missing+2*GIB:raise ValueError('Недостаточно места. Для загрузки и запаса нужно '+str(round((missing+2*GIB)/GIB,1))+' ГБ.')
+  missing=0
+  for f in item['files']:
+   part=self.folder(item)/(f['name']+'.part');final=self.folder(item)/f['name']
+   size=part.stat().st_size if part.exists() else f['bytes'] if final.exists() else 0
+   missing+=f['bytes']-(size if 0<=size<=f['bytes'] else 0)
+  from model_advisor import disk_at
+  if disk_at(self.folder(item))<missing+2*GIB:raise ValueError('Недостаточно места. Для загрузки и запаса нужно '+str(round((missing+2*GIB)/GIB,1))+' ГБ.')
   try:lock=file_lock(self.folder(item)/'.download.lock')
   except OSError:raise ValueError('Эта модель уже скачивается в другом процессе. Дождитесь завершения текущей загрузки.')
   self.download_locks[ident]=lock
@@ -66,12 +73,15 @@ class Library:
     if final.exists() and final.stat().st_size==f['bytes'] and digest(final)==f['sha256']:
      verified[f['name']]={'sha256':f['sha256'],'mtime_ns':final.stat().st_mtime_ns};continue
     if final.exists():raise ValueError('Файл с таким именем уже существует и не прошёл проверку. Он сохранён; выберите новую папку модели.')
+    if part.exists() and part.stat().st_size>f['bytes']:
+     os.replace(part,part.with_name(part.name+'.failed-size-'+uuid.uuid4().hex[:10]))
     for attempt in range(5):
      if self.cancel[ident].is_set():raise InterruptedError()
      start=part.stat().st_size if part.exists() else 0
      if start==f['bytes']:break
      try:
-      with requests.get(f['url'],headers={'Range':f'bytes={start}-','User-Agent':'FreedomGPT/1.1'},stream=True,timeout=(20,35)) as response:
+      with requests.get(f['url'],headers=hf_access.headers(f['url'],{'Range':f'bytes={start}-'}),stream=True,timeout=(20,35)) as response:
+       if response.status_code in (401,403):raise ValueError('Нет доступа к модели. Подключите Hugging Face в подборе моделей и откройте карточку модели для получения доступа.')
        response.raise_for_status()
        if start and response.status_code!=206:raise ValueError('Сервер не поддержал продолжение. Частичный файл сохранён.')
        if response.status_code==206 and not response.headers.get('Content-Range','').startswith(f'bytes {start}-'):raise ValueError('Неверный диапазон ответа.')
@@ -89,7 +99,10 @@ class Library:
       if attempt==4:raise
       if self.cancel[ident].wait(min(10,2+attempt)):raise InterruptedError()
     self.jobs[ident]['state']='verifying'
-    if part.stat().st_size!=f['bytes'] or digest(part)!=f['sha256']:raise ValueError('SHA256 не совпал. Частичный файл сохранён; запуск запрещён.')
+    if part.stat().st_size!=f['bytes'] or digest(part)!=f['sha256']:
+     preserved=part.with_name(part.name+'.failed-sha256-'+uuid.uuid4().hex[:10])
+     os.replace(part,preserved)
+     raise ValueError('SHA256 не совпал. Повреждённая копия сохранена отдельно; нажмите скачать снова. Запуск запрещён.')
     if item['kind']=='chat' and f['name']=='model.gguf':
      from gguf_info import model_context
      model_context(part)
@@ -117,7 +130,7 @@ class Library:
   except (KeyError,psutil.NoSuchProcess):pass
  def engine_config(self,item):
   device=hardware();self.device=device;vram=max((g.get('free_gb') or 0 for g in device.get('gpus',[]) if g.get('cuda') or g.get('metal') or g.get('vulkan')),default=0);weight=sum(f['bytes'] for f in item['files'] if f['name']=='model.gguf')/GIB
-  context=65536
+  context=min(65536,int(item.get('context') or 65536))
   ngl='all' if device.get('gpu_accelerated') and vram>=weight+4 else str(max(0,int(24*max(0,vram-2)/max(weight,1)))) if device.get('gpu_accelerated') else '0'
   overhead=max(2,min(5,1.5+weight*.35))
   required_ram=weight+overhead if device.get('unified_memory') else 4 if ngl=='all' else max(0,weight-max(0,vram-2))+overhead
@@ -189,20 +202,40 @@ class Library:
   with source.open('rb') as stream:
    if stream.read(4)!=b'GGUF':raise ValueError('Файл не имеет заголовка GGUF.')
   from gguf_info import model_context
-  model_context(source)
-  if shutil.disk_usage(ROOT).free<source.stat().st_size+GIB:raise ValueError('Недостаточно места для импорта.')
-  ident='import-'+uuid.uuid4().hex[:12];folder=STACK/'models'/ident;folder.mkdir(parents=True)
-  # A complete copy remains independent if the source disk is disconnected.
-  shutil.copy2(source,folder/'model.gguf');sha=digest(folder/'model.gguf')
-  item={'id':ident,'name':str(name or source.stem)[:100],'kind':'chat','quantization':'Импорт GGUF','context':65536,'recommended_ram_gb':max(8,math.ceil(source.stat().st_size/GIB)+5),'recommended_vram_gb':math.ceil(source.stat().st_size/GIB)+2,
-        'source':'Локальный файл','license':'Проверьте лицензию исходной модели','files':[{'name':'model.gguf','bytes':source.stat().st_size,'sha256':sha,'url':None}]}
-  self.catalog.append(item);self.save_custom();write(folder/'.verified.json',{'model.gguf':{'sha256':sha,'mtime_ns':(folder/'model.gguf').stat().st_mtime_ns}});return item
+  context=model_context(source);sha=digest(source);size=source.stat().st_size
+  with self.catalog_lock:
+   existing=next((m for m in self.catalog if m['kind']=='chat' and any(f.get('sha256')==sha for f in m['files']) and self.ready(m)),None)
+   if existing:return existing
+   base=(STACK/'models').resolve();base.mkdir(parents=True,exist_ok=True)
+   if shutil.disk_usage(base).free<size+GIB:raise ValueError('Недостаточно места для импорта.')
+   ident='import-'+uuid.uuid4().hex[:12];folder=base/ident;staging=base/('.'+ident);staging.mkdir()
+   assert staging.resolve().parent==base and staging.name.startswith('.import-')
+   try:
+    # Install only a complete independent copy; keep the original file untouched.
+    target=staging/'model.gguf';shutil.copy2(source,target)
+    if target.stat().st_size!=size or digest(target)!=sha:raise ValueError('Исходный файл изменился во время импорта. Повторите импорт после завершения записи файла.')
+    model_context(target)
+    item={'id':ident,'name':str(name or source.stem)[:100],'kind':'chat','quantization':'Импорт GGUF','context':min(65536,context),'recommended_ram_gb':max(8,math.ceil(size/GIB)+5),'recommended_vram_gb':math.ceil(size/GIB)+2,
+          'source':'Локальный файл','license':'Проверьте лицензию исходной модели','files':[{'name':'model.gguf','bytes':size,'sha256':sha,'url':None}]}
+    write(staging/'.verified.json',{'model.gguf':{'sha256':sha,'mtime_ns':target.stat().st_mtime_ns}})
+    os.replace(staging,folder);self.catalog.append(item)
+    try:self.save_custom()
+    except Exception:
+     self.catalog.remove(item);os.replace(folder,staging);raise
+    return item
+   finally:
+    if staging.exists() and staging.resolve().parent==base and staging.name.startswith('.import-'):shutil.rmtree(staging)
  def hf_files(self,value):
   value=value.strip().removeprefix('https://huggingface.co/').strip('/')
   parts=value.split('/')
   if len(parts)!=2 or not all(__import__('re').fullmatch(r'[A-Za-z0-9_.-]+',p) for p in parts):raise ValueError('Введите owner/repository или ссылку на репозиторий Hugging Face.')
-  response=requests.get('https://huggingface.co/api/models/'+value,params={'blobs':'true'},timeout=30);response.raise_for_status();meta=response.json()
-  return {'repo':value,'revision':meta['sha'],'license':meta.get('cardData',{}).get('license','see model card'),
+  url='https://huggingface.co/api/models/'+value
+  response=requests.get(url,params={'blobs':'true'},headers=hf_access.headers(url),timeout=30)
+  if response.status_code in (401,403):raise ValueError('Нет доступа к репозиторию. Подключите Hugging Face в подборе моделей и проверьте доступ на странице модели.')
+  response.raise_for_status();meta=response.json()
+  if not isinstance(meta,dict) or not isinstance(meta.get('sha'),str):raise ValueError('Hugging Face вернул неполные сведения о модели.')
+  card=meta.get('cardData') or {};card=card if isinstance(card,dict) else {}
+  return {'repo':value,'revision':meta['sha'],'license':card.get('license','see model card'),
           'architecture':(meta.get('gguf') or {}).get('architecture'),'context':(meta.get('gguf') or {}).get('context_length'),
           'files':[{'name':f['rfilename'],'bytes':f.get('size') or f.get('lfs',{}).get('size'),'sha256':f.get('lfs',{}).get('sha256')} for f in meta['siblings'] if f['rfilename'].endswith('.gguf') and f.get('lfs',{}).get('sha256') and 'mmproj' not in f['rfilename'].lower()]}
  def add_hf(self,repo,filename):

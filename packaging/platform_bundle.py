@@ -113,6 +113,8 @@ def prepare(target,donor):
   skill.write_text(text,encoding='utf-8')
  marker={'product':'Freedom GPT','version':VERSION,'platform':target,'hermes_commit':json.loads((donor/'freedom-bundle.json').read_text())['hermes_commit'],'personal_data_included':False,'model_weights_included':False}
  (app/'freedom-bundle.json').write_text(json.dumps(marker,indent=2));(app/'licenses/Runtime-provenance.json').write_text(json.dumps(native,indent=2))
+ from feature_payload import apply as stage_features
+ stage_features(app)
  result=manifest(app,target);print('STAGED '+target+' '+str(sum(f['bytes'] for f in result['files']))+' bytes',flush=True);return app,result
 
 def add_tar_file(tar,path,name,file_mode):

@@ -1,6 +1,6 @@
 {
   "product": "Freedom GPT",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "published": false,
   "platforms": [
     {
@@ -10,18 +10,18 @@
       "note_en": "Tested on Windows 11. Python, Node.js and engines included; models separate.",
       "files": [
         {
-          "name": "FreedomGPT-Setup-1.4.2.exe",
-          "bytes": 1610894120,
-          "sha256": "c7862b0c5e90ebcf454b405fa84047c76c966cd2346e1dae25392574dcd4317a",
+          "name": "FreedomGPT-Setup-1.5.0.exe",
+          "bytes": 1615156947,
+          "sha256": "4fe922d80486aceb7a340f67c285001d88d33f375d10957b12642f6d492fd49f",
           "format": "EXE installer",
-          "url": "/downloads/platform/FreedomGPT-Setup-1.4.2.exe"
+          "url": "/downloads/platform/FreedomGPT-Setup-1.5.0.exe"
         },
         {
-          "name": "FreedomGPT-1.4.2-Windows-x64.zip",
-          "bytes": 1610859752,
-          "sha256": "2530733fbe54dfc38800219ed731c21d104dbf65c21b17a71b8e335f306b6db3",
+          "name": "FreedomGPT-1.5.0-Windows-x64.zip",
+          "bytes": 1615122579,
+          "sha256": "1e3e1d8b1e2759d2e7be6e12cc59faf536cc8e646bb74fb38481ee8f520da39c",
           "format": "ZIP portable",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-Windows-x64.zip"
+          "url": "/downloads/platform/FreedomGPT-1.5.0-Windows-x64.zip"
         }
       ],
       "native_tested": true
@@ -33,25 +33,25 @@
       "note_en": "Tested offline in a clean container without system Python. GPU needs a driver.",
       "files": [
         {
-          "name": "FreedomGPT-1.4.2-Ubuntu-x64.tar.gz",
-          "bytes": 1215260425,
-          "sha256": "bdcf2b5c67e94139a3757d44bb97f575e1525e2ea79a7c4fdac2ce9209dbd216",
+          "name": "FreedomGPT-1.5.0-Ubuntu-x64.tar.gz",
+          "bytes": 1219731680,
+          "sha256": "4d626d72bd641906e87c46d9dc1f6e49667a8c86e69879b0765f254a9ae9beb1",
           "format": "TAR.GZ portable",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz"
+          "url": "/downloads/platform/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz"
         },
         {
-          "name": "FreedomGPT-1.4.2-Ubuntu-amd64.deb",
-          "bytes": 1214756920,
-          "sha256": "d3fbdb1224ce8dfbae84137470e43a95244ea2c4fe690eaac83fc2e657faac32",
+          "name": "FreedomGPT-1.5.0-Ubuntu-amd64.deb",
+          "bytes": 1219222444,
+          "sha256": "6e26407a5daaa51d55e0d5eb6d6e8de0e0530f805273578ceab82ccc1108a632",
           "format": "DEB",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-Ubuntu-amd64.deb"
+          "url": "/downloads/platform/FreedomGPT-1.5.0-Ubuntu-amd64.deb"
         },
         {
-          "name": "FreedomGPT-Setup-1.4.2-Ubuntu-x64.run",
-          "bytes": 1215261031,
-          "sha256": "c6e4100867c74ee963f32cddbeb2ad3191562f791ee22e2cd64bace82e684910",
+          "name": "FreedomGPT-Setup-1.5.0-Ubuntu-x64.run",
+          "bytes": 1219732286,
+          "sha256": "4bcd48dac9d19735f9fd433b76b6e13e8ce6e535f6fbf2120b9aed5585e6855d",
           "format": ".run installer",
-          "url": "/downloads/platform/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run"
+          "url": "/downloads/platform/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run"
         }
       ],
       "native_tested": true
@@ -63,11 +63,11 @@
       "note_en": "macOS 26.2+, M1+. Unsigned candidate; native Mac execution not yet tested.",
       "files": [
         {
-          "name": "FreedomGPT-1.4.2-macOS-AppleSilicon.zip",
-          "bytes": 306625293,
-          "sha256": "361c4703cb45f5c44c8b9bd2a4a4cb9a817b1cb9380a16ab9fb52cd75caf1d71",
+          "name": "FreedomGPT-1.5.0-macOS-AppleSilicon.zip",
+          "bytes": 310910060,
+          "sha256": "6a25cec10e906659c6f0106273ee63e3f3e0dc8bd11998e36cf129094d70908b",
           "format": ".app ZIP",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-macOS-AppleSilicon.zip"
+          "url": "/downloads/platform/FreedomGPT-1.5.0-macOS-AppleSilicon.zip"
         }
       ],
       "native_tested": false
