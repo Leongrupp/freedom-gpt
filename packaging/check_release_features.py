@@ -16,7 +16,7 @@ class Features(unittest.TestCase):
  def tearDown(self):self.tmp.cleanup()
  def write(self):self.scope['write_hermes']()
  def test_new_configuration(self):
-  self.write();value=yaml.safe_load((self.home/'config.yaml').read_text());self.assertEqual(value['model']['default'],'test-model');self.assertIn('freedom-preview',value['plugins']['enabled'])
+  self.write();value=yaml.safe_load((self.home/'config.yaml').read_text());self.assertEqual(value['model']['default'],'test-model');self.assertIn('freedom-preview',value['plugins']['enabled']);self.assertTrue(value['tool_loop_guardrails']['hard_stop_enabled'])
  def test_existing_settings_and_backup(self):
   path=self.home/'config.yaml';path.write_text(yaml.safe_dump({'custom_setting':42,'terminal':{'cwd':'myproject'},'plugins':{'enabled':['my-plugin']},'model_aliases':{'personal':{'model':'other'}},'custom_providers':[{'name':'personal'}]}))
   old=path.read_bytes();self.write();value=yaml.safe_load(path.read_text())

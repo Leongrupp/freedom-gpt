@@ -55,7 +55,7 @@ def build_platform(bundle,release,target,file_mode):
    entry=zipfile.ZipInfo(name);entry.create_system=3;entry.compress_type=zipfile.ZIP_DEFLATED;entry.external_attr=(stat.S_IFREG|file_mode(path,bundle))<<16
    with output.open(entry,'w') as destination,path.open('rb') as source:
     import shutil
-    shutil.copyfileobj(source,destination,4*1024**2)
+    shutil.copyfileobj(source,destination,512*1024)
  payload={'schema':1,'version':version,'base_version':'1.5.0','platform':target,'channel':'stable','created':datetime.datetime.now(datetime.timezone.utc).isoformat(),
   'package':{'name':archive.name,'bytes':archive.stat().st_size,'sha256':sha256(archive),'url':f'https://github.com/{meta["repository"]}/releases/download/v{version}/{archive.name}'},'files':files}
  envelope={'payload':payload,'signature':base64.b64encode(key.sign(canonical(payload))).decode()}

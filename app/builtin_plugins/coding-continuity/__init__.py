@@ -172,7 +172,13 @@ class CodingContinuity(MemoryProvider):
         return RecallStatus('Project memory',self.last_recall_count) if self.last_recall_count else None
 
     def system_prompt_block(self):
-        return ('Coding continuity: full local session checkpoints are under ' + str(self.root) +
+        return ('Execution discipline: the latest owner correction overrides the old approach; preserve the task and history. '
+                'Do not repeat a failed approach after two identical errors without a concrete repair. '
+                'A background process handle confirms launch only: inspect its exit/output before claiming success. '
+                'Status probes, sleeps and relaunches are not task progress. Use the documented browser helpers and '
+                'browser-workflows skill for browser tasks; do not assume Firefox/Tor exposes Chromium CDP. '
+                'If the user says browsers are already open, do not launch more. '
+                'Coding continuity: full local session checkpoints are under ' + str(self.root) +
                 '. Before resuming coding, read the project .hermes/STATE.md if it exists. '
                 'Maintain REQUIREMENTS.md, ARCHITECTURE.md, .hermes/TASKS.md, STATE.md and DECISIONS.md '
                 'in the actual project. Follow the auto-loaded coding-continuity skill. '

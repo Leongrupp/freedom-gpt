@@ -146,11 +146,12 @@ def _deliver(authority, session_id, generation, agent, admission_id, text):
         ticketed = callable(getattr(agent, 'withdraw_steer', None))
         entry[1][admission_id] = bool(agent.steer(text, ticket=admission_id) if ticketed else agent.steer(text))
         # Keep the durable, ticketed text in the existing steer buffer. A native redirect
-        # only wakes an in-flight model request, preserving history and partial reasoning.
-        # Tools keep running to their safe boundary; no process or tool is hard-cancelled.
+          # wakes an in-flight model request or yields a tool at its safe boundary,
+          # preserving history and partial reasoning without hard-cancelling processes.
         active=getattr(agent,'_model_request_active',None)
         redirect=getattr(agent,'redirect',None)
-        if entry[1][admission_id] and active is not None and active.is_set() and callable(redirect):
+        tools_active=getattr(agent,'_executing_tools',False)
+        if entry[1][admission_id] and ((active is not None and active.is_set()) or tools_active) and callable(redirect):
             try:redirect('[Freedom GPT: поступила поправка владельца к текущей задаче. Учти следующее сообщение пользователя и продолжай с сохранённой историей.]')
             except Exception:pass  # ordinary steer drain still owns and delivers the exact text
     return entry[1][admission_id]

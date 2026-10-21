@@ -8,6 +8,6 @@
     "github": "https://github.com/Leongrupp/freedom-gpt",
     "bitcoin": "bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6"
   },
-  "local_build": "release-20261021",
-  "ui_revision": "agent-1.5.0"
+  "local_build": "loopfix-20261021",
+  "ui_revision": "agent-1.5.0-loopfix1"
 }

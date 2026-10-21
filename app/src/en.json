@@ -528,6 +528,8 @@
   "Отправленные поправки остаются в истории чата.": "Sent corrections remain in the chat history.",
   "Добавить задачу или уточнение…": "Add a task or correction…",
   "Enter — в очередь · Shift + Enter — новая строка": "Enter — queue · Shift + Enter — new line",
+  "Enter — в очередь · Alt + Enter — скорректировать": "Enter — queue · Alt + Enter — steer now",
+  "Ctrl + Enter — в очередь · Alt + Enter — скорректировать": "Ctrl + Enter — queue · Alt + Enter — steer now",
   "Цель": "Goal",
   "Цель проекта": "Project goal",
   "Не включена": "Not enabled",

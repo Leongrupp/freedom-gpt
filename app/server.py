@@ -454,6 +454,14 @@ async def submit(request):
 
 async def stop(request):
     sid=request.match_info['sid'];snapshot=await bridge.resume(sid)
+    # Completion receipts are stored by the native owner. Cancel only queued,
+    # failed auto-notifications, preserving all human tasks and their payloads.
+    # Otherwise Stop settles one turn and its failed subprocess notices wake it again.
+    for pending in snapshot.get('pending',[]):
+        text=str(pending.get('text') or '')
+        if pending.get('status')=='queued' and str(pending.get('input_id','')).startswith('["completion",') and text.startswith('[IMPORTANT: Background process') and re.search(r'exited \(exit code (?!0\))',text):
+            with contextlib.suppress(Exception):
+                await bridge.rpc('prompt.cancel',session_id=sid,admission_id=pending['admission_id'])
     control=await goals.snapshot(sid)
     if (control.get('goal') or {}).get('status')=='active':
         await bridge.rpc('session.control',session_id=sid,action='goal.pause')

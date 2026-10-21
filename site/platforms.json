@@ -11,15 +11,15 @@
       "files": [
         {
           "name": "FreedomGPT-Setup-1.5.0.exe",
-          "bytes": 1615156947,
-          "sha256": "4fe922d80486aceb7a340f67c285001d88d33f375d10957b12642f6d492fd49f",
+          "bytes": 1623569257,
+          "sha256": "8db8b99dce5dd6594676485b2cab89be6946929a16a4805570e51209565c1941",
           "format": "EXE installer",
           "url": "/downloads/platform/FreedomGPT-Setup-1.5.0.exe"
         },
         {
           "name": "FreedomGPT-1.5.0-Windows-x64.zip",
-          "bytes": 1615122579,
-          "sha256": "1e3e1d8b1e2759d2e7be6e12cc59faf536cc8e646bb74fb38481ee8f520da39c",
+          "bytes": 1623534889,
+          "sha256": "e7af3a4d9cc3f4e0f24e37c622c3739e76e089809164c8cf991b0f3d4eb6ce4a",
           "format": "ZIP portable",
           "url": "/downloads/platform/FreedomGPT-1.5.0-Windows-x64.zip"
         }
@@ -34,22 +34,22 @@
       "files": [
         {
           "name": "FreedomGPT-1.5.0-Ubuntu-x64.tar.gz",
-          "bytes": 1219731680,
-          "sha256": "4d626d72bd641906e87c46d9dc1f6e49667a8c86e69879b0765f254a9ae9beb1",
+          "bytes": 1228616960,
+          "sha256": "81b0bfb2518e36507b2b9a1a3f86fe2c1af3bae8e751eadf31de6a79c3b1a9ac",
           "format": "TAR.GZ portable",
           "url": "/downloads/platform/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz"
         },
         {
           "name": "FreedomGPT-1.5.0-Ubuntu-amd64.deb",
-          "bytes": 1219222444,
-          "sha256": "6e26407a5daaa51d55e0d5eb6d6e8de0e0530f805273578ceab82ccc1108a632",
+          "bytes": 1228067638,
+          "sha256": "f4e7ee14f78e39a07c775d3623916a31fdffc06b23c01f34cc4a25b5f75b26a5",
           "format": "DEB",
           "url": "/downloads/platform/FreedomGPT-1.5.0-Ubuntu-amd64.deb"
         },
         {
           "name": "FreedomGPT-Setup-1.5.0-Ubuntu-x64.run",
-          "bytes": 1219732286,
-          "sha256": "4bcd48dac9d19735f9fd433b76b6e13e8ce6e535f6fbf2120b9aed5585e6855d",
+          "bytes": 1228617566,
+          "sha256": "853cff2f7ddb6cb615365ceb7f87ae26023840d120a0462c9d2cb2b24d6ae21d",
           "format": ".run installer",
           "url": "/downloads/platform/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run"
         }
@@ -64,8 +64,8 @@
       "files": [
         {
           "name": "FreedomGPT-1.5.0-macOS-AppleSilicon.zip",
-          "bytes": 310910060,
-          "sha256": "6a25cec10e906659c6f0106273ee63e3f3e0dc8bd11998e36cf129094d70908b",
+          "bytes": 319334923,
+          "sha256": "3fef8f6e31d9367c633ec70bdb7e3792eb5f757d87561d71ecbb767357340b8b",
           "format": ".app ZIP",
           "url": "/downloads/platform/FreedomGPT-1.5.0-macOS-AppleSilicon.zip"
         }

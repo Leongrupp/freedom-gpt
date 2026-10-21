@@ -9,6 +9,7 @@ Verified on 2026-10-21. This report describes checks performed, not a guarantee 
 - Archive CRC, per-file SHA256, Unix permissions, signed update packages, wrong-OS rejection, signature tampering and rollback checked. Personal histories, credentials and model weights are excluded.
 - macOS: 104 native binaries audited for ARM64, dependency availability and minimum macOS 26.2. Archive hashes, modes, launcher and signed update verified. **No native Mac execution or notarization test.**
 - Existing local GPU model answered again after the personal app restart. This release does not claim new rendering or generation-speed benchmarks across all supported systems.
+- Loop and correction hotfix: ten focused regressions and a real local terminal failure passed. An isolated running gateway accepted an urgent correction during a 20-second foreground command in about 0.4 seconds, retained its history, replayed the receipt without duplicating the correction, blocked the third identical failing command, and remained idle without duplicate failure notifications. Browser harness exceptions and read-only status probes are covered by the loop guard.
 
 ## Updates and migration
 

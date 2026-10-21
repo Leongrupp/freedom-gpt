@@ -12,11 +12,6 @@
       "bytes": 15858
     },
     {
-      "path": "gateway/session_queued_controls.py",
-      "sha256": "964936f3380b4278778792eb6932b58c85e7256b62e3118053bdafadd579d4b6",
-      "bytes": 17156
-    },
-    {
       "path": "gateway/session_worker_construct.py",
       "sha256": "7424b694cd2d471fe206c1c35a7d1e25cbde0f3f8f9796c73593b1d1c907cdd0",
       "bytes": 13864
@@ -35,6 +30,26 @@
       "path": "tools/browser_use_cli.py",
       "sha256": "eb13f6ef0399e8883c640d7231ec4d0211e9127627fd5bd5a28951debf117d34",
       "bytes": 54171
+    },
+    {
+      "path": "agent/tool_guardrails.py",
+      "bytes": 36738,
+      "sha256": "64cd083c817814cfa9fcdfe62d7b3d0e666012825b181b1d1d8a09ef7e00a63c"
+    },
+    {
+      "path": "agent/display.py",
+      "bytes": 56963,
+      "sha256": "7fb815b0839842902faa271a4796f625c40ba1ede757fa53a95fc948e616bc2d"
+    },
+    {
+      "path": "tools/terminal_tool_background.py",
+      "bytes": 16296,
+      "sha256": "9fc499027dbb8ee4462bb7eca4f8d9dc2891ab725f615aaba6cce5b12cf24c4f"
+    },
+    {
+      "path": "gateway/session_queued_controls.py",
+      "bytes": 17227,
+      "sha256": "7c84a15310e4876b18026128ab8fd3fefee6656ab1d6e27db293a2c79b63ffff"
     }
   ]
 }

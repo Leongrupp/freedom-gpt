@@ -376,6 +376,12 @@ class WorkspaceFeatures:
                 state = 'queued'
         elif receipt.get('status')=='started':
             state = 'started'
+            if old:
+                current=await self.bridge.resume(sid)
+                if any(row.get('admission_id')==receipt['admission_id'] and row.get('steering') for row in current.get('pending',[])):
+                    state='steering'
+        elif receipt.get('outcome') in {'steering','steered'}:
+            state = 'steering'
         return web.json_response({'state':state,'receipt':receipt})
 
     async def model_options(self, request):

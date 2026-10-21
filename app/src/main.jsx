@@ -816,7 +816,10 @@ function App() {
      <div className={'composer ' + (mode === 'image' ? 'image-composer' : '')}>
       {!!files.length && <div className="attachment-list">{files.map(file => <div className="attachment-chip" key={file.id}>{file.mime.startsWith('image/') ? <img src={'/api/files/' + file.id} alt="" /> : <FileText size={20} />}<div><strong>{file.name}</strong><span>{prettyBytes(file.bytes)}</span></div><button className="icon-button" aria-label={t("Убрать ") + file.name} onClick={() => setFiles(v => v.filter(f => f.id !== file.id))}><X size={13} /></button></div>)}</div>}
       <textarea ref={textarea} aria-label={t("Сообщение Freedom GPT")} placeholder={busy?t("Добавить задачу или уточнение…"):mode==='image'?t("Опишите изображение, которое хотите создать…"):t("Поручите что угодно…")} value={text} rows={2} onChange={e => setText(e.target.value)} onKeyDown={e => {
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing && (enterSend && !e.shiftKey || !enterSend && (e.ctrlKey || e.metaKey))) {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing && busy && e.altKey) {
+                e.preventDefault();
+                send('steer');
+              } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.altKey && (enterSend && !e.shiftKey || !enterSend && (e.ctrlKey || e.metaKey))) {
                 e.preventDefault();
                 send();
               }
@@ -829,7 +832,7 @@ function App() {
             }} />
       <div className="composer-footer"><div className="composer-tools"><button className="icon-button attach-button" aria-label={t("Прикрепить фото или файл")} title={t("Фото, документы и файлы · до 50 МБ")} onClick={() => fileInput.current?.click()}>{uploading ? <LoaderCircle className="spin" size={20} /> : <Plus size={21} />}</button><button className={'access-label access-picker '+(access==='full'?'full':'')} onClick={()=>setModal('access')} title={t("Режим доступа агента")}><ShieldCheck size={13}/>{access==='full'?t("Полный доступ"):t("С подтверждениями")}<ChevronDown size={10}/></button></div><div className="composer-controls"><button className="model-picker" onClick={() => setModal(sid?'chat-model':'library')}>{cloudRoute?.name||snapshot?.info?.model||metrics.active_model_name||boot?.model_short||t("Модель")}<span>{number(contextMax)}</span><ChevronDown size={12} /></button><ComposerSendActions busy={busy} hasContent={!!text.trim()||!!files.length} canSubmit={!sending&&!uploading&&(!!text.trim()||!!files.length)&&connected} canSteer={!files.length} sending={sending} onSend={send} onStop={stopTurn}/></div></div>
      </div>
-    </div><div className="composer-caption"><span>{mode === 'image' ? t("Изображения создаются локально. На время генерации видеокарта переключается на Qwen Image.") : busy&&enterSend ? t("Enter — в очередь · Shift + Enter — новая строка") : enterSend ? t("Enter — отправить · Shift + Enter — новая строка") : t("Ctrl + Enter — отправить · Enter — новая строка")}</span><button className="compact-usage" title={t("Всего обработано токенов в этом чате")} onClick={()=>setInspector(true)}>Σ {number(workUsage.total_tokens||0)}</button><button title={t("Контекст модели, занятый текущим запросом")} onClick={() => setInspector(true)}><i className="context-ring" style={{
+    </div><div className="composer-caption"><span>{mode === 'image' ? t("Изображения создаются локально. На время генерации видеокарта переключается на Qwen Image.") : busy ? (enterSend ? t("Enter — в очередь · Alt + Enter — скорректировать") : t("Ctrl + Enter — в очередь · Alt + Enter — скорректировать")) : enterSend ? t("Enter — отправить · Shift + Enter — новая строка") : t("Ctrl + Enter — отправить · Enter — новая строка")}</span><button className="compact-usage" title={t("Всего обработано токенов в этом чате")} onClick={()=>setInspector(true)}>Σ {number(workUsage.total_tokens||0)}</button><button title={t("Контекст модели, занятый текущим запросом")} onClick={() => setInspector(true)}><i className="context-ring" style={{
               '--used': contextPercent + '%'
             }} />{usage ? number(usage) + ' / ' : ''}{number(contextMax)}</button></div>
    </div>
