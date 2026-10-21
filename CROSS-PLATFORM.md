@@ -1,8 +1,14 @@
-# Freedom GPT 1.4.2: платформы / platforms
+# Freedom GPT 1.5.0: платформы / platforms
 
 Сборки Windows и Ubuntu проверены локально. macOS распространяется как
 экспериментальный кандидат с явно указанными ограничениями. Модели
 скачиваются отдельно; видеокомплект автора проверен, другие новые загрузки на паузе.
+
+В 1.5.0 доступны цели, очередь и срочные поправки, ветки чатов и память проекта.
+Обновления проверяются и скачиваются только по кнопке «Проверить обновления».
+Для перехода с 1.4.x один раз используйте полный установщик после остановки
+приложения, сохранив резервную копию. Старый автоматический канал намеренно
+не устанавливает 1.5.0. [Проверки этой версии](docs/RELEASE-1.5.0-VERIFICATION.md).
 
 | Система | Формат | Проверка |
 | --- | --- | --- |
@@ -45,13 +51,13 @@ Blender, SDK устройств, браузеры для автоматизац�
 **Ubuntu:**
 
 ```sh
-sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+sh FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
 ```
 
 Без запуска, в выбранную папку SSD:
 
 ```sh
-FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run --install-only
+FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT-Setup-1.5.0-Ubuntu-x64.run --install-only
 ```
 
 Root не требуется. По умолчанию: `~/.local/share/FreedomGPT`, ярлык в
@@ -69,15 +75,15 @@ Root не требуется. По умолчанию: `~/.local/share/FreedomGP
 
 ## Доказательства проверок
 
-- `logs/windows-clean-pc-verification-1.4.2.json`: 11 проверок ядра, запуска,
+- `logs/windows-clean-pc-verification-1.5.0.json`: проверки ядра, запуска,
   повторного запуска, истории и восстановления отсутствующей библиотеки.
-- `logs/ubuntu-clean-pc-verification-1.4.2.json`: 15 проверок без системного Python
+- `logs/ubuntu-clean-pc-verification-1.5.0.json`: проверки без системного Python
   и сети, включая Node, pip, повторную установку и сохранение данных.
 - `logs/ubuntu-cuda-model-verification.json`: Linux CUDA в Docker/WSL2
   загрузил существующий Huihui GGUF, ответил `OK` и написал Python-функцию.
   Контекст теста 1024, без MTP: это проверка работоспособности, не обещание
   скорости на физической Ubuntu или при 65K-контексте.
-- `logs/macos-all-native-audit-1.4.2.json`: ARM64 и зависимости 104 нативных файлов.
+- `logs/macos-all-native-audit-1.5.0.json`: ARM64 и зависимости 104 нативных файлов.
   Статическая проверка не заменяет запуск на Mac.
 - Конечные архивы и установщики имеют отдельные отчёты в `logs/`.
 

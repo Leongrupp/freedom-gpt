@@ -1,5 +1,10 @@
 # Freedom GPT verification history
 
+**Current release: 1.5.0.** See [current checks and limits](docs/RELEASE-1.5.0-VERIFICATION.md)
+and [actual interface captures](docs/SCREENSHOTS.md). Updates in 1.5.0 start only
+with Check for updates. The earlier automatic-update and rendering results below
+are historical checks; they do not claim a fresh benchmark on every platform.
+
 Verified on Windows 11 with Ryzen9 7900X, 32 GB RAM and NVIDIA RTX4080 16 GB.
 Other physical PCs and an external SSD on another PC were not tested.
 

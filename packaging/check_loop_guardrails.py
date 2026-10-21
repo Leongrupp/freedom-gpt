@@ -47,6 +47,19 @@ class Loops(unittest.TestCase):
    self.assertTrue(controls._deliver(authority,'sid',7,agent,'note','Real user correction'))
   self.assertEqual(len([c for c in calls if c[0]=='steer']),1);self.assertEqual(len([c for c in calls if c[0]=='redirect']),1)
   self.assertEqual(calls[0][2]['ticket'],'note')
+ def test_model_steer_follows_current_request_not_historical_tool(self):
+  from agent.turn_iteration_prep import _inject_steer_after_newest_tool_result
+  history=[{'role':'assistant','content':'old tool','tool_calls':[]},{'role':'tool','content':'old result'},{'role':'assistant','content':'old answer'},{'role':'user','content':'current request'}]
+  original=json.loads(json.dumps(history));_inject_steer_after_newest_tool_result(object(),history,'Newest correction')
+  self.assertEqual(history[:len(original)],original);self.assertEqual(history[-1]['role'],'user');self.assertIn('Newest correction',history[-1]['content'])
+ def test_model_steer_without_any_tool_is_delivered(self):
+  from agent.turn_iteration_prep import _inject_steer_after_newest_tool_result
+  history=[{'role':'user','content':'current question'}];_inject_steer_after_newest_tool_result(object(),history,'Text-only correction')
+  self.assertEqual(len(history),3);self.assertIn('Text-only correction',history[-1]['content'])
+ def test_steer_after_current_tool_needs_no_placeholder(self):
+  from agent.turn_iteration_prep import _inject_steer_after_newest_tool_result
+  history=[{'role':'tool','content':'current result'}];_inject_steer_after_newest_tool_result(object(),history,'Correction')
+  self.assertEqual(len(history),2);self.assertIn('Correction',history[-1]['content'])
  def test_fast_background_failure_is_returned_inline(self):
   from tools import terminal_tool_background as background
   import tools.terminal_tool as terminal

@@ -10,6 +10,17 @@ def sha(p):
   for b in iter(lambda:f.read(4*1024**2),b''):h.update(b)
  return h.hexdigest()
 
+def verify_package_reports(root,v):
+ """Reject stale successful reports from an earlier build of the same version."""
+ folder=root/'release/platforms'/v
+ windows=[root/'release'/('FreedomGPT-Setup-'+v+'.exe'),root/'release'/('FreedomGPT-'+v+'-Windows-x64.zip')]
+ ubuntu=[folder/('FreedomGPT-'+v+'-Ubuntu-x64.tar.gz'),folder/('FreedomGPT-Setup-'+v+'-Ubuntu-x64.run'),folder/('FreedomGPT-'+v+'-Ubuntu-amd64.deb')]
+ packages=windows+ubuntu+[folder/('FreedomGPT-'+v+'-macOS-AppleSilicon.zip'),root/'release/update.json',folder/'update-ubuntu-x64.json',folder/'update-macos-arm64.json']
+ for kind,inputs in [('windows-clean-pc-verification',windows),('ubuntu-clean-pc-verification',ubuntu[:1]),('ubuntu-installers-verification',ubuntu[1:]),('platform-artifacts-verification',packages)]:
+  report=root/'logs'/(kind+'-'+v+'.json')
+  if not report.is_file() or not json.loads(report.read_text()).get('passed'):raise ValueError('Passed verification required: '+kind)
+  if any(not p.is_file() for p in inputs) or report.stat().st_mtime<max(p.stat().st_mtime for p in inputs):raise ValueError('Fresh package verification required: '+kind)
+
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--approved-version',required=True);p.add_argument('--phase',choices=['source','upload','publish'],required=True);a=p.parse_args()
  meta=json.loads((ROOT/'app/version.json').read_text());v=meta['version'];repo=meta['repository'];tag='v'+v
@@ -51,14 +62,14 @@ def main():
   topic_file=ROOT/'.tmp/release-topics.json';topic_file.write_text(json.dumps({'names':metadata['topics']}))
   run([gh,'api','--method','PUT','repos/'+repo+'/topics','--input',topic_file])
   state(source_pushed=True,commit=pinned);return
- for kind in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification']:
-  if not json.loads((ROOT/'logs'/(kind+'-'+v+'.json')).read_text()).get('passed'):raise ValueError('Verification required: '+kind)
+ verify_package_reports(ROOT,v)
  manifest=json.loads((out/'release.json').read_text());assets=[out/f['name'] for f in manifest['files']]+[out/'release.json',out/'platforms.json',out/'SHA256SUMS.txt',out/'README-BUILDS.md']
  if len({f.name for f in assets})!=len(assets):raise ValueError('Duplicate release assets')
  expected={f.name:{'bytes':f.stat().st_size,'sha256':sha(f)} for f in assets}
  if expected!=json.loads(approval.read_text()).get('assets'):raise ValueError('Frozen release assets changed; do not publish')
- notes=ROOT/'release'/('notes-'+tag+'.md')
- if not notes.is_file():raise ValueError('Reviewed bilingual release notes required')
+ reviewed_notes=json.loads(approval.read_text()).get('release_notes',{})
+ notes=pathlib.Path(reviewed_notes.get('path','')).resolve()
+ if not notes.is_relative_to(ROOT) or not notes.is_file() or sha(notes)!=reviewed_notes.get('sha256'):raise ValueError('Frozen reviewed release notes required; notes may not change during publication')
  result=run([gh,'release','view',tag,'--repo',repo,'--json','isDraft,tagName'],check=False)
  if result.returncode:
   if not any(s in result.stderr.lower() for s in ['release not found','not found','http 404']):raise RuntimeError('Cannot inspect the existing release: '+result.stderr[-500:])
@@ -90,7 +101,7 @@ def main():
  if set(uploaded)!=set(expected):raise ValueError('Unexpected release asset')
  commit=json.loads(approval.read_text()).get('source_commit')
  if not commit or not re.fullmatch('[0-9a-f]{40}',commit):raise ValueError('Pinned source commit is required')
- run([gh,'release','edit',tag,'--repo',repo,'--target',commit,'--draft=false','--latest']);latest=api('repos/'+repo+'/releases/latest')
+ run([gh,'release','edit',tag,'--repo',repo,'--target',commit,'--notes-file',notes,'--draft=false','--latest']);latest=api('repos/'+repo+'/releases/latest')
  if latest['tag_name']!=tag or latest['draft']:raise RuntimeError('Published latest release differs')
  state(published=True,url=latest['html_url'],verified_assets=len(expected))
 if __name__=='__main__':main()

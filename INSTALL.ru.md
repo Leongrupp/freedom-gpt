@@ -23,7 +23,7 @@
   if ([string]::IsNullOrWhiteSpace($freedomInstallPath)) { throw 'Choose an empty folder.' }
   $freedomInstallPath = [IO.Path]::GetFullPath($freedomInstallPath)
   $freedomSetupPath = Join-Path (Get-Location) 'FreedomGPT-Setup-1.5.0.exe'
-  $freedomHash = '8db8b99dce5dd6594676485b2cab89be6946929a16a4805570e51209565c1941'
+  $freedomHash = 'fb3e319c5223efda6efb97d3ab150cef2c3f7a1a853595ee10e371d4670844d1'
   if (!(Test-Path -LiteralPath $freedomSetupPath) -or (Get-FileHash -LiteralPath $freedomSetupPath -Algorithm SHA256).Hash -ne $freedomHash) {
     curl.exe -fL -C - --retry 4 -o $freedomSetupPath 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe'
     if ($LASTEXITCODE -ne 0) { throw 'Download failed. Run again to resume.' }
@@ -55,7 +55,7 @@
   [ "$(uname -m)" = arm64 ] || { echo 'Apple Silicon is required.'; exit 1; }
   sw_vers -productVersion | awk -F. '{ exit !($1 > 26 || ($1 == 26 && $2 >= 2)) }' || { echo 'macOS26.2+ is required.'; exit 1; }
   freedom_file='FreedomGPT-1.5.0-macOS-AppleSilicon.zip'
-  freedom_sha='3fef8f6e31d9367c633ec70bdb7e3792eb5f757d87561d71ecbb767357340b8b'
+  freedom_sha='d847ea54519b4839392d77311c2e42241d4b1759ed6f99f00223b3571adac650'
   freedom_folder='./FreedomGPT-1.5.0-macOS'
   [ ! -e "$freedom_folder" ] || { echo 'The extraction folder already exists. Choose a new folder.'; exit 1; }
   if ! printf '%s  %s\n' "$freedom_sha" "$freedom_file" | shasum -a 256 -c - >/dev/null 2>&1; then
@@ -87,7 +87,7 @@ sh ./FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
 (
   set -eu
   freedom_file='FreedomGPT-Setup-1.5.0-Ubuntu-x64.run'
-  freedom_sha='853cff2f7ddb6cb615365ceb7f87ae26023840d120a0462c9d2cb2b24d6ae21d'
+  freedom_sha='18df05c86de811b3216434fb5d80ddbbbd9ebdd4d41896fcb2c252a885e82ba2'
   if ! printf '%s  %s\n' "$freedom_sha" "$freedom_file" | sha256sum -c - >/dev/null 2>&1; then
     curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run'
   fi

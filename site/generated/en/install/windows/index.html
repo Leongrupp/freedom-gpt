@@ -14,7 +14,7 @@
   if ([string]::IsNullOrWhiteSpace($freedomInstallPath)) { throw &#x27;Choose an empty folder.&#x27; }
   $freedomInstallPath = [IO.Path]::GetFullPath($freedomInstallPath)
   $freedomSetupPath = Join-Path (Get-Location) &#x27;FreedomGPT-Setup-1.5.0.exe&#x27;
-  $freedomHash = &#x27;8db8b99dce5dd6594676485b2cab89be6946929a16a4805570e51209565c1941&#x27;
+  $freedomHash = &#x27;fb3e319c5223efda6efb97d3ab150cef2c3f7a1a853595ee10e371d4670844d1&#x27;
   if (!(Test-Path -LiteralPath $freedomSetupPath) -or (Get-FileHash -LiteralPath $freedomSetupPath -Algorithm SHA256).Hash -ne $freedomHash) {
     curl.exe -fL -C - --retry 4 -o $freedomSetupPath &#x27;https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe&#x27;
     if ($LASTEXITCODE -ne 0) { throw &#x27;Download failed. Run again to resume.&#x27; }

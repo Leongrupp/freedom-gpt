@@ -1,5 +1,5 @@
 """Finish one authorized release, then atomically update static pages without VPN changes."""
-import argparse,hashlib,json,os,pathlib,shlex,subprocess,sys,time,urllib.request
+import argparse,hashlib,json,os,pathlib,shlex,subprocess,sys,tarfile,time,urllib.request
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 VERSION='1.5.0';STATUS=ROOT/'logs/background-publication-1.5.0.json'
 SSH=['C:/Windows/System32/OpenSSH/ssh.exe','-o','BatchMode=yes','-o','ConnectTimeout=20','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+str(ROOT/'.private/vps-known-hosts'),'root@185.125.100.186']
@@ -42,6 +42,20 @@ def deploy():
  for path,lang in [('/','ru'),('/en/','en'),('/guides/ai-agent/','ru'),('/en/guides/ai-agent/','en')]:
   code,raw,_=fetch('https://aionpc.ru'+path);text=raw.decode('utf-8');checks[path]=code==200 and '1.5.0' in text and 'https://t.me/AI1rus' in text
  code,_,_=fetch('https://aionpc.ru/agent.css');checks['agent_css']=code==200
+ with tarfile.open(source,'r:gz') as archive:
+  design=json.load(archive.extractfile('design-manifest.json'))
+ images=[item for item in design['files'] if item['path'].startswith('public/media/screenshots/')]
+ checks['nine_real_interface_images']=len(images)==9
+ commit=approved['source_commit']
+ for item in images:
+  relative=item['path'].removeprefix('public/');name=pathlib.PurePosixPath(relative).name
+  code,pixels,headers=fetch('https://aionpc.ru/'+relative)
+  checks['site_image:'+name]=code==200 and hashlib.sha256(pixels).hexdigest()==item['sha256'] and 'image/png' in headers.get('Content-Type','')
+  code,pixels,_=fetch('https://raw.githubusercontent.com/Leongrupp/freedom-gpt/'+commit+'/assets/screenshots/'+name)
+  checks['github_image:'+name]=code==200 and hashlib.sha256(pixels).hexdigest()==item['sha256']
+ for readme,lang in [('README.md','en'),('README.ru.md','ru')]:
+  code,raw,_=fetch('https://raw.githubusercontent.com/Leongrupp/freedom-gpt/'+commit+'/'+readme)
+  checks['github_readme:'+lang]=code==200 and ('assets/screenshots/overview-'+lang+'.png') in raw.decode('utf-8') and 'https://aionpc.ru' in raw.decode('utf-8')
  matrix=json.loads(fetch('https://aionpc.ru/api/platforms')[1]);checks['three_platforms']=matrix.get('version')==VERSION and len(matrix.get('platforms',[]))==3
  downloads=[f for p in matrix['platforms'] for f in p['files']];checks['six_downloads']=len(downloads)==6
  for file in downloads:

@@ -3,6 +3,7 @@ import hashlib,json,os,pathlib,re,shutil,subprocess,sys,tarfile,time,urllib.requ
 BASE=pathlib.Path('/var/www/freedom-gpt');WORK=pathlib.Path('/root/freedom-gpt-deploy')
 ALLOWED={'public/index.html','public/en/index.html','public/premium.css','public/premium.js','public/app.js','public/freedom.svg','public/media/site/core-hero.webp','public/media/site/creative-world.webp','public/media/site/project-cover.png'}
 ALLOWED|={'public/robots.txt','public/sitemap.xml','public/llms.txt','public/agent.css'}
+ALLOWED|={'public/media/screenshots/'+name+'.png' for name in ['overview-ru','overview-en','chat-ru','chat-en','goal-ru','goal-en','models-ru','models-en','agent-working-ru']}
 ALLOWED|={'public/'+lang+path+'index.html' for lang in ['', 'en/'] for path in ['install/windows/','install/ubuntu/','install/macos/','guides/local-ai/','guides/choose-model/','guides/ai-agent/']}
 
 def allowed_files(manifest):

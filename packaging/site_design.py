@@ -14,6 +14,8 @@ def main():
   'public/media/site/creative-world.webp':'assets/site/creative-world.webp',
   'public/media/site/project-cover.png':'assets/cover-platforms.png',
  }
+ for name in ['overview-ru','overview-en','chat-ru','chat-en','goal-ru','goal-en','models-ru','models-en','agent-working-ru']:
+  files['public/media/screenshots/'+name+'.png']='assets/screenshots/'+name+'.png'
  sys.path.insert(0,str(ROOT/'site'))
  from seo import generated_files
  files.update({'public/'+name:'site/generated/'+name for name in generated_files()})

@@ -57,10 +57,24 @@ def section(lang):
  guide=('/en' if lang=='en' else '')+'/guides/ai-agent/'
  return f'''<section class="section wrap agent-section" id="features"><div class="section-heading"><div><div class="eyebrow">FREEDOM GPT / AI AGENT</div><h2>{d['heading']}</h2></div><p>{e(d['lead'])}</p></div><div class="agent-preview-note"><span>{e(d['preview'])}</span><p>{e(d['status'])}</p></div><div class="agent-capabilities">{cards}</div><ol class="agent-flow">{flow}</ol><div class="agent-fine-print"><p>{e(d['limits'])}</p><a class="text-link" href="{guide}">{e(d['detail'])}</a></div></section>'''
 
+def gallery(lang):
+ en=lang=='en';e=html.escape
+ title='The real agent.<br>In your workspace.' if en else 'Настоящий агент.<br>В вашем рабочем окне.'
+ lead='Actual Freedom GPT 1.5.0 on Windows 11. The agent created ExpenseLab, accepted a correction, ran six tests and completed its goal.' if en else 'Реальная Freedom GPT 1.5.0 на Windows 11. Агент создал ExpenseLab, учёл поправку, выполнил шесть тестов и завершил цель.'
+ labels=[('chat','Code, chats and editable files' if en else 'Код, чаты и редактирование файлов'),('goal','Goals, acceptance criteria and history' if en else 'Цели, критерии готовности и история'),('models','Model suggestions for your hardware' if en else 'Подбор моделей под ваш компьютер')]
+ figures=[]
+ for kind,label in labels:
+  src=f'/media/screenshots/{"overview" if kind=="chat" else kind}-{lang}.png'
+  figures.append(f'<figure class="panel-shot panel-shot-{kind}"><a href="{src}" target="_blank" rel="noopener" aria-label="{e(label)} — {"open screenshot" if en else "открыть снимок"}"><img src="{src}" width="1536" height="1000" loading="lazy" decoding="async" alt="{e(label)} · Freedom GPT 1.5.0 · {"English interface" if en else "русский интерфейс"}"></a><figcaption><span>{e(label)}</span><a href="{src}" target="_blank" rel="noopener">{"Full size ↗" if en else "Открыть ↗"}</a></figcaption></figure>')
+ note='Screenshots show the Windows interface, with a Russian example conversation. Mac and Linux use the same web interface; native Mac execution remains unverified. The displayed PC is an example, not a minimum requirement.' if en else 'Снимки сделаны в Windows на демонстрационном проекте, без личных чатов. На Mac и Linux используется тот же веб-интерфейс; запуск на настоящем Mac ещё не проверен. Показанное железо — пример, а не минимальное требование.'
+ return f'''<section class="section wrap panel-gallery" id="workspace"><div class="section-heading"><div><div class="eyebrow">FREEDOM GPT / {"ACTUAL APP" if en else "РЕАЛЬНОЕ ПРИЛОЖЕНИЕ"}</div><h2>{title}</h2></div><p>{e(lead)}</p></div><div class="panel-gallery-grid">{''.join(figures)}</div><details class="panel-workflow"><summary>{"See the task queue and an urgent correction" if en else "Посмотреть очередь и срочную поправку во время работы"}</summary><a href="/media/screenshots/agent-working-ru.png" target="_blank" rel="noopener"><img src="/media/screenshots/agent-working-ru.png" width="1536" height="1000" loading="lazy" alt="{"Actual task queue and active-task steering, Russian interface" if en else "Настоящая очередь заданий и поправка текущей задаче"}"></a></details><p class="panel-capture-note">{e(note)}</p></section>'''
+
 def decorate(page,lang):
+ start=page.index('<section class="section wrap" id="workspace">');end=page.index('</section>',start)+len('</section>')
+ page=page[:start]+gallery(lang)+page[end:]
  start=page.index('<section class="section wrap feature-section" id="features">');end=page.index('</section>',start)+len('</section>')
  page=page[:start]+section(lang)+page[end:]
- return page.replace('</head>','<link rel="stylesheet" href="/agent.css?v=20261021"></head>')
+ return page.replace('</head>','<link rel="stylesheet" href="/agent.css?v=20261021-panels"></head>')
 
 def guide(lang):
  d=COPY[lang];e=html.escape;en=lang=='en'
@@ -70,4 +84,5 @@ def guide(lang):
  prompt='Create a small local website in this project folder. Start with a plan, implement it, run available tests and show the page in preview. Stop before external publication.' if en else 'Создай небольшой локальный сайт в этой папке проекта. Сначала составь план, реализуй его, выполни доступные тесты и покажи страницу в просмотре. Остановись перед публикацией в интернете.'
  body+=f'<section><h2>{title}</h2><p>{e(prompt)}</p></section>'
  body+=f'<section><h2>{"Control and limits" if en else "Контроль и ограничения"}</h2><p>{e(d["limits"])}</p><p>{e(d["free"])}</p><p>{"Use narrow permissions, project backups and your own acceptance checks. A completed goal is a model verdict, not a guarantee of correctness." if en else "Используйте подходящий режим доступа, резервные копии и свою проверку результата. Завершение цели — оценка агента, а не гарантия правильности."}</p></section>'
+ body+=f'<section><h2>{"The real interface" if en else "Настоящий интерфейс"}</h2><a href="/media/screenshots/chat-{lang}.png"><img class="panel-guide-image" src="/media/screenshots/chat-{lang}.png" width="1536" height="1000" loading="lazy" alt="Freedom GPT 1.5.0 — {"code and file editing on Windows" if en else "код и редактор файлов в Windows"}"></a><p>{"Actual Windows capture. A neutral demo project, with the Russian conversation preserved." if en else "Снимок работающей Windows-версии на демонстрационном проекте ExpenseLab."}</p></section>'
  return body

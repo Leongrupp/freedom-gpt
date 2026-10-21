@@ -66,3 +66,4 @@ body{overflow-x:clip}.header-actions{margin-left:auto}
 .command-toolbar>span{flex:1}.command-toolbar button+button{margin-left:-6px;background:transparent}.install-command code:focus-visible{outline:1px solid #b8cfe533;outline-offset:4px}
 
 .install-command>.command-hint{font-size:10px;line-height:1.8;color:#7f93a8;margin:0;padding:0 17px 14px}
+.panel-guide-image{display:block;max-width:100%;height:auto;border-radius:12px;margin:20px 0;border:1px solid #ffffff20}

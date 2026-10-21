@@ -32,6 +32,14 @@ def repo_name(value):
     if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',value):raise ValueError('Нужен репозиторий owner/name.')
     return value
 
+def auxiliary_gguf(name):
+    """Calibration matrices are not language-model weights, including cached results."""
+    basename=str(name).replace('\\','/').rsplit('/',1)[-1].lower()
+    stem=basename.removesuffix('.gguf')
+    matrix=bool(re.search(r'(?:^|[_.-])imatrix(?:$|[_.-])',stem))
+    quantized=bool(re.search(r'(?:^|[_.-])(?:iq[1-4]|q[2-8])_',stem))
+    return matrix and not quantized
+
 def hf_candidates(repo,device):
     meta=remote(HF+'/api/models/'+repo_name(repo),{'blobs':'true'})
     gguf=meta.get('gguf') or {};architecture=gguf.get('architecture');context=gguf.get('context_length') or 0
@@ -40,7 +48,7 @@ def hf_candidates(repo,device):
     for file in meta.get('siblings',[]):
         name=file['rfilename'];lfs=file.get('lfs') or {};size=file.get('size') or lfs.get('size');sha=lfs.get('sha256')
         basename=name.rsplit('/',1)[-1].lower()
-        if basename.endswith('.imatrix.gguf') or re.match(r'imatrix[_.-]',basename):continue
+        if auxiliary_gguf(name):continue
         if not name.endswith('.gguf') or any(s in name.lower() for s in ['mmproj','-of-','encoder','embedding','vae']) or re.match(r'(mtp|draft|dflash)[-_]',name.rsplit('/',1)[-1],re.I):continue
         if not isinstance(size,int) or not re.fullmatch(r'[a-f0-9]{64}',sha or ''):continue
         assessment=fit(size,device)
@@ -164,11 +172,11 @@ class Discovery:
             saved=read(cache,{})
             self.state={**self.state,**saved,'state':'complete' if saved else 'error','offline':True,'errors':[str(exc)],'query':query,'provider':provider,'task':task}
     def snapshot(self):
-        state=dict(self.state);state['results']=[dict(m,recommendation=fit(m['bytes'],self.library.device,kind=m.get('kind','chat'),ram=m.get('recommended_ram_gb'),vram=m.get('recommended_vram_gb'))) for m in state.get('results',[])]
+        state=dict(self.state);state['results']=[dict(m,recommendation=fit(m['bytes'],self.library.device,kind=m.get('kind','chat'),ram=m.get('recommended_ram_gb'),vram=m.get('recommended_vram_gb'))) for m in state.get('results',[]) if not auxiliary_gguf(m.get('filename',m.get('name','')))]
         return state
     def add(self,key):
         row=next((m for m in self.state.get('results',[]) if m['key']==key),None)
-        if not row or not row.get('can_add'):raise ValueError('Выберите доступную модель из результатов поиска.')
+        if not row or not row.get('can_add') or auxiliary_gguf(row.get('filename',row.get('name',''))):raise ValueError('Выберите доступную модель из результатов поиска.')
         if row['provider']=='huggingface':return self.library.add_hf(row['repo'],row['filename'])
         layer=ollama_manifest(row['repo'],row['filename']);sha=layer['digest'][7:];ident='ollama-'+sha[:16]
         if self.library.model(ident):return self.library.model(ident)

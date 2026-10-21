@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/agent-cover.svg" alt="Freedom GPT — Your AI. Your computer." width="100%"></p>
+<p align="center"><img src="assets/screenshots/overview-en.png" alt="Actual Freedom GPT 1.5.0 on Windows — chats, files and project history" width="100%"></p>
 
 <h1 align="center">Freedom GPT 💛</h1>
 <p align="center"><strong>A free, open-source AI agent. Your models, tools and project memory.</strong></p>
@@ -54,9 +54,21 @@ Version **1.5.0** includes the agent features below. Updates are checked and dow
 
 ### A look inside
 
-![Freedom GPT first-run hardware check and model selection](assets/first-run-en.jpg)
+These are real **1.5.0 Windows** captures, using a neutral project rather than private chats. The local agent created ExpenseLab, accepted a correction, passed six tests, wrote the queued README and completed its goal. The example conversation is in Russian; the interface below is English.
 
-<sub>Actual first-run screen on an example PC. The hardware shown is not a minimum requirement for every model.</sub>
+| Goals and completion history | Hardware and model suggestions |
+|---|---|
+| ![Actual goal panel](assets/screenshots/goal-en.png) | ![Actual model advisor](assets/screenshots/models-en.png) |
+
+<details><summary>See the real task queue and an urgent correction</summary>
+
+![Task queue and live steering in the Russian interface](assets/screenshots/agent-working-ru.png)
+
+</details>
+
+[Capture details and more views](docs/SCREENSHOTS.md). These are Windows screenshots; native Mac execution remains unverified. The shown hardware is an example, not a minimum requirement.
+
+**During a task:** Enter queues the next prompt; **Steer / Alt+Enter** corrects the current task. Delivery occurs at a safe boundary; completed actions are not undone. Repeated identical tool failures are guarded.
 
 ## ⬇ Choose your system
 

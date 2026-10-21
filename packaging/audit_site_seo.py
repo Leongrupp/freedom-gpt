@@ -72,7 +72,10 @@ def main():
  titles=[doc.title for doc in documents.values()];descs=[doc.metas('name','description')[0] for doc in documents.values()]
  checks['all_titles_unique']=len(set(titles))==len(titles);checks['all_descriptions_unique']=len(set(descs))==len(descs)
  for path in sorted(resources):checks['asset:'+path]=fetch(path)[0]==200
- checks['internal_links_resolve']=internal.issubset(set(documents))
+ # Full-size screenshot links are valid assets, with HTTP checked above.
+ # Keep rejecting undeclared HTML routes and unverified file links.
+ unresolved_internal=sorted(internal-(set(documents)|resources))
+ checks['internal_links_resolve']=not unresolved_internal
  status,data,headers,_=fetch('/sitemap.xml');sitemap=ET.fromstring(data);ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9','x':'http://www.w3.org/1999/xhtml'}
  entries=sitemap.findall('s:url',ns);locs=[entry.findtext('s:loc',namespaces=ns) for entry in entries]
  checks['sitemap_all_canonical_pages']=status==200 and len(locs)==len(documents) and set(locs)=={SITE+path for path in documents}
@@ -87,7 +90,7 @@ def main():
  checks['llms_optional_reference']=fetch('/llms.txt')[0]==200
  try:fetch('/this-page-does-not-exist-seo-check/');checks['real_404']=False
  except urllib.error.HTTPError as exc:checks['real_404']=exc.code==404
- report={'passed':all(checks.values()),'checked_at':time.time(),'base':base,'pages':len(documents),'checks':checks,'page_transfers':details,'core_web_vitals_field_data_measured':False,'indexing_or_ranking_verified':False,'schema_rich_result_eligibility_claimed':False}
+ report={'passed':all(checks.values()),'checked_at':time.time(),'base':base,'pages':len(documents),'checks':checks,'unresolved_internal_links':unresolved_internal,'page_transfers':details,'core_web_vitals_field_data_measured':False,'indexing_or_ranking_verified':False,'schema_rich_result_eligibility_claimed':False}
  destination=ROOT/args.report
  if not destination.resolve().is_relative_to(ROOT):raise ValueError('Report must stay inside project')
  destination.parent.mkdir(parents=True,exist_ok=True);destination.write_text(json.dumps(report,indent=2),encoding='utf-8')

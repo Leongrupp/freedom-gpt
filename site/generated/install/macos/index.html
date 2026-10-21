@@ -13,7 +13,7 @@
   [ &quot;$(uname -m)&quot; = arm64 ] || { echo &#x27;Apple Silicon is required.&#x27;; exit 1; }
   sw_vers -productVersion | awk -F. &#x27;{ exit !($1 &gt; 26 || ($1 == 26 &amp;&amp; $2 &gt;= 2)) }&#x27; || { echo &#x27;macOS26.2+ is required.&#x27;; exit 1; }
   freedom_file=&#x27;FreedomGPT-1.5.0-macOS-AppleSilicon.zip&#x27;
-  freedom_sha=&#x27;3fef8f6e31d9367c633ec70bdb7e3792eb5f757d87561d71ecbb767357340b8b&#x27;
+  freedom_sha=&#x27;d847ea54519b4839392d77311c2e42241d4b1759ed6f99f00223b3571adac650&#x27;
   freedom_folder=&#x27;./FreedomGPT-1.5.0-macOS&#x27;
   [ ! -e &quot;$freedom_folder&quot; ] || { echo &#x27;The extraction folder already exists. Choose a new folder.&#x27;; exit 1; }
   if ! printf &#x27;%s  %s\n&#x27; &quot;$freedom_sha&quot; &quot;$freedom_file&quot; | shasum -a 256 -c - &gt;/dev/null 2&gt;&amp;1; then

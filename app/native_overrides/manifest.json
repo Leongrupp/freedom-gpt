@@ -42,6 +42,11 @@
       "sha256": "7fb815b0839842902faa271a4796f625c40ba1ede757fa53a95fc948e616bc2d"
     },
     {
+      "path": "agent/turn_iteration_prep.py",
+      "bytes": 28450,
+      "sha256": "30a0d41a1a0456005354b29e811df6475a1eea9148fac8aeb7bd12f591ab15f9"
+    },
+    {
       "path": "tools/terminal_tool_background.py",
       "bytes": 16296,
       "sha256": "9fc499027dbb8ee4462bb7eca4f8d9dc2891ab725f615aaba6cce5b12cf24c4f"

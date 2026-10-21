@@ -76,10 +76,15 @@ def find_artifacts(session_id,value):
     def walk(item):
         if isinstance(item,dict):
             for key,val in item.items():
-                if key in {'image','image_path','output','output_path','file_path','path'} and isinstance(val,str):
+                if key in {'image','image_path','output','output_path','file_path','path','resolved_path'} and isinstance(val,str):
                     if pathlib.Path(val).is_absolute():
                         asset=register_artifact(session_id,val)
                         if asset:found.append(asset)
+                if key in {'files_modified','files_created','output_files'} and isinstance(val,list):
+                    for path in val:
+                        if isinstance(path,str) and pathlib.Path(path).is_absolute():
+                            asset=register_artifact(session_id,path)
+                            if asset:found.append(asset)
                 if isinstance(val,(dict,list)):walk(val)
         elif isinstance(item,list):
             for part in item:walk(part)

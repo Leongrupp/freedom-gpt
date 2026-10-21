@@ -6,7 +6,7 @@ def main():
  for name in ['.gitignore','.gitattributes','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt']:
   files.append(ROOT/name)
  files.extend(ROOT/name for name in ['SUPPORT.md','CODE_OF_CONDUCT.md'])
- files.extend(ROOT/'packaging'/name for name in ['audit_site_seo.py','submit_indexnow.py','feature_payload.py','check_release_features.py','check_installed_features.py','check_integrations.py','check_loop_guardrails.py','check_agent_preview.py','protect_legacy_updates.py','finish_publication.py','freeze_release_source.py'])
+ files.extend(ROOT/'packaging'/name for name in ['audit_site_seo.py','submit_indexnow.py','feature_payload.py','check_release_features.py','check_installed_features.py','check_integrations.py','check_loop_guardrails.py','check_model_candidates.py','check_artifact_discovery.py','check_publication_guards.py','check_agent_preview.py','protect_legacy_updates.py','finish_publication.py','freeze_release_source.py'])
  for name in ['src','public','creative','scripts','agent_plugins','builtin_plugins','native_overrides']:
   files.extend(p for p in (ROOT/'app'/name).rglob('*') if p.is_file())
  files.extend(p for p in (ROOT/'app').iterdir() if p.is_file() and p.suffix.lower() in {'.py','.json','.js','.html','.cmd','.ico','.txt','.pub'})
