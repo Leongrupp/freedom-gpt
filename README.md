@@ -45,6 +45,9 @@ A first site, a generated image, a million processed model tokens: achievements 
 
 - **Ready-reply notifications.** A card in the lower right and a soft short chime. Open the finished chat from the card; control notifications and sound separately on each device. On phones, the agent page must be open.
 
+- **Live activity.** Expand tool calls, commands and results; steer or stop the task as it works.
+- **Applications and Blender.** Use installed CLIs, Python scripts and available automation controls. The required applications are separate installations.
+
 ## Current public downloads
 
 | System | Download | Requirements |

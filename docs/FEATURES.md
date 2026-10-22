@@ -92,3 +92,13 @@ Quality depends on the model, memory, tools and permissions. Review important re
 ## Model connections
 
 The new connection catalog includes OpenRouter, Google Gemini, Groq, Cloudflare Workers AI, OpenAI, DeepSeek, Grok · xAI, Claude · Anthropic, fal.ai. You supply your own API credentials and requests go to your selected provider. Free provider tiers can have changing limits; paid requests follow that provider’s billing.
+
+
+## Watch the work live
+
+Expand activity to see tool calls, commands and results as the agent works. Send a correction, queue a follow-up or stop the task.
+
+
+## Applications and Blender
+
+Use installed command-line tools, Python scripts and available app controls, including Blender workflows. The application and its automation tools must be installed and accessible.
