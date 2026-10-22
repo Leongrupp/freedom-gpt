@@ -9,10 +9,13 @@ def main():
   'public/index.html':'site/index.html','public/en/index.html':'site/en.html',
   'public/premium.css':'site/premium.css','public/premium.js':'site/premium.js',
   'public/app.js':'site/app.js','public/freedom.svg':'site/freedom.svg',
+  'public/agent.css':'site/agent.css',
   'public/media/site/core-hero.webp':'assets/site/core-hero.webp',
   'public/media/site/creative-world.webp':'assets/site/creative-world.webp',
   'public/media/site/project-cover.png':'assets/cover-platforms.png',
  }
+ for name in ['overview-ru','overview-en','chat-ru','chat-en','goal-ru','goal-en','models-ru','models-en','agent-working-ru','phone-access','settings-160','rewards-160','phone-160','notifications-160','workspace-160-ru','workspace-160-en']:
+  files['public/media/screenshots/'+name+'.png']='assets/screenshots/'+name+'.png'
  sys.path.insert(0,str(ROOT/'site'))
  from seo import generated_files
  files.update({'public/'+name:'site/generated/'+name for name in generated_files()})

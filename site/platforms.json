@@ -1,76 +1,77 @@
 {
   "product": "Freedom GPT",
   "version": "1.4.2",
-  "published": false,
+  "published": true,
   "platforms": [
     {
       "id": "windows-x64",
       "name": "Windows 10/11 x64",
-      "note_ru": "Проверено на Windows 11. Python, Node.js и движки внутри. Модели отдельно.",
-      "note_en": "Tested on Windows 11. Python, Node.js and engines included; models separate.",
       "files": [
         {
           "name": "FreedomGPT-Setup-1.4.2.exe",
           "bytes": 1610894120,
           "sha256": "c7862b0c5e90ebcf454b405fa84047c76c966cd2346e1dae25392574dcd4317a",
-          "format": "EXE installer",
-          "url": "/downloads/platform/FreedomGPT-Setup-1.4.2.exe"
+          "format": "EXE",
+          "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe"
         },
         {
           "name": "FreedomGPT-1.4.2-Windows-x64.zip",
           "bytes": 1610859752,
           "sha256": "2530733fbe54dfc38800219ed731c21d104dbf65c21b17a71b8e335f306b6db3",
-          "format": "ZIP portable",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-Windows-x64.zip"
+          "format": "ZIP",
+          "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip"
         }
       ],
+      "note_ru": "Python, Node.js и движки внутри; модели отдельно.",
+      "note_en": "Python, Node.js and engines included; models separate.",
       "native_tested": true
     },
     {
       "id": "ubuntu-x64",
       "name": "Ubuntu 24.04 x64",
-      "note_ru": "Проверено без Python и сети в чистом контейнере. GPU требует драйвера.",
-      "note_en": "Tested offline in a clean container without system Python. GPU needs a driver.",
       "files": [
         {
-          "name": "FreedomGPT-1.4.2-Ubuntu-x64.tar.gz",
-          "bytes": 1215260425,
-          "sha256": "bdcf2b5c67e94139a3757d44bb97f575e1525e2ea79a7c4fdac2ce9209dbd216",
-          "format": "TAR.GZ portable",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz"
+          "name": "FreedomGPT-Setup-1.4.2-Ubuntu-x64.run",
+          "bytes": 1215261031,
+          "sha256": "c6e4100867c74ee963f32cddbeb2ad3191562f791ee22e2cd64bace82e684910",
+          "format": ".run",
+          "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run"
         },
         {
           "name": "FreedomGPT-1.4.2-Ubuntu-amd64.deb",
           "bytes": 1214756920,
           "sha256": "d3fbdb1224ce8dfbae84137470e43a95244ea2c4fe690eaac83fc2e657faac32",
           "format": "DEB",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-Ubuntu-amd64.deb"
+          "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb"
         },
         {
-          "name": "FreedomGPT-Setup-1.4.2-Ubuntu-x64.run",
-          "bytes": 1215261031,
-          "sha256": "c6e4100867c74ee963f32cddbeb2ad3191562f791ee22e2cd64bace82e684910",
-          "format": ".run installer",
-          "url": "/downloads/platform/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run"
+          "name": "FreedomGPT-1.4.2-Ubuntu-x64.tar.gz",
+          "bytes": 1215260425,
+          "sha256": "bdcf2b5c67e94139a3757d44bb97f575e1525e2ea79a7c4fdac2ce9209dbd216",
+          "format": "TAR.GZ",
+          "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz"
         }
       ],
+      "note_ru": "Проверено в чистом контейнере без сети; GPU требует драйвера.",
+      "note_en": "Tested in a clean offline container; GPU needs a driver.",
       "native_tested": true
     },
     {
       "id": "macos-arm64",
       "name": "macOS · Apple Silicon",
-      "note_ru": "macOS 26.2+, M1+. Кандидат без подписи; запуск на Mac ещё не проверен.",
-      "note_en": "macOS 26.2+, M1+. Unsigned candidate; native Mac execution not yet tested.",
       "files": [
         {
           "name": "FreedomGPT-1.4.2-macOS-AppleSilicon.zip",
           "bytes": 306625293,
           "sha256": "361c4703cb45f5c44c8b9bd2a4a4cb9a817b1cb9380a16ab9fb52cd75caf1d71",
           "format": ".app ZIP",
-          "url": "/downloads/platform/FreedomGPT-1.4.2-macOS-AppleSilicon.zip"
+          "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip"
         }
       ],
+      "note_ru": "macOS 26.2+, M1+. Кандидат без подписи, запуск на Mac ещё не проверен.",
+      "note_en": "macOS 26.2+, M1+. Unsigned candidate; native Mac execution not yet tested.",
       "native_tested": false
     }
-  ]
+  ],
+  "checked_at": 1792688818.1152837
 }

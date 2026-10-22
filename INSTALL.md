@@ -101,3 +101,7 @@ Open Terminal in a folder for downloads and paste the full block. The file is ve
 The application checks hardware and helps you select a model. Download the model, activate it, then start a chat. Search and new downloads need internet; installed local models can run offline. Keep free SSD space for weights and updates.
 
 [Telegram @AI1rus](https://t.me/AI1rus) · [Build from source](BUILD.md)
+
+## Upgrading from 1.4.x
+
+Stop the app, keep your backup and run the full 1.5.0 installer once in your existing Freedom GPT folder. Chats and models are preserved. The legacy automatic update channel does not install 1.5.0. From 1.5.0, updates start only after you click Check for updates.

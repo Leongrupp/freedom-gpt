@@ -1,11 +1,13 @@
 # Freedom GPT
 
-> Free, MIT-licensed local AI workspace for Windows and Ubuntu, with an experimental Apple Silicon Mac build. No subscription or per-token charge for local inference.
+> Free, MIT-licensed local AI agent for Windows and Ubuntu, with an experimental Apple Silicon Mac build. No subscription or per-token charge for local inference.
 
 Model weights download separately and have their own licenses. Hardware, electricity, storage and initial internet access are required. Downloaded local models can run offline; web tools and updates need internet. This is an independent project, not free access to proprietary cloud services. Mac native execution and video on other hardware remain unverified.
 
 ## Public documentation
 
+- [Your AI agent on your phone](https://aionpc.ru/en/guides/phone-access/): Connect your iPhone to Freedom GPT on your PC using a QR code and PC approval. Setup, privacy, mobile access and revocation.
+- [How the Freedom GPT AI agent works](https://aionpc.ru/en/guides/ai-agent/): How Freedom GPT combines compatible models, tools and project memory. Goals, queue, branches, Blender and GitHub: features and limits.
 - [Free local AI for Windows](https://aionpc.ru/en/install/windows/): Install Freedom GPT on Windows 10/11. Free local AI with no subscription, bundled Python, EXE or portable ZIP, and verified PowerShell commands.
 - [Free local AI for Ubuntu Linux](https://aionpc.ru/en/install/ubuntu/): Download Freedom GPT for Ubuntu 24.04 x64: .run installer, DEB and TAR.GZ. Bundled Python and engines, with model selection for your hardware.
 - [Freedom GPT for Mac: Apple Silicon preview](https://aionpc.ru/en/install/macos/): Open-source local AI preview for Apple Silicon M1+ and macOS 26.2+. Download the app ZIP and read requirements and unverified-platform limitations.

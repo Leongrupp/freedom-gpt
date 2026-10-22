@@ -4,6 +4,12 @@ ROOT=pathlib.Path(__file__).resolve().parent.parent
 SYSTEMS=['windows-x64','macos-arm64','ubuntu-x64']
 TITLES={'windows-x64':'Windows','macos-arm64':'macOS · Apple Silicon','ubuntu-x64':'Ubuntu Linux'}
 def release_files(version):
+    # Public website instructions follow the verified published snapshot, even
+    # when newer unpublished build artifacts exist in this checkout.
+    snapshot=json.loads((ROOT/'site/platforms.json').read_text(encoding='utf-8'))
+    if snapshot['version']==version:
+        files=[dict(file,url=f'https://github.com/Leongrupp/freedom-gpt/releases/download/v{version}/'+file['name']) for platform in snapshot['platforms'] for file in platform['files']]
+        return {f['name']:f for f in files}
     manifest=ROOT/'release/platforms'/version/'release.json'
     if manifest.is_file():files=json.loads(manifest.read_text(encoding='utf-8'))['files']
     else:
@@ -113,4 +119,5 @@ def markdown(lang,version,repo):
         if target=='ubuntu-x64':terminal_note+=(' If curl is missing, use the download button and the short command above.' if en else ' Если curl не найден, скачайте файл кнопкой и выполните короткую команду выше.')
         lines+=['','### '+('Terminal download and installation' if en else 'Скачать и установить через терминал'),'',terminal_note,'','```'+('powershell' if target=='windows-x64' else 'sh'),commands(target,version,repo),'```','']
     lines+=['## '+('Choose your first model' if en else 'Выберите первую модель'),'',('The application checks hardware and helps you select a model. Download the model, activate it, then start a chat. Search and new downloads need internet; installed local models can run offline. Keep free SSD space for weights and updates.' if en else 'Приложение проверит железо и поможет выбрать модель. Скачайте модель, активируйте и создайте чат. Поиск и новые загрузки требуют интернета; скачанные локальные модели могут работать офлайн. Оставьте место на SSD для весов и обновлений.'),'','[Telegram @AI1rus](https://t.me/AI1rus) · [Build from source](BUILD.md)']
+    lines+=['','## '+('Upgrading from 1.4.x' if en else 'Переход с 1.4.x'),'',('Stop the app, keep your backup and run the full 1.5.0 installer once in your existing Freedom GPT folder. Chats and models are preserved. The legacy automatic update channel does not install 1.5.0. From 1.5.0, updates start only after you click Check for updates.' if en else 'Остановите приложение, сохраните резервную копию и один раз запустите полный установщик 1.5.0 в прежнюю папку Freedom GPT. Чаты и модели сохраняются. Старый автоматический канал не устанавливает 1.5.0. Начиная с 1.5.0 обновления запускаются только кнопкой «Проверить обновления».')]
     return '\n'.join(lines)+'\n'

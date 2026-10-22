@@ -2,8 +2,9 @@
 import hashlib,json,os,pathlib,re,shutil,subprocess,sys,tarfile,time,urllib.request
 BASE=pathlib.Path('/var/www/freedom-gpt');WORK=pathlib.Path('/root/freedom-gpt-deploy')
 ALLOWED={'public/index.html','public/en/index.html','public/premium.css','public/premium.js','public/app.js','public/freedom.svg','public/media/site/core-hero.webp','public/media/site/creative-world.webp','public/media/site/project-cover.png'}
-ALLOWED|={'public/robots.txt','public/sitemap.xml','public/llms.txt'}
-ALLOWED|={'public/'+lang+path+'index.html' for lang in ['', 'en/'] for path in ['install/windows/','install/ubuntu/','install/macos/','guides/local-ai/','guides/choose-model/']}
+ALLOWED|={'public/robots.txt','public/sitemap.xml','public/llms.txt','public/agent.css'}
+ALLOWED|={'public/media/screenshots/'+name+'.png' for name in ['overview-ru','overview-en','chat-ru','chat-en','goal-ru','goal-en','models-ru','models-en','agent-working-ru','phone-access','settings-160','rewards-160','phone-160','notifications-160','workspace-160-ru','workspace-160-en']}
+ALLOWED|={'public/'+lang+path+'index.html' for lang in ['', 'en/'] for path in ['install/windows/','install/ubuntu/','install/macos/','guides/local-ai/','guides/choose-model/','guides/ai-agent/','guides/phone-access/']}
 
 def allowed_files(manifest):
  declared={item['path'] for item in manifest['files']}

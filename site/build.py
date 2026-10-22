@@ -36,13 +36,17 @@ COPY={
  'faq':[('Does it work offline?','Yes, for local chat and files after the models are downloaded. Search, websites, downloads and update checks need internet.'),('How do updates arrive?','Automatically after a new signed release is published. Installation waits for idle tasks, checks signatures and hashes, preserves user data and backs up replaced app files. You can disable automatic updates.'),('Will it always generate 100+ tokens per second?','No. Speed depends on hardware, model and context length. One tested long code answer on an RTX 4080 measured 100.85 tokens/s. This is a case-specific result, not a guarantee. Review code and run tests.'),('What about licenses?','Application source is MIT. Bundled components retain their licenses and notices; model licenses are separate. The clean installer includes no personal history or credentials from the author.')],
  'footer':'Your computer. Your models. Your choice.','local':'Local website · server hosting will be configured separately'}
 }
-from design import build,PROJECT
+from design import build as original_build,PROJECT,TEXT
+from agent_content import configure,decorate
+from phone_content import section as phone_section
+configure(TEXT,COPY)
+from showcase_content import configure as configure_showcase, decorate as decorate_showcase
+configure_showcase(TEXT,COPY)
+def build(lang,c):return decorate_showcase(decorate(original_build(lang,c),lang).replace('<section class="download-section',phone_section(lang)+'<section class="download-section',1),lang)
 from install_guide import markdown
 from seo import build_extra
 
 if __name__=='__main__':
- for lang,c in COPY.items():
-  c['faq']=[(('Is Freedom GPT really free?' if lang=='en' else 'Freedom GPT действительно бесплатный?'),('Yes. The application is free, its source code is MIT-licensed, and local inference has no subscription or per-token charge. You provide hardware, electricity and storage. Models have separate licenses.' if lang=='en' else 'Да. Приложение бесплатно, исходный код открыт под MIT. У локальных запросов нет подписки и оплаты за токены. Нужны ваше железо, электричество и место на диске. У моделей отдельные лицензии.'))]+c['faq']
  for lang,c in COPY.items():
   (ROOT/('index.html' if lang=='ru' else 'en.html')).write_text(build(lang,c),encoding='utf8')
   (ROOT.parent/('INSTALL.ru.md' if lang=='ru' else 'INSTALL.md')).write_text(markdown(lang,PROJECT['version'],'https://github.com/Leongrupp/freedom-gpt'),encoding='utf-8')

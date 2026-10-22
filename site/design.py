@@ -4,7 +4,7 @@ from download_ui import brand,quick_downloads,platform_cards
 from install_guide import guides
 from seo import metadata,home_resources
 
-VERSION = 'seo-20261020-r1'
+VERSION = 'agent-20261021-r1'
 PROJECT=json.loads((pathlib.Path(__file__).parent/'project.json').read_text(encoding='utf-8'))
 SITE=PROJECT['support']['website']
 TELEGRAM=PROJECT['support']['telegram']

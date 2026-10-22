@@ -51,6 +51,6 @@ def create_app():
  for name in ['robots.txt','sitemap.xml','llms.txt']:app.router.add_get('/'+name,seo_file)
  for lang in ['ru','en']:
   for path in PAGES:app.router.add_get('/'+('en/' if lang=='en' else '')+path,seo_file)
- for name in ['style.css','premium.css','premium.js','app.js','freedom.svg']:app.router.add_get('/'+name,lambda request,n=name:web.FileResponse(ROOT/n))
+ for name in ['style.css','premium.css','agent.css','premium.js','app.js','freedom.svg']:app.router.add_get('/'+name,lambda request,n=name:web.FileResponse(ROOT/n))
  app.router.add_static('/fonts/',ROOT/'fonts');app.router.add_static('/media/',PROJECT/'assets');return app
 if __name__=='__main__':web.run_app(create_app(),host='127.0.0.1',port=PORT,access_log=None)
