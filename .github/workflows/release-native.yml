@@ -1,0 +1,33 @@
+name: Native macOS release verification
+
+on:
+  push:
+    branches: [release/1.6.0]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Check out the exact release commit
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          git init .
+          git remote add origin https://github.com/Leongrupp/freedom-gpt.git
+          git fetch --depth=1 origin "$RELEASE_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Download the draft candidate
+        run: |
+          mkdir -p .tmp/native-macos
+          gh release download v1.6.0 --repo Leongrupp/freedom-gpt --pattern 'FreedomGPT-1.6.0-macOS-AppleSilicon.zip' --dir .tmp/native-macos
+      - name: Verify the actual macOS package
+        run: |
+          python3 packaging/native_macos_smoke.py
