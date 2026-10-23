@@ -1,6 +1,6 @@
 # Freedom GPT: complete feature tour
 
-This guide describes the upcoming 1.6.0 Windows preview. Current public downloads remain on 1.4.2; the new installers and source are being prepared for publication.
+This guide describes Freedom GPT 1.6.0. Download the package for your system; the screenshots show the actual Windows interface. See the verification guide for platform-specific limits.
 
 ## Free by design
 
@@ -86,7 +86,7 @@ Optional local reading, custom voice cloning and a camera/avatar studio are bein
 
 ## Practical limits
 
-Quality depends on the model, memory, tools and permissions. Review important results. Local video is experimental. The Mac package remains a preview until native validation is complete. The free phone relay has capacity and transfer limits; background iOS push is not claimed.
+Quality depends on the model, memory, tools and permissions. Review important results. Local video is experimental. The Mac core passed native ARM64 CI with a model fixture; real GPU/media generation is not tested. The package is unsigned and not notarized. The free phone relay has capacity and transfer limits; background iOS push is not claimed.
 
 
 ## Model connections

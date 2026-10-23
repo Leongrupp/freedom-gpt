@@ -1,14 +1,20 @@
-# Freedom GPT 1.4.2: платформы / platforms
+# Freedom GPT 1.6.0: платформы / platforms
 
 Сборки Windows и Ubuntu проверены локально. macOS распространяется как
 экспериментальный кандидат с явно указанными ограничениями. Модели
-скачиваются отдельно; видеокомплект автора проверен, другие новые загрузки на паузе.
+скачиваются отдельно. Проверки генерации автора и ограничения платформ описаны ниже.
+
+В 1.6.0 доступны цели, очередь и срочные поправки, ветки чатов и память проекта.
+Обновления проверяются и скачиваются только по кнопке «Проверить обновления».
+Для перехода с 1.4.x один раз используйте полный установщик после остановки
+приложения, сохранив резервную копию. Старый автоматический канал намеренно
+не устанавливает 1.6.0. [Проверки этой версии](docs/RELEASE-1.6.0-VERIFICATION.md).
 
 | Система | Формат | Проверка |
 | --- | --- | --- |
 | Windows 10/11 x64 | EXE, ZIP | На Windows 11, отдельный runtime и PATH без сторонних программ |
 | Ubuntu 24.04 x64 | `.run`, `.deb`, `.tar.gz` | Чистый контейнер без Python и сети; физический рабочий стол не проверен |
-| macOS 26.2+, Apple Silicon M1+ | `.app` внутри ZIP | Проверены ARM64 и зависимости; реальный запуск на Mac ещё не проверен |
+| macOS 26.2+, Apple Silicon M1+ | `.app` внутри ZIP | Точный архив и запуск ядра проверены в ARM64 CI с тестовым ответом модели; GPU-генерация не проверена |
 
 Intel Mac, Ubuntu ARM и более ранняя macOS не поддерживаются этими пакетами.
 Mac-кандидат не подписан Developer ID и не notarized. Для статуса проверенного Mac-релиза нужны
@@ -45,13 +51,13 @@ Blender, SDK устройств, браузеры для автоматизац�
 **Ubuntu:**
 
 ```sh
-sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+sh FreedomGPT-Setup-1.6.0-Ubuntu-x64.run
 ```
 
 Без запуска, в выбранную папку SSD:
 
 ```sh
-FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT-Setup-1.4.2-Ubuntu-x64.run --install-only
+FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT-Setup-1.6.0-Ubuntu-x64.run --install-only
 ```
 
 Root не требуется. По умолчанию: `~/.local/share/FreedomGPT`, ярлык в
@@ -65,19 +71,19 @@ Root не требуется. По умолчанию: `~/.local/share/FreedomGP
 в системных настройках безопасности. Не отключайте защиту macOS глобально.
 Данные создаются в `~/Library/Application Support/FreedomGPT`. Для другой
 папки есть комплектный `Install-FreedomGPT.sh --target /Volumes/SSD/FreedomGPT`.
-Установка на реальном Mac пока не проверена.
+Распаковка и запуск ядра проверены в нативном ARM64 CI. Проверка использует тестовый ответ модели; генерация на GPU и ручной запуск через Finder не проверены.
 
 ## Доказательства проверок
 
-- `logs/windows-clean-pc-verification-1.4.2.json`: 11 проверок ядра, запуска,
+- `logs/windows-clean-pc-verification-1.6.0.json`: проверки ядра, запуска,
   повторного запуска, истории и восстановления отсутствующей библиотеки.
-- `logs/ubuntu-clean-pc-verification-1.4.2.json`: 15 проверок без системного Python
+- `logs/ubuntu-clean-pc-verification-1.6.0.json`: проверки без системного Python
   и сети, включая Node, pip, повторную установку и сохранение данных.
 - `logs/ubuntu-cuda-model-verification.json`: Linux CUDA в Docker/WSL2
   загрузил существующий Huihui GGUF, ответил `OK` и написал Python-функцию.
   Контекст теста 1024, без MTP: это проверка работоспособности, не обещание
   скорости на физической Ubuntu или при 65K-контексте.
-- `logs/macos-all-native-audit-1.4.2.json`: ARM64 и зависимости 104 нативных файлов.
+- `logs/macos-all-native-audit-1.6.0.json`: ARM64 и зависимости 104 нативных файлов.
   Статическая проверка не заменяет запуск на Mac.
 - Конечные архивы и установщики имеют отдельные отчёты в `logs/`.
 
@@ -121,7 +127,7 @@ separately; the author's personal tool collection is not bundled.
 Windows and clean offline Ubuntu core tests passed. Linux CUDA also generated
 Python code from existing weights in a 1024-context smoke test.
 The Mac candidate requires Apple Silicon/macOS 26.2+, is unsigned, not notarized
-and has not run on a Mac. Intel Mac is not included. Everything stays local.
+and passed native ARM64 CI for core startup with a model fixture. Real GPU/media generation remains untested. Intel Mac is not included. Local model inference stays on the computer.
 
 ## Обновление проверки видео — 1.4.2
 Веса Wan на ПК автора полностью скачаны и проверены SHA-256. Исправлен конфликт записи состояния Windows. Реальная генерация 512×288 / 33 кадра / 20 шагов проверена на RTX 4080: 50,24 с с возвратом к модели кода. Декодирование WebM, HTTP Range и ответ модели кода после видео проверены. На macOS и физической Ubuntu генерация видео ещё не проверена.

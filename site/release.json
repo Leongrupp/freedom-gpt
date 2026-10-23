@@ -1,21 +1,34 @@
 {
   "product": "Freedom GPT",
-  "version": "1.4.2",
+  "version": "1.6.0",
   "public": true,
-  "status": "ready",
+  "date": "2026-10-23",
+  "platforms": [
+    "windows-x64",
+    "ubuntu-x64",
+    "macos-arm64"
+  ],
+  "macos_status": "Unsigned; exact archive/core runtime passed native ARM64 CI with a model fixture; GPU/media generation not tested",
+  "macos_native_ci": "https://github.com/Leongrupp/freedom-gpt/actions/runs/39877825964",
+  "model_weights_included": false,
+  "updates_signed": true,
+  "updates_manual_only": true,
+  "legacy_update_migration": "1.4.x requires one deliberate full-installer upgrade; automatic migration is blocked",
+  "authenticode_signed": false,
+  "video_status": "Experimental; no new cross-platform GPU rendering benchmark claimed",
   "files": [
     {
-      "name": "FreedomGPT-1.4.2-Windows-x64.zip",
-      "bytes": 1610859752,
-      "sha256": "2530733fbe54dfc38800219ed731c21d104dbf65c21b17a71b8e335f306b6db3",
-      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip"
+      "name": "FreedomGPT-Setup-1.6.0.exe",
+      "bytes": 1615406260,
+      "sha256": "df9c9b031e7b72054248bdfb64002d7395c6164417d8bf28ae4b4a8ac12d8947",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0.exe"
     },
     {
-      "name": "FreedomGPT-Setup-1.4.2.exe",
-      "bytes": 1610894120,
-      "sha256": "c7862b0c5e90ebcf454b405fa84047c76c966cd2346e1dae25392574dcd4317a",
-      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe"
+      "name": "FreedomGPT-1.6.0-Windows-x64.zip",
+      "bytes": 1615371892,
+      "sha256": "ec18312fdf006032f645b0a4f345fbc29e2df80f0f8e4287bdb7ab1c83cdbdac",
+      "url": "https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Windows-x64.zip"
     }
   ],
-  "checked_at": 1792688818.1146283
+  "status": "ready"
 }

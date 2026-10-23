@@ -1,5 +1,5 @@
 """Refresh public download metadata. No account or GitHub credential is used."""
-import json,os,pathlib,re,time,urllib.error,urllib.request
+import hashlib,json,os,pathlib,re,time,urllib.error,urllib.request
 BASE=pathlib.Path('/var/www/freedom-gpt')
 META=BASE/'shared/metadata'
 REPO='Leongrupp/freedom-gpt'
@@ -8,11 +8,12 @@ def write(name,value):
  target=META/name;temporary=META/(name+'.new')
  temporary.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf8');os.chmod(temporary,0o644);temporary.replace(target)
 
-def fetch(url):
+def fetch(url,expected_sha=None):
  request=urllib.request.Request(url,headers={'User-Agent':'FreedomGPT-Website','Accept':'application/vnd.github+json'})
  with urllib.request.urlopen(request,timeout=12) as response:
   raw=response.read(2*1024**2+1)
  if len(raw)>2*1024**2:raise ValueError('Oversized public release response')
+ if expected_sha is not None and hashlib.sha256(raw).hexdigest()!=expected_sha:raise ValueError('Public platform matrix digest mismatch')
  return json.loads(raw)
 
 def main():
@@ -46,6 +47,27 @@ def main():
     fmt='EXE' if name.endswith('.exe') else 'DEB' if name.endswith('.deb') else '.run' if name.endswith('.run') else 'TAR.GZ' if name.endswith('.tar.gz') else '.app ZIP' if target=='macos-arm64' else 'ZIP'
     downloads.append({'name':name,'bytes':size,'sha256':sha,'format':fmt,'url':f'https://github.com/{REPO}/releases/download/{tag}/{name}'})
    if downloads:platforms.append({'id':target,'name':label,'files':downloads,'note_ru':ru,'note_en':en,'native_tested':target!='macos-arm64'})
+  # The released matrix carries the exact current verification scope. Do not
+  # overwrite successful native CI evidence with a permanent "unverified" label.
+  matrix_asset=uploaded.get('platforms.json',{})
+  matrix_digest=matrix_asset.get('digest','')
+  if re.fullmatch(r'sha256:[a-f0-9]{64}',matrix_digest or ''):
+   matrix=fetch(f'https://github.com/{REPO}/releases/download/{tag}/platforms.json',matrix_digest[7:])
+   if matrix.get('version')!=tag[1:] or matrix.get('published') is not True:raise ValueError('Platform matrix version mismatch')
+   declared={p['id']:p for p in matrix['platforms']}
+   if set(declared)!={p['id'] for p in platforms}:raise ValueError('Platform matrix layout mismatch')
+   for platform in platforms:
+    entry=declared[platform['id']]
+    actual={f['name']:(f['bytes'],f['sha256']) for f in platform['files']}
+    if {f['name']:(f['bytes'],f['sha256']) for f in entry['files']}!=actual:raise ValueError('Platform matrix asset mismatch')
+    for field in ['note_ru','note_en']:
+     if not isinstance(entry.get(field),str) or len(entry[field])>2000:raise ValueError('Invalid platform note')
+     platform[field]=entry[field]
+    platform['native_tested']=entry.get('native_tested') is True
+    if platform['id']=='macos-arm64' and platform['native_tested']:
+     proof=entry.get('native_verification_url','')
+     if not re.fullmatch(r'https://github.com/Leongrupp/freedom-gpt/actions/runs/\d+',proof):raise ValueError('Native verification link required')
+     platform.update(native_verification_url=proof,model_generation_tested=False,media_generation_tested=False)
   write('platforms.json',{'product':'Freedom GPT','version':tag[1:],'published':True,'platforms':platforms,'checked_at':time.time()})
  except Exception as exc:
   old={}

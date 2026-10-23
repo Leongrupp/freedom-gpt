@@ -1,5 +1,10 @@
 # Freedom GPT verification history
 
+**Current release: 1.6.0.** See [current checks and limits](docs/RELEASE-1.6.0-VERIFICATION.md)
+and [actual interface captures](docs/SCREENSHOTS.md). Updates in 1.5.0 start only
+with Check for updates. The earlier automatic-update and rendering results below
+are historical checks; they do not claim a fresh benchmark on every platform.
+
 Verified on Windows 11 with Ryzen9 7900X, 32 GB RAM and NVIDIA RTX4080 16 GB.
 Other physical PCs and an external SSD on another PC were not tested.
 
@@ -102,3 +107,23 @@ the VPN port, configuration and processes are preserved.
 Real rendering found WinError 5 when a progress JSON destination was briefly held open on Windows. State writes now use unique temporary files, bounded sharing-violation retries and a writer lock; reads retry short sharing violations too. Video progress only writes when it changes. A real Windows destination-lock test and 400 concurrent writes with a reader passed.
 The corrected candidate rendered Wan 2.1 512x288, 33 frames, 16 fps and 20 steps: 30.76 s native engine, 50.24 s including GPU handoff and coder restoration. WebM VP8, 33 decoded frames, HTTP 206 and a subsequent local coder reply passed. Contact sheets were visually reviewed. VAE CUDA decode took 8.73 s; CPU decode had taken about 63 s per tile. Native macOS rendering remains untested.
 The final 1.4.2 application repeated the same test in 52.68 s while packaging was running. Its clip was byte-identical to the visually reviewed candidate. A UI code reply and copy/paste after video, application restart and video-history recovery passed too.
+
+## Release 1.5.0
+
+See [1.5.0 checks and remaining limits](docs/RELEASE-1.5.0-VERIFICATION.md). Windows and offline Ubuntu installation/runtime checks passed. Mac native execution remains unverified. Legacy automatic migration from 1.4.x is deliberately blocked; use the full installer once.
+
+
+
+## 1.6.0 local release verification — 2026-10-22
+
+- The final Windows EXE was extracted into a new directory and checked against the signed file manifest. Clean startup, bundled Python/Node, offline dependency repair, restart and history retention passed.
+- 19 feature scenarios passed, including the portable model picker and an Auto → local response → manual route round trip. Twelve loop recovery scenarios passed with cancellation, access revocation and budget guards retained.
+- On the owner's Windows installation, the real local model answered, wrote Python files, passed three unittest cases and recognized a red square. Qwen Image produced a 256×256 PNG; Wan produced a playable 9-frame 256×144 WebM. The text model returned after media GPU handoff.
+- The agent used the actual preview tool to fill a local form and click Verify. The visible page displayed PREVIEW_160_SUCCESS; automatic opening and minimization were observed.
+- Three concurrent launches, two rapid UI restarts and one forced UI exit passed. The original model and phone controller processes stayed available.
+- Ubuntu 24.04 was tested in a network-isolated Docker container without system Python: tar archive, .run, .deb, chat, Auto routing, reinstall with data retained, signed update and rollback passed. These Ubuntu chat checks use a local synthetic OpenAI fixture, not actual GPU/model inference.
+- All three desktop packages contain the reviewed source payload: 85 source/assets entries per target were compared. Package hashes, update signatures, Unix modes and macOS Mach-O requirements passed.
+- Native macOS CI passed for the final archive and core startup with a loopback model fixture. This does not establish GPU/model inference. Target: Apple Silicon, macOS 26.2+. See the current verification guide for the exact archive digest and CI run.
+- Optional live connections: GitHub/Hugging Face account checks passed. OpenRouter, Groq and Gemini Flash-Lite answered; Cloudflare generated an image. Gemini 3.8 Flash returned upstream 503 with a high-demand message. Paid providers without credentials were not executed.
+- The Windows publisher certificate (Authenticode) is not configured. Update manifest signatures are separate from operating-system code signing.
+- The final packages were rebuilt and verified on 2026-10-23 after reply notifications were added. Earlier intermediate artifacts were excluded. Publication requires exact remote hashes and sizes.

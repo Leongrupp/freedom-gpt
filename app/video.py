@@ -8,7 +8,7 @@ from platform_support import native_environment
 class Videos:
     def __init__(self):
         self.pool=concurrent.futures.ThreadPoolExecutor(max_workers=1);self.lock=threading.Lock();self.stop=threading.Event();self.process=None
-        self.current=None;self.records=ROOT/'data/video-jobs';self.records.mkdir(parents=True,exist_ok=True)
+        self.on_complete=None;self.current=None;self.records=ROOT/'data/video-jobs';self.records.mkdir(parents=True,exist_ok=True)
     def model(self):return next((m for m in library.catalog if m.get('adapter')=='wan21-t2v'),None)
     def busy(self):return bool(self.current and self.current.get('state') in {'queued','loading','generating','restoring'})
     def snapshot(self):
@@ -45,7 +45,7 @@ class Videos:
             if shutil.disk_usage(ROOT).free<2*1024**3:raise ValueError('Освободите не менее 2 ГБ для результата и временных файлов.')
             self.stop.clear();ident=uuid.uuid4().hex;folder=ROOT/'output/videos'/ident;folder.mkdir(parents=True)
             self.current={'id':ident,'state':'queued','prompt':prompt,'width':width,'height':height,'frames':frames,'steps':steps,'fps':16,'seed':int(value.get('seed',42))%(2**31),
-                'created_at':time.time(),'progress':0,'output':str(folder/'video.webm'),'log':str(ROOT/'logs'/('video-'+ident+'.log')),'free':True}
+                'session_id':str(value.get('session_id') or ''),'created_at':time.time(),'progress':0,'output':str(folder/'video.webm'),'log':str(ROOT/'logs'/('video-'+ident+'.log')),'free':True}
             self.save();self.pool.submit(self.generate,item,dict(self.current));return self.public(self.current)
     @contextlib.contextmanager
     def handoff(self):
@@ -114,6 +114,9 @@ class Videos:
                     if stream.read(4)!=b'\x1aE\xdf\xa3':raise RuntimeError('Неверный заголовок WebM.')
                 self.save(state='restoring',progress=98);success=True
             self.save(state='complete',progress=100,seconds=round(time.monotonic()-started,2),bytes=pathlib.Path(job['output']).stat().st_size)
+            if self.on_complete:
+                try:self.on_complete(dict(self.current))
+                except Exception:self.save(presentation_error='Видео сохранено; не удалось обновить список файлов чата.')
         except InterruptedError:self.save(state='cancelled',seconds=round(time.monotonic()-started,2))
         except Exception as exc:self.save(state='error',error=str(exc),seconds=round(time.monotonic()-started,2))
         finally:
@@ -122,12 +125,20 @@ class Videos:
     def cancel(self):self.stop.set();return {'ok':True}
 
 videos=Videos()
-def register(app,bridge):
+def register(app,bridge,register_artifact=None):
     async def status(request):return web.json_response(videos.snapshot())
     async def start(request):
         listed=await bridge.rpc('session.list',scope='live',limit=200)
         if any(s.get('running') for s in listed.get('sessions',[])):raise ValueError('Сначала дождитесь завершения текущей задачи агента или остановите её.')
-        return web.json_response(videos.start(await request.json()))
+        value=await request.json();sid=str(value.get('session_id') or '')
+        if sid:await bridge.resume(sid)
+        loop=asyncio.get_running_loop()
+        def completed(job):
+            if job.get('session_id') and register_artifact:
+                register_artifact(job['session_id'],job['output'])
+                asyncio.run_coroutine_threadsafe(bridge.broadcast({'type':'artifacts.changed','session_id':job['session_id']}),loop)
+        videos.on_complete=completed
+        return web.json_response(videos.start(value))
     async def cancel(request):return web.json_response(videos.cancel())
     async def file(request):
         ident=request.match_info['ident']

@@ -1,0 +1,96 @@
+.sidebar-bottom {
+  flex-shrink: 0;
+  padding: 8px 0 12px;
+}
+
+.sidebar-tools {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--panel);
+}
+
+.sidebar-models,
+.sidebar-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  color: var(--secondary);
+  transition: background .15s, color .15s;
+}
+
+.sidebar-models {
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+  padding: 0 10px;
+  text-align: left;
+  border-radius: 10px 0 0 10px;
+  font-size: 11px;
+}
+
+.sidebar-models span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sidebar-models > svg {
+  flex-shrink: 0;
+}
+
+.sidebar-models > svg:last-child {
+  color: var(--muted);
+}
+
+.sidebar-settings {
+  position: relative;
+  flex: 0 0 40px;
+  border-radius: 0 10px 10px 0;
+  color: var(--muted);
+}
+
+.sidebar-settings::before {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+  background: var(--border);
+  content: '';
+}
+
+.sidebar-models:hover,
+.sidebar-settings:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.sidebar-tools button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.sidebar-download-progress {
+  position: absolute;
+  height: 2px;
+  left: 11px;
+  right: 11px;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sidebar-download-progress i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 1s;
+}

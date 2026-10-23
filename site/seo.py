@@ -11,7 +11,7 @@ PROJECT=json.loads((ROOT/'site/project.json').read_text(encoding='utf-8'))
 SITE=PROJECT['support']['website'].rstrip('/')
 REPO=PROJECT['support']['github']
 VERSION=PROJECT['version']
-CONTENT_DATE='2026-10-22'
+CONTENT_DATE='2026-10-23'
 from agent_content import guide as agent_guide
 from phone_content import guide as phone_guide
 PAGES={
@@ -166,7 +166,7 @@ Sitemap: https://aionpc.ru/sitemap.xml
             alternates=''.join(f'<xhtml:link rel="alternate" hreflang="{alt}" href="{escape(url(alt,path))}"/>' for alt in ['ru','en'])+f'<xhtml:link rel="alternate" hreflang="x-default" href="{escape(url("en",path))}"/>'
             entries.append(f'<url><loc>{escape(url(lang,path))}</loc><lastmod>{CONTENT_DATE}</lastmod>{alternates}</url>')
     (folder/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'+'\n'.join(entries)+'\n</urlset>\n',encoding='utf-8')
-    text='# Freedom GPT\n\n> Free, MIT-licensed local AI agent for Windows and Ubuntu, with an experimental Apple Silicon Mac build. No subscription or per-token charge for local inference.\n\nModel weights download separately and have their own licenses. Hardware, electricity, storage and initial internet access are required. Downloaded local models can run offline; web tools and updates need internet. This is an independent project, not free access to proprietary cloud services. Mac native execution and video on other hardware remain unverified.\n\n## Public documentation\n\n'
+    text='# Freedom GPT\n\n> Free, MIT-licensed local AI agent for Windows and Ubuntu, with an experimental Apple Silicon Mac build. No subscription or per-token charge for local inference.\n\nModel weights download separately and have their own licenses. Hardware, electricity, storage and initial internet access are required. Downloaded local models can run offline; web tools and updates need internet. This is an independent project, not free access to proprietary cloud services. The Mac core passed native ARM64 CI with a model fixture. Real Mac GPU generation and video on other hardware remain unverified.\n\n## Public documentation\n\n'
     text+='\n'.join(f'- [{info["en"][2]}]({url("en",path)}): {info["en"][1]}' for path,info in PAGES.items())
     text+=f'\n- [Русский]({SITE}/): приложение, модели и инструкции.\n- [Source code]({REPO}): MIT source and component notices.\n- [Releases]({REPO}/releases/tag/v{VERSION}): installers and SHA256 checksums.\n- [Verification]({REPO}/blob/main/VERIFICATION.md): actual checks and limitations.\n- [Support](https://t.me/AI1rus): author support.\n'
     (folder/'llms.txt').write_text(text,encoding='utf-8')

@@ -19,10 +19,12 @@ os.environ.update(HERMES_HOME=str(portable.HOME),TEMP=str(ROOT/'.tmp'),TMP=str(R
 os.environ['PATH']=str(pathlib.Path(sys.executable).parent)+os.pathsep+os.environ['PATH']
 sys.path.insert(0,str(HERMES_SOURCE))
 from aiohttp import web, ClientSession, ClientTimeout
+from remote_client import RemoteClient
 from PIL import Image
 from updater import updates,META
 import psutil
 from hermes_cli.gateway_client import connect_gateway
+from activity_feed import ActivityFeed
 
 log=logging.getLogger('freedom')
 TOKEN=secrets.token_urlsafe(32)
@@ -62,7 +64,8 @@ def local_asset(path):
 def register_artifact(session_id,path):
     file=local_asset(path)
     if file is None:return None
-    mime=mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
+    if artifact_workspace.hidden(file):return None
+    mime={'.mp4':'video/mp4','.m4v':'video/mp4','.webm':'video/webm','.mov':'video/quicktime'}.get(file.suffix.lower()) or mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
     identifier=uuid.uuid4().hex
     with db() as conn:
         conn.execute('INSERT OR IGNORE INTO artifacts VALUES(?,?,?,?,?,?)',
@@ -75,17 +78,22 @@ def find_artifacts(session_id,value):
     def walk(item):
         if isinstance(item,dict):
             for key,val in item.items():
-                if key in {'image','image_path','output','output_path','file_path','path'} and isinstance(val,str):
+                if key in {'image','image_path','output','output_path','file_path','path','resolved_path'} and isinstance(val,str):
                     if pathlib.Path(val).is_absolute():
                         asset=register_artifact(session_id,val)
                         if asset:found.append(asset)
+                if key in {'files_modified','files_created','output_files'} and isinstance(val,list):
+                    for path in val:
+                        if isinstance(path,str) and pathlib.Path(path).is_absolute():
+                            asset=register_artifact(session_id,path)
+                            if asset:found.append(asset)
                 if isinstance(val,(dict,list)):walk(val)
         elif isinstance(item,list):
             for part in item:walk(part)
         elif isinstance(item,str):
             if item.lstrip().startswith(('{','[')):
                 with contextlib.suppress(ValueError):walk(json.loads(item))
-            for candidate in re.findall(r'[A-Za-z]:[/\\][^\n\r<>"|]*?\.(?:png|jpe?g|webp|gif|pdf|zip|glb|blend|txt|py|html|exe)(?=[\s\)\]\}.,;]|$)',item):
+            for candidate in re.findall(r'[A-Za-z]:[/\\][^\n\r<>"|]*?\.(?:png|jpe?g|webp|gif|mp4|webm|mov|m4v|pdf|zip|glb|blend|txt|py|html|exe)(?=[\s\)\]\}.,;]|$)',item,re.I):
                 asset=register_artifact(session_id,candidate.strip())
                 if asset:found.append(asset)
     walk(value)
@@ -95,6 +103,16 @@ class Bridge:
     def __init__(self):
         self.client=None;self.ready=asyncio.Event();self.sockets=set();self.task=None
         self.error=None;self.snapshots={};self.live={};self.reconnected=0;self.resume_locks={}
+        self.activity=ActivityFeed();self.reasoning_display=set()
+        # One-shot handoff when this UI process is replaced; the independent agent keeps running.
+        handoff=ROOT/'.tmp/ui-activity-handoff.json'
+        saved=load_json(handoff,{})
+        if saved and time.time()-saved.get('created',0)<120:
+            self.live.update(saved.get('live',{}));self.snapshots.update({sid:{} for sid in self.live})
+            for sid,activity in saved.get('activity',{}).items():
+                activity['epoch']=self.activity.epoch
+                self.activity.sessions[sid]=activity
+            handoff.replace(handoff.with_name('ui-activity-handoff.consumed.json'))
     async def start(self):self.task=asyncio.create_task(self.loop())
     async def close(self):
         if self.task:
@@ -112,6 +130,12 @@ class Bridge:
                     for sid in list(self.snapshots):
                         with contextlib.suppress(Exception):
                             self.snapshots[sid]=await client.rpc('session.resume',session_id=sid)
+                            saved=self.live.get(sid,{})
+                            current=self.snapshots[sid]
+                            if current.get('running') and saved.get('active') and saved.get('generation')==current.get('execution_generation') and not self.activity.snapshot(sid):
+                                self.activity.adopt(sid,saved)
+                            elif not current.get('running'):
+                                saved.update(active=False,text='',tool=None)
                     await self.broadcast({'type':'gateway.connected','reconnected':self.reconnected})
                     while True:
                         event=await client.events.get()
@@ -119,9 +143,14 @@ class Bridge:
                         params=event.get('params') or {}
                         kind=params.get('type');sid=params.get('session_id');payload=params.get('payload') or {}
                         if sid:
+                            self.activity.record(sid,kind,params)
+                            workspace.event(sid,kind,params)
+                            if kind=='session.control.update':
+                                goals.archive_goal(sid,(payload.get('control') or {}).get('goal'))
                             state=self.live.setdefault(sid,{'text':'','active':False,'tool':None,'generation':0})
                             state['generation']=params.get('execution_generation',state['generation'])
-                            if kind=='message.delta':
+                            if kind=='message.start':state.update(active=True,text='',tool=None,started_at=time.time())
+                            elif kind=='message.delta':
                                 state['active']=True;state['text']+=payload.get('text') or payload.get('delta') or payload.get('content') or ''
                             elif kind=='tool.start':state.update(active=True,tool=payload.get('tool_name') or 'tool',text='')
                             elif kind=='tool.complete':
@@ -129,10 +158,13 @@ class Bridge:
                                 assets=find_artifacts(sid,payload.get('result'))
                                 if assets:await self.broadcast({'type':'artifacts.changed','session_id':sid,'artifacts':assets})
                             elif kind=='message.complete':
-                                state.update(active=False,text='',tool=None)
+                                queue_completion=params.get('execution_generation') is None and payload.get('outcome') in {'cancelled','steered'}
+                                if not queue_completion:
+                                    state.update(active=False,text='',tool=None)
+                                    await preview.finish(sid)
                                 find_artifacts(sid,payload.get('text') or payload.get('content') or '')
                             elif kind=='session.info' and 'running' in payload:state['active']=bool(payload['running'])
-                        await self.broadcast({**params,'type':'gateway.event','event_type':kind})
+                        await self.broadcast({**params,'type':'gateway.event','event_type':kind,**self.activity.stamp(sid)})
             except asyncio.CancelledError:raise
             except Exception as exc:
                 self.error=str(exc);self.client=None;self.ready.clear()
@@ -142,13 +174,23 @@ class Bridge:
     async def rpc(self,method,**params):
         try:await asyncio.wait_for(self.ready.wait(),40)
         except asyncio.TimeoutError:raise ValueError('Freedom GPT пока недоступен. Повторите проверку через несколько секунд.')
+        while method=='prompt.submit' and getattr(self,'performance_hold',False):await asyncio.sleep(.25)
         return await self.client.rpc(method,**params)
     async def resume(self,sid):
         async with self.resume_locks.setdefault(sid,asyncio.Lock()):return await self._resume(sid)
+    async def enable_reasoning_display(self,sid):
+        if sid in self.reasoning_display:return
+        try:
+            # Native session display only: preserve model effort, requests and config files.
+            await self.rpc('config.set',session_id=sid,key='show_reasoning',value='1')
+            self.reasoning_display.add(sid)
+        except Exception as exc:
+            log.debug('reasoning display unavailable: %s',type(exc).__name__)
     async def _resume(self,sid):
         snapshot=await self.rpc('session.resume',session_id=sid)
+        await self.enable_reasoning_display(sid)
         info=snapshot.get('info') or {}
-        if portable.PRIVATE:
+        if portable.PRIVATE or str(info.get('model') or '').startswith(('freedom-api-','freedom-auto-')):
             self.snapshots[sid]=snapshot
             return snapshot
         with db() as conn:route=conn.execute('SELECT model,url FROM routes WHERE session_id=?',(sid,)).fetchone()
@@ -164,6 +206,26 @@ class Bridge:
         return snapshot
 
 bridge=Bridge()
+from workspace_features import WorkspaceFeatures, LEARNING_NOTE, EXECUTION_NOTE
+workspace=WorkspaceFeatures(ROOT,portable,db,bridge)
+from goal_workspace import GoalWorkspace
+goals=GoalWorkspace(db,bridge,workspace,videos.busy)
+from artifact_workspace import ArtifactWorkspace
+artifact_workspace=ArtifactWorkspace(ROOT,PROJECTS,STACK,db,bridge)
+from cloud_api import CloudAPI
+cloud=CloudAPI(ROOT,portable,db,bridge,register_artifact)
+workspace.cloud=cloud
+from auto_models import AutoModels
+from chat_branches import ChatBranches
+branches=ChatBranches(db,bridge,workspace,portable)
+from rewards import FreedomRewards
+rewards=FreedomRewards(ROOT,portable,db,bridge)
+from preview_browser import PreviewBrowser
+from model_advisor import ModelAdvisor
+from account_connections import AccountConnections
+accounts=AccountConnections(ROOT,portable)
+advisor=ModelAdvisor(library)
+preview=PreviewBrowser(ROOT,portable,bridge,register_artifact)
 
 def image_status():
     item=next((m for m in library.snapshot()['models'] if m['kind']=='image'),None)
@@ -171,6 +233,13 @@ def image_status():
     return {'ready':item['installed'],'tested':False,'percent':item['percent'],'bytes':item['bytes'],'total':item['total'],
             'model':item['name'],'files':[dict(f,complete=(library.folder(item)/f['name']).is_file()) for f in item['files']],
             'phase':'ready' if item['installed'] else 'downloading','reference_editing':False}
+
+auto=AutoModels(ROOT,portable,db,cloud,workspace,bridge,videos,image_status,register_artifact)
+cloud.auto=auto
+from engine_performance import Performance
+performance=Performance(library,bridge,videos,image_status)
+from context_modes import ContextModes
+context_modes=ContextModes(performance,library,bridge,cloud,workspace,db)
 
 def read_timings():
     result={'tokens_per_second':None,'speed_kind':'last','generated_tokens':None,'prompt_tokens_per_second':None}
@@ -206,6 +275,8 @@ async def monitor(app):
                     slot=slots[0]
                     data.update(model_ready=True,processing=bool(slot.get('is_processing')),
                         context_used=slot.get('n_prompt_tokens'),context_max=slot.get('n_ctx',65536))
+                    if await asyncio.to_thread(library.observe_context,slot.get('n_ctx')):
+                        await asyncio.to_thread(cloud.sync_aliases)
                     if not data['processing']:data['speed_kind']='last'
             except Exception:
                 data.update(processing=False)
@@ -222,7 +293,7 @@ async def monitor(app):
             except Exception:pass
             active=library.model(portable.config().get('active')) or {}
             data['active_model_name']=active.get('name',portable.config().get('external_model','Выберите модель'))
-            data['images']=image_status();app['runtime']['metrics']=data
+            data['images']=image_status();data['performance']=performance.status();app['runtime']['metrics']=data
             await bridge.broadcast(data)
             await asyncio.sleep(2)
 
@@ -239,6 +310,11 @@ async def security(request,handler):
     if request.path.startswith('/api/') and request.method not in {'GET','HEAD'}:
         if request.headers.get('X-Freedom-Token')!=TOKEN:return error('Локальный сеанс обновлён. Восстанавливаем подключение.',403,'session_expired')
     if request.app.get('update_applying') and request.method not in {'GET','HEAD'}:return error('Обновление устанавливается. Соединение восстановится автоматически.',503,'updating')
+    inference_change=request.path.startswith(('/api/sessions','/api/library/activate','/api/library/connect','/api/video/generate','/api/updates'))
+    if request.app.get('performance_busy') and inference_change and request.method not in {'GET','HEAD'} and not request.path.endswith(('/stop','/respond')):
+        return error('Настраиваем скорость локальной модели. Дождитесь окончания замера или отмените его кнопкой Турбо.',409,'performance_busy')
+    if request.method=='POST' and request.path.endswith('/messages') and (library.activation or {}).get('state')=='loading':
+        return error('Локальная модель переключается. Дождитесь её готовности.',409)
     admission=request.method=='POST' and request.path.endswith('/messages')
     if admission:request.app['prompt_admissions']=request.app.get('prompt_admissions',0)+1
     try:response=await handler(request)
@@ -253,11 +329,11 @@ async def security(request,handler):
     if response.content_type=='text/html':response.headers['Content-Security-Policy']=f"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws://127.0.0.1:{PORT} ws://localhost:{PORT}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
     return response
 
-async def health(request):return web.json_response({'application':'Freedom GPT','version':META['version'],'installation':hashlib.sha256(str(ROOT).encode()).hexdigest()[:16],'gateway_ready':bridge.ready.is_set()})
+async def health(request):return web.json_response({'application':'Freedom GPT','version':META['version'],'local_build':META.get('local_build'),'installation':hashlib.sha256(str(ROOT).encode()).hexdigest()[:16],'gateway_ready':bridge.ready.is_set()})
 async def bootstrap(request):
     active=library.model(portable.config().get('active')) or {}
     return web.json_response({'token':TOKEN,'name':'Freedom GPT','model':active.get('name',portable.config().get('external_model','Выберите модель')),'model_short':active.get('name',portable.config().get('external_model','Модель')),'model_id':portable.model_id(),'first_run':not portable.config().get('onboarded'),
-        'version':META['version'],'updates':updates.status(),'context':portable.context_size(),'skills':None,'default_project':str(portable.workspace_root()),'images':image_status(),
+        'version':META['version'],'ui_revision':META.get('ui_revision'),'updates':updates.status(),'context':portable.context_size(),'skills':None,'default_project':str(portable.workspace_root()),'images':image_status(),
         'metrics':request.app['runtime'].get('metrics',{}),'root':str(ROOT),'history_home':str(portable.HOME),'language':portable.config().get('language'),
         'support':None if portable.PRIVATE else META.get('support')})
 
@@ -268,33 +344,51 @@ async def sessions(request):
         for row in result.get('sessions',[]):
             sid=row.get('session_id') or row['id'];rows[sid]=row
     with db() as conn:meta={row['id']:dict(row) for row in conn.execute('SELECT * FROM chats')}
-    result=[]
+    result=[];branch_rows=branches.rows()
     for sid,row in rows.items():
         settings=meta.get(sid,{})
         result.append({**row,'id':sid,'title':settings.get('title') or row.get('title') or 'Новый чат',
             'archived':bool(settings.get('archived')),'pinned':bool(settings.get('pinned')),
+            'created':row.get('started_at'),'branch':branch_rows.get(sid),
             'updated':settings.get('updated') or row.get('started_at') or 0})
     return web.json_response({'sessions':sorted(result,key=lambda x:(x['pinned'],x['updated']),reverse=True)})
 
 async def new_session(request):
     data=await body_json(request);cwd=local_project(data.get('cwd'))
+    effort='none' if data.get('mode','code')=='code' else data.get('reasoning') or 'low'
+    if effort not in {'none','low','medium','high','xhigh'}:raise ValueError('Выберите уровень обдумывания.')
     from hermes_cli.gateway_chat import shell_client_env
+    target=cloud.target(data.get('model'))
+    if data.get('model') and not target:raise ValueError('Выберите подключённую API-модель.')
+    if target:await asyncio.to_thread(cloud.sync_aliases)
+    selected=target['id'] if target else portable.model_id()
+    endpoint=cloud.proxy_url() if target else portable.model_url()
     snapshot=await bridge.rpc('session.create',request_id=uuid.uuid4().hex,source='cli',cwd=cwd,
-        provider='custom',base_url=portable.model_url(),model=portable.model_id(),reasoning='none' if data.get('mode','code')=='code' else 'low',client_env=shell_client_env())
+        provider='custom',base_url=endpoint,model=selected,**({'api_key':cloud.proxy_key} if target else {}),reasoning='none' if data.get('mode','code')=='code' else effort,client_env=shell_client_env())
     sid=snapshot['stored_session_id'];bridge.snapshots[sid]=snapshot
+    await bridge.enable_reasoning_display(sid)
+    access=data.get('access') or portable.config().get('default_access','manual')
+    if access=='full':
+        await bridge.rpc('config.set',session_id=sid,key='yolo',value='1')
+        snapshot=await bridge.resume(sid)
     # In this installed Hermes version a named create can continue an existing title.
     # Keep presentation titles in our own table so every New Chat is unconditionally fresh.
     with db() as conn:
         conn.execute('INSERT OR IGNORE INTO chats(id,title,updated) VALUES(?,?,?)',(sid,data.get('title'),time.time()))
-        conn.execute('INSERT OR REPLACE INTO routes VALUES(?,?,?)',(sid,portable.model_id(),portable.model_url().rstrip('/')))
-    return web.json_response({'id':sid,'snapshot':filter_snapshot(snapshot)})
+        conn.execute('INSERT OR REPLACE INTO routes VALUES(?,?,?)',(sid,selected,endpoint.rstrip('/')))
+        if target:conn.execute('INSERT INTO workspace_preferences(session_id,selected_model) VALUES(?,?) ON CONFLICT(session_id) DO UPDATE SET selected_model=excluded.selected_model',(sid,selected))
+        conn.execute('INSERT INTO workspace_preferences(session_id,reasoning) VALUES(?,?) ON CONFLICT(session_id) DO UPDATE SET reasoning=excluded.reasoning',(sid,effort))
+    if preview.process and preview.process.returncode is None:
+        with contextlib.suppress(Exception):await preview.call(sid,{'action':'adopt','from':'workspace'})
+    return web.json_response({'id':sid,'snapshot':filter_snapshot({**snapshot,'work_preferences':workspace.preferences(sid)})})
 
 def filter_snapshot(snapshot):
     # The UI never needs credential hints, launch environment or provider secrets.
     info=snapshot.get('info') or {}
     return {**{k:v for k,v in snapshot.items() if k!='info'},'info':{k:info.get(k) for k in
-        ('title','model','provider','cwd','tool_count','reasoning_effort','yolo','started_at','last_active_at')},
+        ('title','model','provider','cwd','tool_count','reasoning_effort','context_length','yolo','started_at','last_active_at')},
         'live':bridge.live.get(snapshot.get('stored_session_id'),{}),
+        'activity':bridge.activity.snapshot(snapshot.get('stored_session_id')),
         'route':{'provider':info.get('provider'),'model':info.get('model'),
                  'base_url':(info.get('launch_request') or {}).get('base_url')}}
 
@@ -308,8 +402,15 @@ async def session_detail(request):
                 row=conn.execute('SELECT * FROM files WHERE id=?',(identifier,)).fetchone()
                 if row:attached.append(public_file(dict(row)))
             if attached:files.append({'input_id':turn['input_id'],'text':turn['text'],'created':turn['created'],'files':attached})
-        artifacts=[{'id':r['id'],'name':r['name'],'mime':r['mime'],'url':'/api/artifacts/'+r['id']} for r in conn.execute('SELECT * FROM artifacts WHERE session_id=? ORDER BY created',(sid,))]
-    return web.json_response({**filter_snapshot(snapshot),'attachments':files,'artifacts':artifacts})
+    # Discover media in saved replies too, including results produced before this UI update.
+    for message in snapshot.get('messages',[])[-50:]:
+        if message.get('role') in {'assistant','tool'}:find_artifacts(sid,message.get('content',''))
+    artifacts,artifact_trash=await asyncio.to_thread(artifact_workspace.list,sid)
+    result={**filter_snapshot(snapshot),'attachments':files,'artifacts':artifacts,'artifact_trash':artifact_trash,'branch':branches.rows().get(sid)}
+    result=await workspace.decorate(result)
+    try:result['goal_state']=await goals.snapshot(sid)
+    except Exception:result['goal_state']={'unavailable':True}
+    return web.json_response(result)
 
 async def chat_meta(request):
     sid=request.match_info['sid'];data=await body_json(request)
@@ -333,11 +434,14 @@ async def submit(request):
     with db() as conn:prior=conn.execute('SELECT * FROM turns WHERE input_id=?',(input_id,)).fetchone()
     if prior:
         if prior['session_id']!=sid or prior['text']!=text or json.loads(prior['file_ids'])!=identifiers:return error('Идентификатор уже использован.',409)
-        if prior['admission_id']:return web.json_response({'admission_id':prior['admission_id'],'input_id':input_id,'duplicate':True})
+        if prior['admission_id']:
+            recovery=await workspace.recovery.after_input(sid,prior['admission_id'])
+            return web.json_response({'admission_id':prior['admission_id'],'input_id':input_id,'duplicate':True,**recovery})
     mode=data.get('mode','chat')
     if mode not in {'code','chat','image'}:return error('Неизвестный режим работы.')
     image_api_text=None
-    if mode=='image':
+    auto_enabled=bool((auto.row(sid) or {}).get('enabled'))
+    if mode=='image' and not auto_enabled:
         if not image_status()['ready']:return error('Модель изображений ещё скачивается. Прогресс доступен в разделе «Модели».',409)
         if identifiers:return error('Этот генератор работает по тексту. Сначала проанализируйте фото в обычном чате, затем используйте его описание для генерации.',409)
         job_folder=ROOT/'data/image-requests';job_folder.mkdir(exist_ok=True)
@@ -350,14 +454,39 @@ async def submit(request):
             '. Описание уже записано в JSON, не подставляй его в командную строку. '
             'Не подменяй результат SVG или текстовым описанием. После успеха сообщи путь к PNG. Описание: '+text)
     snapshot=await bridge.resume(sid)
-    if snapshot.get('running'):return error('Дождитесь завершения текущего ответа.',409)
+    was_running=bool(snapshot.get('running'))
+    from chat_recovery import has_unknown
+    interrupted=has_unknown(snapshot)
     if portable.PRIVATE:
-        info=snapshot.get('info') or {};url=(info.get('launch_request') or {}).get('base_url')
-        if info.get('model')!=portable.model_id() or info.get('provider') not in {'custom','direct-local'} or (url and url.rstrip('/')!=portable.model_url().rstrip('/')):
+        info=snapshot.get('info') or {}
+        route_target=cloud.target(info.get('model'))
+        expected_url=cloud.proxy_url() if route_target else portable.model_url()
+        # Creation launch_request is immutable after a canonical model mutation.
+        # The accepted UI route is updated only after the owner commits that mutation.
+        with db() as conn:accepted=conn.execute('SELECT model,url FROM routes WHERE session_id=?',(sid,)).fetchone()
+        # Model mutation resolves named custom providers as custom:<profile-name>.
+        # Keep the selected model and accepted loopback route checks for both forms.
+        provider=str(info.get('provider') or '')
+        custom_provider=provider=='custom' or provider.startswith('custom:')
+        if info.get('model')!=workspace.selected_model(sid) or not (custom_provider or provider=='direct-local') or not accepted or accepted['model']!=info.get('model') or accepted['url'].rstrip('/')!=expected_url.rstrip('/'):
             return error('Этот сохранённый чат использует другой провайдер. Создайте новый чат для текущей локальной модели.',409)
-    reasoning='none' if mode=='code' else 'low'
-    if (snapshot.get('info') or {}).get('reasoning_effort')!=reasoning:
+    local_item=library.route_item((snapshot.get('info') or {}).get('model'))
+    if local_item and not was_running and not interrupted:
+        if library.active_id()!=local_item['id'] and any(other.get('running') or other.get('pending') for key,other in bridge.snapshots.items() if key!=sid):
+            return error('Другая локальная модель используется в чате. Остановите ответ перед переключением.',409)
+        await library.ensure_active(local_item['id'])
+    if not was_running and not interrupted:
+        snapshot=await context_modes.ensure_context(sid,snapshot)
+    requested_reasoning=data.get('reasoning')
+    if requested_reasoning is not None and requested_reasoning not in {'none','low','medium','high','xhigh'}:raise ValueError('Выберите уровень обдумывания.')
+    reasoning='none' if mode=='code' else requested_reasoning or context_modes.effort(sid)
+    if local_item or (snapshot.get('info') or {}).get('model')==portable.model_id():
+        supported=context_modes.status(sid)['reasoning_levels']
+        if reasoning not in supported:reasoning='low' if 'low' in supported else 'none'
+    if not was_running and not interrupted and (snapshot.get('info') or {}).get('reasoning_effort')!=reasoning:
         await bridge.rpc('config.set',session_id=sid,key='reasoning',value=reasoning,scope='session')
+    if not was_running and not interrupted:
+        with db() as conn:conn.execute('INSERT INTO workspace_preferences(session_id,reasoning) VALUES(?,?) ON CONFLICT(session_id) DO UPDATE SET reasoning=excluded.reasoning',(sid,reasoning))
     attachments=[];file_refs=[];selected=[]
     with db() as conn:
         for identifier in identifiers:
@@ -386,18 +515,37 @@ async def submit(request):
     if image_api_text:turn_params['api_text']=image_api_text
     # Keep image annotations and file refs together in the canonical prompt. An api_text
     # override would replace the vision annotation assembled by this Hermes version.
-    wire_text=text+('\n\nПрикреплённые пользователем файлы:\n'+'\n'.join(file_refs) if file_refs else '')
+    wire_text=('Создай изображение: ' if auto_enabled and mode=='image' else '')+text+('\n\nПрикреплённые пользователем файлы:\n'+'\n'.join(file_refs) if file_refs else '')
+    if not attachments and not image_api_text:
+        owner_notes=EXECUTION_NOTE+'\nТекущий чат для встроенного просмотра: '+sid
+        if workspace.preferences(sid).get('learning',True):owner_notes+='\n'+LEARNING_NOTE
+        turn_params['api_text']=wire_text+'\n\n[Настройки владельца: выполнение и память]\n'+owner_notes
     receipt=await bridge.rpc('prompt.submit',session_id=sid,input_id=input_id,text=wire_text,**turn_params)
+    workspace.admitted(sid,input_id,receipt,(snapshot.get('info') or {}).get('model'))
     with db() as conn:
         conn.execute('UPDATE turns SET admission_id=? WHERE input_id=?',(receipt.get('admission_id',''),input_id))
         conn.execute('INSERT OR IGNORE INTO chats(id,updated) VALUES(?,?)',(sid,time.time()))
         conn.execute('UPDATE chats SET updated=?,title=CASE WHEN title IS NULL OR title=\'\' THEN ? ELSE title END WHERE id=?',
             (time.time(),str(data.get('text'))[:70],sid))
-    bridge.live[sid]={'text':'','active':True,'tool':None,'generation':receipt.get('execution_generation',0)}
-    return web.json_response(receipt)
+    recovery=await workspace.recovery.after_input(sid,receipt['admission_id'])
+    if not was_running:
+        bridge.live.setdefault(sid,{'text':'','active':True,'tool':None,'generation':receipt.get('execution_generation',0)})
+    return web.json_response({**receipt,**recovery})
 
 async def stop(request):
     sid=request.match_info['sid'];snapshot=await bridge.resume(sid)
+    await auto.stop(sid,request)
+    # Completion receipts are stored by the native owner. Cancel only queued,
+    # failed auto-notifications, preserving all human tasks and their payloads.
+    # Otherwise Stop settles one turn and its failed subprocess notices wake it again.
+    for pending in snapshot.get('pending',[]):
+        text=str(pending.get('text') or '')
+        if pending.get('status')=='queued' and str(pending.get('input_id','')).startswith('["completion",') and text.startswith('[IMPORTANT: Background process') and re.search(r'exited \(exit code (?!0\))',text):
+            with contextlib.suppress(Exception):
+                await bridge.rpc('prompt.cancel',session_id=sid,admission_id=pending['admission_id'])
+    control=await goals.snapshot(sid)
+    if (control.get('goal') or {}).get('status')=='active':
+        await bridge.rpc('session.control',session_id=sid,action='goal.pause')
     return web.json_response(await bridge.rpc('session.interrupt',session_id=sid,execution_generation=snapshot['execution_generation']))
 
 async def respond(request):
@@ -442,14 +590,14 @@ async def file_response(request):
     with db() as conn:row=conn.execute('SELECT * FROM files WHERE id=?',(identifier,)).fetchone()
     if not row:return error('Файл не найден.',404)
     response=web.FileResponse(row['path']);response.content_type=row['mime']
-    if row['mime'] not in {'image/png','image/jpeg','image/gif','image/webp','image/bmp'}:response.headers['Content-Disposition']="attachment; filename*=UTF-8''"+__import__('urllib.parse',fromlist=['quote']).quote(row['name'])
+    if row['mime'] not in {'image/png','image/jpeg','image/gif','image/webp','image/bmp','video/mp4','video/webm','video/quicktime'}:response.headers['Content-Disposition']="attachment; filename*=UTF-8''"+__import__('urllib.parse',fromlist=['quote']).quote(row['name'])
     return response
 
 async def artifact_response(request):
     with db() as conn:row=conn.execute('SELECT * FROM artifacts WHERE id=?',(request.match_info['fid'],)).fetchone()
-    if not row or not local_asset(row['path']):return error('Артефакт не найден.',404)
+    if not row or artifact_workspace.hidden(row['path']) or not local_asset(row['path']):return error('Артефакт не найден.',404)
     response=web.FileResponse(row['path']);response.content_type=row['mime']
-    if row['mime'] not in {'image/png','image/jpeg','image/gif','image/webp','image/bmp'}:response.headers['Content-Disposition']="attachment; filename*=UTF-8''"+__import__('urllib.parse',fromlist=['quote']).quote(row['name'])
+    if row['mime'] not in {'image/png','image/jpeg','image/gif','image/webp','image/bmp','video/mp4','video/webm','video/quicktime'}:response.headers['Content-Disposition']="attachment; filename*=UTF-8''"+__import__('urllib.parse',fromlist=['quote']).quote(row['name'])
     return response
 
 async def projects(request):
@@ -477,11 +625,20 @@ async def startup(app):
     await asyncio.to_thread(library.scan)
     system.start()
     portable.write_hermes(portable.context_size())
+    if cloud.models():await asyncio.to_thread(cloud.sync_aliases)
     await bridge.start();app['monitor_task']=asyncio.create_task(monitor(app))
     await updates.start(app,bridge)
+    await rewards.start()
     active=library.model(portable.config().get('active'))
     if active and library.ready(active):library.activate(active['id'])
+    performance.start(app)
 async def cleanup(app):
+    await performance.close()
+    await auto.close()
+    await rewards.stop()
+    advisor.pool.shutdown(wait=False,cancel_futures=True)
+    await preview.stop()
+    await cloud.close()
     await updates.close()
     app['monitor_task'].cancel()
     with contextlib.suppress(asyncio.CancelledError):await app['monitor_task']
@@ -490,12 +647,28 @@ async def cleanup(app):
 def create_app():
     app=web.Application(middlewares=[security],client_max_size=55*1024**2)
     app['runtime']={'metrics':{}}
+    app['bridge']=bridge
+    remote=RemoteClient()
+    remote.register(app)
+    app['phone_access']=remote
+    performance.register(app)
+    context_modes.register(app)
     register_library(app)
-    register_video(app,bridge)
+    register_video(app,bridge,register_artifact)
     app.router.add_get('/api/updates',lambda r:web.json_response(updates.status()))
     app.router.add_post('/api/updates/check',update_check)
     app.router.add_post('/api/updates/settings',update_settings)
     register_system(app)
+    workspace.register(app)
+    auto.register(app)
+    cloud.register(app)
+    branches.register(app)
+    rewards.register(app)
+    preview.register(app)
+    advisor.register(app)
+    accounts.register(app)
+    goals.register(app)
+    artifact_workspace.register(app)
     app.router.add_get('/api/health',health);app.router.add_get('/api/bootstrap',bootstrap)
     app.router.add_get('/api/sessions',sessions);app.router.add_post('/api/sessions',new_session)
     app.router.add_get('/api/sessions/{sid}',session_detail);app.router.add_patch('/api/sessions/{sid}',chat_meta)

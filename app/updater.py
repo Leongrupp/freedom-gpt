@@ -1,4 +1,4 @@
-"""Opt-out automatic signed updates; apply only when this installation is idle."""
+"""Signed updates requested by the owner; apply only after a manual check and while idle."""
 import asyncio,contextlib,json,os,pathlib,shutil,subprocess,sys,time,urllib.parse,urllib.request
 from bootstrap import ROOT,STACK,config,read,write
 from update_protocol import verify,sha256,version,target_platform
@@ -20,12 +20,13 @@ def remote(url,headers=None):
 
 class Updates:
  def __init__(self):
-  self.state={'state':'idle','current_version':META['version'],'enabled':config().get('auto_update',True),'percent':0}
+  self.state={'state':'idle','current_version':META['version'],'enabled':False,'manual_only':True,'percent':0}
+  self.manual_requested=False
   self.task=None;self.check_task=None;self.lock=asyncio.Lock();self.payload=None;self.package=None;self.envelope=None
- def status(self):return dict(self.state,enabled=config().get('auto_update',True))
+ def status(self):return dict(self.state,enabled=False,manual_only=True,local_build=META.get('local_build'))
  def enabled(self,value):
   if not isinstance(value,bool):raise ValueError('Expected a boolean')
-  cfg=config();cfg['auto_update']=value;write(ROOT/'data/settings.json',cfg);return self.status()
+  cfg=config();cfg['auto_update']=False;write(ROOT/'data/settings.json',cfg);return self.status()
  async def start(self,app,bridge):self.task=asyncio.create_task(self.loop(app,bridge))
  async def close(self):
   for task in [self.task,self.check_task]:
@@ -34,6 +35,7 @@ class Updates:
    if task:
     with contextlib.suppress(asyncio.CancelledError):await task
  def request_check(self):
+  self.manual_requested=True
   if not self.check_task or self.check_task.done():self.check_task=asyncio.create_task(self.check())
   return self.status()
  async def check(self):
@@ -76,12 +78,10 @@ class Updates:
  async def loop(self,app,bridge):
   await asyncio.sleep(12)
   while True:
-   if config().get('auto_update',True):
-    if self.state['state']=='ready':await self.try_apply(app,bridge)
-    elif time.time()-self.state.get('last_check',0)>(600 if self.state['state']=='error' else 21600):await self.check()
+   if self.manual_requested and self.state['state']=='ready':await self.try_apply(app,bridge)
    await asyncio.sleep(5)
  async def try_apply(self,app,bridge):
-  if not self.package or not self.payload or app.get('prompt_admissions',0):return
+  if not self.package or not self.payload or app.get('prompt_admissions',0) or app.get('performance_busy'):return
   from library import library
   from video import videos
   if videos.busy():return

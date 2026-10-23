@@ -79,12 +79,50 @@ def write_hermes(context=None):
        'model_aliases':{'freedom-active':{'model':ident,'provider':'custom','base_url':url,'api_key':'local'}},
        'custom_providers':[{'name':'direct-local','base_url':url,'api_key':'local'}],
        'toolsets':['hermes-cli','vision','image_gen'],'terminal':{'backend':'local','cwd':str(ROOT/'workspaces')},
-       'compression':{'enabled':True,'threshold_tokens':min(32768,int(context*.75))},
+       'compression':{'enabled':True,'threshold':.5},
+         'tool_loop_guardrails':{'hard_stop_enabled':True,'warnings_enabled':True,
+                                 'hard_stop_after':{'exact_failure':2,'idempotent_no_progress':3,'same_tool_failure':8},
+                                 'warn_after':{'exact_failure':1,'idempotent_no_progress':2,'same_tool_failure':2}},
        'auxiliary':{'vision':{'provider':'custom','model':ident,'base_url':url,'api_key':'local','timeout':240},
                     'compression':{'provider':'custom','model':ident,'base_url':url,'api_key':'local'}},
-       'telemetry':{'enabled':False},'database':{'journal_mode':'delete','synchronous':'FULL'},'plugins':{'enabled':['coding-continuity','local-qwen-image']},
+       'telemetry':{'enabled':False},'database':{'journal_mode':'delete','synchronous':'FULL'},'plugins':{'enabled':['coding-continuity','local-qwen-image','freedom-accounts','freedom-preview']},
        'image_gen':{'provider':'local-qwen-image'},'memory':{'provider':'coding-continuity'}}
- (HOME/'config.yaml').write_text(yaml.safe_dump(data,allow_unicode=True,sort_keys=False),encoding='utf8')
+ path=HOME/'config.yaml'
+ previous=path.read_text(encoding='utf-8-sig') if path.exists() else None
+ existing=yaml.safe_load(previous) if previous is not None else {}
+ if existing is None:existing={}
+ if not isinstance(existing,dict):raise ValueError('Agent configuration must be a YAML mapping; the original file was preserved.')
+ # Defaults fill gaps. Only the active model route is managed by the application.
+ import copy,hashlib
+ def defaults(target,source):
+  for key,value in source.items():
+   if key not in target:target[key]=copy.deepcopy(value)
+   elif isinstance(value,dict) and isinstance(target[key],dict):defaults(target[key],value)
+ merged=copy.deepcopy(existing);defaults(merged,data)
+ for section in ('model','model_aliases','auxiliary','plugins'):
+  if not isinstance(merged[section],dict):raise ValueError('Invalid agent configuration section: '+section+'; original preserved.')
+ merged['model'].update(data['model'])
+ merged['model_aliases']['freedom-active']=data['model_aliases']['freedom-active']
+ for name,value in data['auxiliary'].items():
+  if not isinstance(merged['auxiliary'].get(name),dict):raise ValueError('Invalid auxiliary configuration; original preserved.')
+  merged['auxiliary'][name].update({k:v for k,v in value.items() if k!='timeout'})
+ providers=merged.get('custom_providers')
+ if not isinstance(providers,list):raise ValueError('Invalid custom providers; original preserved.')
+ providers[:]=[item for item in providers if not isinstance(item,dict) or item.get('name')!='direct-local']+[data['custom_providers'][0]]
+ enabled=merged['plugins'].get('enabled',[])
+ if not isinstance(enabled,list):raise ValueError('Invalid enabled plugins; original preserved.')
+ merged['plugins']['enabled']=list(dict.fromkeys(enabled+data['plugins']['enabled']))
+ if merged==existing:return
+ if previous is not None:
+  backup=ROOT/'archive/agent-config';backup.mkdir(parents=True,exist_ok=True)
+  target=backup/(hashlib.sha256(previous.encode('utf-8')).hexdigest()+'.yaml')
+  if not target.exists():target.write_text(previous,encoding='utf-8')
+ temp=path.with_name('config-'+uuid.uuid4().hex+'.new')
+ try:
+  with temp.open('w',encoding='utf-8') as stream:
+   stream.write(yaml.safe_dump(merged,allow_unicode=True,sort_keys=False));stream.flush();os.fsync(stream.fileno())
+  os.replace(temp,path)
+ finally:temp.unlink(missing_ok=True)
 def relocate():
  previous=read(ROOT/'data/install-root.json',{}).get('root')
  if previous and previous!=str(ROOT):

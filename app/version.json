@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
+  "version": "1.6.0",
   "channel": "stable",
   "repository": "Leongrupp/freedom-gpt",
   "support": {
@@ -7,5 +7,7 @@
     "telegram": "https://t.me/AI1rus",
     "github": "https://github.com/Leongrupp/freedom-gpt",
     "bitcoin": "bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6"
-  }
+  },
+  "local_build": "release-20261022",
+  "ui_revision": "agent-1.6.0-turbo-context-recovery-ui-phone-notify1"
 }

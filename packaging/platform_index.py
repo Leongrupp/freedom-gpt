@@ -1,8 +1,11 @@
 """Assemble a local download index only; never publishes or uploads."""
 import json,pathlib,shutil
 from platform_bundle import ROOT,VERSION,sha
+from publish_platforms import verify_package_reports,verify_native_macos
 
 def main():
+ verify_package_reports(ROOT,VERSION)
+ native=verify_native_macos(ROOT,VERSION)
  out=ROOT/'release/platforms'/VERSION;release=json.loads((ROOT/'release/release.json').read_text(encoding='utf-8'))
  for kind in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification']:
   name=kind+'-'+VERSION+'.json'
@@ -15,7 +18,7 @@ def main():
  notes={
   'windows-x64':('Windows 10/11 x64','Проверено на Windows 11. Python, Node.js и движки внутри. Модели отдельно.','Tested on Windows 11. Python, Node.js and engines included; models separate.'),
   'ubuntu-x64':('Ubuntu 24.04 x64','Проверено без Python и сети в чистом контейнере. GPU требует драйвера.','Tested offline in a clean container without system Python. GPU needs a driver.'),
-  'macos-arm64':('macOS · Apple Silicon','macOS 26.2+, M1+. Кандидат без подписи; запуск на Mac ещё не проверен.','macOS 26.2+, M1+. Unsigned candidate; native Mac execution not yet tested.')}
+  'macos-arm64':('macOS · Apple Silicon','macOS 26.2+, M1+. Запуск ядра проверен в ARM64 CI с тестовым ответом модели. Без подписи и нотарификации; генерация на GPU не проверена.','macOS 26.2+, M1+. Core runtime tested in ARM64 CI with a model fixture. Unsigned, not notarized; GPU generation not tested.')}
  platforms=[];all_files=[]
  for target,(name,ru,en) in notes.items():
   meta=json.loads((out/(target+'.json')).read_text());public=[]
@@ -26,7 +29,9 @@ def main():
    if 'update' in file.name.lower() or 'source' in file.name.lower():continue
    fmt='EXE installer' if file.suffix=='.exe' else 'DEB' if file.suffix=='.deb' else '.run installer' if file.suffix=='.run' else 'TAR.GZ portable' if file.name.endswith('.tar.gz') else '.app ZIP' if target.startswith('macos') else 'ZIP portable'
    public.append({**{k:item[k] for k in ['name','bytes','sha256']},'format':fmt,'url':'/downloads/platform/'+file.name})
-  platforms.append({'id':target,'name':name,'note_ru':ru,'note_en':en,'files':public,'native_tested':target!='macos-arm64'})
+  entry={'id':target,'name':name,'note_ru':ru,'note_en':en,'files':public,'native_tested':True}
+  if target=='macos-arm64':entry.update(native_verification_url=native['workflow']['url'],model_generation_tested=False,media_generation_tested=False)
+  platforms.append(entry)
  matrix={'product':'Freedom GPT','version':VERSION,'published':False,'platforms':platforms}
  (out/'platforms.json').write_text(json.dumps(matrix,ensure_ascii=False,indent=2),encoding='utf-8')
  unique={f['name']:f for f in all_files};(out/'SHA256SUMS.txt').write_text(''.join(f['sha256']+'  '+f['name']+'\n' for f in sorted(unique.values(),key=lambda f:f['name'])),encoding='ascii')

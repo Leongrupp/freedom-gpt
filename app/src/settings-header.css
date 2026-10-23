@@ -1,0 +1,14 @@
+.modal.has-header-actions>header{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:12px}
+.modal.has-header-actions>header>div:first-child{min-width:0}
+.modal-header-controls{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.modal-header-controls .segmented{padding:3px}
+.modal-header-controls .segmented>button{width:26px;height:27px;padding:4px;font-size:10px}
+.modal-header-controls .settings-theme-switch{flex-shrink:0}
+.language-switch button{white-space:nowrap}
+.language-switch button[lang="zh-CN"]{min-width:32px}
+:root:lang(zh-CN){font-family:Inter,"Microsoft YaHei UI","PingFang SC","Noto Sans CJK SC","Segoe UI",sans-serif}
+@media(max-width:520px){
+ .modal.has-header-actions>header{grid-template-columns:minmax(0,1fr) auto;gap:10px}
+ .modal.has-header-actions>header>.icon-button{grid-column:2;grid-row:1}
+ .modal-header-controls{grid-column:1/-1;grid-row:2;justify-self:end}
+}

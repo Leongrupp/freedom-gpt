@@ -1,0 +1,20 @@
+// Uses the existing QR encoder bundled with npm; no runtime network dependency.
+import {createRequire} from 'node:module';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+const require=createRequire(import.meta.url);
+const root=fileURLToPath(new URL('../',import.meta.url));
+const QRCode=require(path.join(root,'runtime/node/node_modules/npm/node_modules/qrcode-terminal/vendor/QRCode'));
+const levels=require(path.join(root,'runtime/node/node_modules/npm/node_modules/qrcode-terminal/vendor/QRCode/QRErrorCorrectLevel.js'));
+const address=JSON.parse(readFileSync(path.join(root,'version.json'),'utf8')).support.bitcoin;
+if(!/^bc1[a-z0-9]{20,80}$/.test(address))throw new Error('Expected the configured Bitcoin address');
+const payload='bitcoin:'+address;
+const qr=new QRCode(-1,levels.H);qr.addData(payload);qr.make();
+const size=qr.getModuleCount(),border=4,extent=size+border*2;
+const segments=[];
+for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(qr.isDark(y,x))segments.push(`M${x+border} ${y+border}h1v1h-1z`);
+const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${extent*4}" height="${extent*4}" viewBox="0 0 ${extent} ${extent}" shape-rendering="crispEdges"><title>Freedom GPT · Bitcoin</title><desc>${payload}</desc><rect width="${extent}" height="${extent}" fill="#fff"/><path d="${segments.join('')}" fill="#17181b"/></svg>\n`;
+const destination=path.join(root,'src/assets');mkdirSync(destination,{recursive:true});
+writeFileSync(path.join(destination,'bitcoin-qr.svg'),svg);
+console.log(JSON.stringify({address,payload,modules:size,quietZone:border,bytes:Buffer.byteLength(svg)}));

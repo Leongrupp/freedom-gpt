@@ -4,7 +4,7 @@
 
 **Русский** · [English](README.md)
 
-> **Готовим Freedom GPT 1.6.0.** Снимки и обзор ниже показывают новую Windows-сборку. Сейчас публично скачивается **1.4.2**, в которой ещё нет всех новых функций. Новые установщики и исходники готовятся к публикации.
+> **Freedom GPT 1.6.0.** Сборки Windows, Ubuntu и Apple Silicon, доступ с телефона, награды и уведомления об ответах. Перед установкой ознакомьтесь с требованиями и проверками платформ.
 
 Freedom GPT связывает совместимые нейросети, инструменты и память проекта. Поручите результат: агент может править реальные файлы, запускать команды, работать с сайтами и продолжать проект в одном чате.
 
@@ -52,9 +52,9 @@ Freedom GPT связывает совместимые нейросети, инс
 
 | Система | Скачать | Требования |
 |---|---|---|
-| Windows | [EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Windows-x64.zip) | Windows 10/11 x64 |
-| Ubuntu / Linux | [.run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-Ubuntu-x64.tar.gz) | Ubuntu 24.04+ x64 / compatible glibc 2.39+ |
-| macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip) | M1+, macOS 26.2+; unsigned / not notarized |
+| Windows | [EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Windows-x64.zip) | Windows 10/11 x64 |
+| Ubuntu / Linux | [.run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04+ x64 / compatible glibc 2.39+ |
+| macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-macOS-AppleSilicon.zip) | M1+, macOS 26.2+; unsigned / not notarized |
 | iPhone / Android | [Подключение телефона](docs/PHONE-ACCESS.md) | Обзор 1.6.0: браузер телефона + работающий ПК |
 
 **Python, Node.js/npm, библиотеки агента и движки уже внутри.** Системный Python и Ollama не нужны. Веса моделей скачиваются отдельно. Git, браузеры автоматизации, Blender и специализированные инструменты устанавливаются отдельно.

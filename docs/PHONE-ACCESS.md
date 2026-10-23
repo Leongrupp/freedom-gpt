@@ -1,5 +1,3 @@
-> New phone access is shown in the upcoming 1.6.0 preview. Current public 1.4.2 downloads do not include it. / Пульт показан в готовящейся 1.6.0, в публичной 1.4.2 этой функции ещё нет.
-
 # Доступ с телефона / Phone access
 
 Available in Freedom GPT **1.6.0+**. Optional, disabled by default.
@@ -67,8 +65,8 @@ Never publish `data/`, device keys, cookies, pairing links or customer databases
 The implementation was tested with two independent PC identities, mandatory
 approval, one-time/expired QR codes, streamed uploads/downloads, protected browser
 storage, WebSocket compression boundaries, reconnection and revocation. The live
-browser flow was tested through the project HTTPS relay. macOS remains an
-unsigned build with native execution unverified; see [CROSS-PLATFORM.md](../CROSS-PLATFORM.md).
+browser flow was tested through the project HTTPS relay. The unsigned macOS core passed native ARM64 CI with a model fixture;
+real GPU generation remains untested; see [CROSS-PLATFORM.md](../CROSS-PLATFORM.md).
 
 The earlier owner-only iPhone certificate installation is separate from this
 public feature. No owner key or phone profile is included in public packages.

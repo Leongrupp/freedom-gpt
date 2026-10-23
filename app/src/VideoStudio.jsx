@@ -1,16 +1,19 @@
+import {localStore,sessionStore} from './browserStorage.js';
 import React,{useEffect,useState} from 'react';
 import {X,Video,Download,RefreshCw,Square,Play,Sparkles,ExternalLink} from 'lucide-react';
 import {api,CONNECTION_ERROR} from './api.js';
 import {t} from './i18n.js';
+import {FalVideoPanel} from './FalVideoPanel.jsx';
+import './api-connections.css';
 const phases={queued:'В очереди',loading:'Загружаем видеомодель',generating:'Создаём видео',restoring:'Возвращаем модель кода',complete:'Готово',error:'Ошибка',cancelled:'Остановлено',interrupted:'Прервано'};
-export function VideoStudio({onClose,onModels}){
- const[data,setData]=useState(null),[prompt,setPrompt]=useState(()=>localStorage.getItem('freedom-video-prompt')||''),[size,setSize]=useState('512x288'),[frames,setFrames]=useState(33),[steps,setSteps]=useState(20),[error,setError]=useState(''),[busy,setBusy]=useState('');
+function LocalVideoStudio({onClose,onModels,sid,onEnsureChat,sourceTabs}){
+ const[data,setData]=useState(null),[prompt,setPrompt]=useState(()=>localStore.getItem('freedom-video-prompt')||''),[size,setSize]=useState('512x288'),[frames,setFrames]=useState(33),[steps,setSteps]=useState(20),[error,setError]=useState(''),[busy,setBusy]=useState('');
  useEffect(()=>{let off=false;const load=async()=>{try{const next=await api('/video');if(!off){setData(next);setError(prior=>prior===CONNECTION_ERROR?'':prior)}}catch(e){if(!off)setError(e.message)}};load();const id=setInterval(load,1600);return()=>{off=true;clearInterval(id)}},[]);
- useEffect(()=>{localStorage.setItem('freedom-video-prompt',prompt)},[prompt]);
- async function action(path,body={}){setError('');setBusy(path);try{await api(path,{method:'POST',body:JSON.stringify(body)});setData(await api('/video'))}catch(e){setError(e.message)}finally{setBusy('')}}
+ useEffect(()=>{localStore.setItem('freedom-video-prompt',prompt)},[prompt]);
+ async function action(path,body={}){setError('');setBusy(path);try{if(path==='/video/generate')body={...body,session_id:sid||await onEnsureChat?.()};await api(path,{method:'POST',body:JSON.stringify(body)});setData(await api('/video'))}catch(e){setError(e.message)}finally{setBusy('')}}
  const job=data?.current,working=['queued','loading','generating','restoring'].includes(job?.state),results=(data?.history||[]).filter(j=>j.state==='complete'),[width,height]=size.split('x').map(Number);
  return <div className="modal-backdrop"><section className="modal video-studio" role="dialog" aria-modal="true" aria-label={t('Видео на вашем ПК')}><header><div><div className="library-eyebrow">FREEDOM GPT · VIDEO LAB</div><h2>{t('Видео на вашем ПК')} <span className="free-pill">{t('Бесплатно')}</span></h2><p>{t('Опишите сцену. Видеомодель создаст короткий ролик локально, без платного API.')}</p></div><button className="icon-button" aria-label={t('Закрыть')} onClick={onClose}><X size={18}/></button></header>
- <div className="video-layout"><div className="video-controls"><div className="video-model-card"><Video size={22}/><div><strong>{data?.model||'Wan 2.1'}</strong><span>{data?.ready?t('Модель скачана и проверена'):t('Комплект модели: ')+(data?.total?(data.total/1024**3).toFixed(2)+t(' ГБ'):'—')}</span></div><span className={'tiny-dot '+(data?.ready?'green':'amber')}/></div>
+ {sourceTabs}<div className="video-layout"><div className="video-controls"><div className="video-model-card"><Video size={22}/><div><strong>{data?.model||'Wan 2.1'}</strong><span>{data?.ready?t('Модель скачана и проверена'):t('Комплект модели: ')+(data?.total?(data.total/1024**3).toFixed(2)+t(' ГБ'):'—')}</span></div><span className={'tiny-dot '+(data?.ready?'green':'amber')}/></div>
  {!data?.ready&&<div className="video-setup"><p>{t('Сначала проверим ПК и подберём видеомодель. Загрузка начнётся после выбора в каталоге.')}</p><button className="primary-button" disabled={!!busy} onClick={async()=>{await action('/library/scan',{task:'video'});onModels('video')}}><RefreshCw size={15}/>{t('Проверить ПК и выбрать модель')}</button></div>}
  {data?.recommendation&&<p className={'fit-text '+data.recommendation.level}>{t(data.recommendation.reason)}</p>}
  <label className="video-prompt-label">{t('Описание сцены')}<textarea rows={5} aria-label={t('Описание видео')} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder={t('Камера медленно приближается к футуристическому городу на закате…')}/></label>
@@ -22,4 +25,11 @@ export function VideoStudio({onClose,onModels}){
  <div className="video-preview">{job&&working?<div className="video-progress"><RefreshCw className="spin" size={28}/><h3>{t(phases[job.state])}</h3><p>{job.progress||0}%</p><div className="download-progress"><i style={{width:(job.progress||0)+'%'}}/></div><small>{t('Можно закрыть окно: задача продолжится. Результат останется в истории видео.')}</small></div>:results.length?<><video key={results[0].id} src={results[0].url} controls preload="metadata"/><div className="video-result-info"><span>{results[0].width} × {results[0].height} · {results[0].frames} {t('кадров')} · {results[0].seconds} {t('сек расчёта')}</span><a href={results[0].url} download={'FreedomGPT-'+results[0].id.slice(0,8)+'.webm'}><Download size={14}/>{t('Скачать WebM')}</a></div><p>{results[0].prompt}</p></>:<div className="video-empty"><div><Video size={44}/></div><h3>{t('Ваша идея в движении')}</h3><p>{t('Первое видео появится здесь. Генерация работает на вашем компьютере.')}</p></div>}</div></div>
  {!!results.length&&<section className="video-history"><h3>{t('История видео')}</h3><div>{results.map(item=><a href={item.url} key={item.id} target="_blank" rel="noreferrer"><Play size={14}/><span>{item.prompt.slice(0,72)}</span><small>{new Date(item.created_at*1000).toLocaleDateString()}</small></a>)}</div></section>}
  <footer className="library-footer"><span>{t('Бесплатно. Видео и история хранятся на этом ПК.')}</span><a href="https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B" target="_blank" rel="noreferrer">Wan 2.1 <ExternalLink size={12}/></a></footer></section></div>
+}
+
+export function VideoStudio(props){
+ const[source,setSource]=useState('local');
+ const tabs=<div className="video-sources" role="tablist" aria-label={t('Источник генерации видео')}><button role="tab" aria-selected={source==='local'} onClick={()=>setSource('local')}>{t('Локально · бесплатно')}</button><button role="tab" aria-selected={source==='fal'} onClick={()=>setSource('fal')}>{t('fal.ai · платно')}</button></div>;
+ if(source==='local')return <LocalVideoStudio {...props} sourceTabs={tabs}/>;
+ return <div className="modal-backdrop"><section className="modal video-studio" role="dialog" aria-modal="true" aria-label={t('Видео через fal.ai')}><header><div><div className="library-eyebrow">FREEDOM GPT · VIDEO LAB</div><h2>{t('Видео через fal.ai')} <span className="api-paid-badge">{t('Платный API')}</span></h2></div><button className="icon-button" aria-label={t('Закрыть')} onClick={props.onClose}><X size={18}/></button></header>{tabs}<FalVideoPanel sid={props.sid} onEnsureChat={props.onEnsureChat} onConnect={props.onApi}/></section></div>;
 }

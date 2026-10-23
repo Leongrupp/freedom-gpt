@@ -18,6 +18,8 @@ try:
    time.sleep(1)
   else:raise RuntimeError('Video is still releasing GPU resources. Keep the disk connected and retry Stop-FreedomGPT.cmd.')
 except (urllib.error.URLError,TimeoutError):pass
+from ui_lifecycle import request_stop
+request_stop()
 if not bootstrap.PRIVATE:library.stop_model()
 record=read(ROOT/'.tmp/server-process.json',{})
 def wait_stopped(process,timeout=15):

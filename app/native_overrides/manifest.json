@@ -1,0 +1,120 @@
+{
+  "source": "Reviewed Freedom GPT 1.6.0 delta against clean 1.4.2 runtime",
+  "files": [
+    {
+      "path": "agent/conversation_compression.py",
+      "sha256": "2dfc1b0dfdb564d6a343cf99790d5d96e4c80ee3c3c355292eb251f2f01934ac",
+      "bytes": 254598
+    },
+    {
+      "path": "agent/display.py",
+      "sha256": "7fb815b0839842902faa271a4796f625c40ba1ede757fa53a95fc948e616bc2d",
+      "bytes": 56963
+    },
+    {
+      "path": "agent/freedom_context_recovery.py",
+      "sha256": "84568220c8a98b81248d33437160ae01c254aca3d4db2aa9bd1313e5fed6fd11",
+      "bytes": 3288
+    },
+    {
+      "path": "agent/freedom_local_runtime.py",
+      "sha256": "b457cb602f1279e7d11c0a4ddab3bf734305b1c2bc7e1b13d119a54263f1af65",
+      "bytes": 488
+    },
+    {
+      "path": "agent/freedom_local_tokens.py",
+      "sha256": "f32e0adf0104569ba1452dd5b5f6713a84dfb4b27b13e6965fc0832201e9664a",
+      "bytes": 3510
+    },
+    {
+      "path": "agent/tool_guardrails.py",
+      "sha256": "e808eea76c86635b97a8eef5b2025c0fe26d8ea718d7a79f72367b13ba069496",
+      "bytes": 37964
+    },
+    {
+      "path": "agent/tool_loop_recovery.py",
+      "sha256": "f9aa8f0eb6ba7575e70734f67a7432bc170ba1507af28dbf2d8b4b7c3be2c82a",
+      "bytes": 6267
+    },
+    {
+      "path": "agent/turn_context_compaction.py",
+      "sha256": "2a1c83bd5de74b65cc26c7f37e9bb181f95f785a806013e6a39b04bdf3292bad",
+      "bytes": 24963
+    },
+    {
+      "path": "agent/turn_iteration_prep.py",
+      "sha256": "30a0d41a1a0456005354b29e811df6475a1eea9148fac8aeb7bd12f591ab15f9",
+      "bytes": 28450
+    },
+    {
+      "path": "agent/turn_preflight_gate.py",
+      "sha256": "f64c26f55cdb91296342764b0e626ba9e23227532aa0cf2a1e356a7482b3b827",
+      "bytes": 5979
+    },
+    {
+      "path": "agent/turn_request_assembly.py",
+      "sha256": "eb6737754280947e4c467e4148e500f636108fca5b5c63516a48af7411f10a31",
+      "bytes": 15243
+    },
+    {
+      "path": "gateway/run_goals.py",
+      "sha256": "29ef9a13fcc34cfb8f4ad51d769675c23e5bda0d5ade1087625546524455b3fb",
+      "bytes": 30559
+    },
+    {
+      "path": "gateway/run_turn_persistence.py",
+      "sha256": "d49825f19cdcb96c9f91e41441db22c84c995bb428e29c62e9d4d18686867ab7",
+      "bytes": 38228
+    },
+    {
+      "path": "gateway/session_mutation_model.py",
+      "sha256": "7e612793ff313b370bb978a8adc11511560cd7b012fa43fe72dd94e16926f4af",
+      "bytes": 14939
+    },
+    {
+      "path": "gateway/session_policy_refresh.py",
+      "sha256": "eb54e0fe70dcd6d4079f8a5128e77af5dcd0be42dd7c624abe46ad9ef662ca99",
+      "bytes": 15858
+    },
+    {
+      "path": "gateway/session_queued_controls.py",
+      "sha256": "7c84a15310e4876b18026128ab8fd3fefee6656ab1d6e27db293a2c79b63ffff",
+      "bytes": 17227
+    },
+    {
+      "path": "gateway/session_worker_construct.py",
+      "sha256": "7424b694cd2d471fe206c1c35a7d1e25cbde0f3f8f9796c73593b1d1c907cdd0",
+      "bytes": 13864
+    },
+    {
+      "path": "hermes_cli/goal_command.py",
+      "sha256": "9842e16581ced3b2ea10d1eeadb57b4624be0aacaf9d611ae2e4c6ecad777ef3",
+      "bytes": 9524
+    },
+    {
+      "path": "hermes_cli/goals.py",
+      "sha256": "32930ea4239eafe88ac62b554651e3a7bc631c8b5d27e58b41e7ce7d2d362cff",
+      "bytes": 86834
+    },
+    {
+      "path": "hermes_state_mutations.py",
+      "sha256": "a93e666cf84889c6b716a700955d0015ad0d17e54a8949e0184bf5bc9dd85f11",
+      "bytes": 10789
+    },
+    {
+      "path": "run_agent.py",
+      "sha256": "a8e21d74db7dbc11db022d14da21ab1dae335a208b393221260dda6d37af2424",
+      "bytes": 84576
+    },
+    {
+      "path": "tools/browser_use_cli.py",
+      "sha256": "bda017157f2b1618ccf5ae3161fdefc45c3368829be63ab114f9daac5a60576d",
+      "bytes": 54160
+    },
+    {
+      "path": "tools/terminal_tool_background.py",
+      "sha256": "9fc499027dbb8ee4462bb7eca4f8d9dc2891ab725f615aaba6cce5b12cf24c4f",
+      "bytes": 16296
+    }
+  ]
+}

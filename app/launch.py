@@ -15,7 +15,13 @@ def free_port(preferred):
     sock.bind(('127.0.0.1',port));return port
   except OSError:pass
  raise RuntimeError('Не найден свободный локальный порт.')
+def ensure_agent():
+ from hermes_cli.gateway_runtime import ensure_gateway_runtime,attachable
+ result=ensure_gateway_runtime(bootstrap.HOME,idle_exit=True)
+ if not attachable(result):
+  raise RuntimeError('Не удалось запустить службу агента: '+str(result.reason_code or result.state)+'. Подробности: '+str(bootstrap.HOME/'logs/gateway-stdio.log'))
 def main():
+ from ui_lifecycle import spawn_ui,ensure_supervisor
  from preflight import ensure
  ensure(ROOT)
  bootstrap.ensure_private_model()
@@ -27,18 +33,28 @@ def main():
   if not bootstrap.PRIVATE:library.stop_model();cfg['model_port']=free_port(cfg['model_port'])
   write(ROOT/'data/settings.json',cfg)
   write_hermes()
-  with (ROOT/'logs/launcher.log').open('ab') as log:
-   child=subprocess.Popen([sys.executable,'-s',str(ROOT/'server.py')],cwd=ROOT,env=os.environ.copy(),stdout=log,stderr=log,creationflags=PROCESS_FLAGS)
+  # Start the canonical owner before detaching the UI. Windows launchers may
+  # allow this process to detach once but refuse a second nested breakaway.
+  # Preserve Hermes ownership checks and report a bounded startup failure.
+  ensure_agent()
+  record=spawn_ui()
   import psutil
-  write(ROOT/'.tmp/server-process.json',{'pid':child.pid,'created':psutil.Process(child.pid).create_time()})
   for _ in range(90):
    if health(cfg['ui_port']):break
-   if child.poll() is not None:raise RuntimeError('Не удалось запустить приложение. Подробности: '+str(ROOT/'logs/launcher.log'))
+   if not psutil.pid_exists(record['pid']):raise RuntimeError('Не удалось запустить приложение. Подробности: '+str(ROOT/'logs/launcher.log'))
    time.sleep(.5)
   else:raise RuntimeError('Запуск занял слишком долго. Подробности в logs/launcher.log.')
+ else:
+  if not current.get('gateway_ready'):ensure_agent()
+  # An earlier crash/restart may have left stale process metadata.
+  record=spawn_ui()
+ ensure_supervisor(read(ROOT/'.tmp/server-process.json',{}),cfg['ui_port'])
  if '--no-browser' in sys.argv:return
  url=f"http://127.0.0.1:{cfg['ui_port']}/"
  open_browser(ROOT,url)
 if __name__=='__main__':
  try:main()
- except Exception as exc:show_error(str(exc));raise SystemExit(1)
+ except Exception as exc:
+  if '--no-browser' in sys.argv:print(str(exc),file=sys.stderr)
+  else:show_error(str(exc))
+  raise SystemExit(1)

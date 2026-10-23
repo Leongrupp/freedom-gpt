@@ -2,13 +2,36 @@
 import argparse,hashlib,json,os,pathlib,re,shutil,subprocess,time
 from publish import github_env
 ROOT=pathlib.Path(__file__).resolve().parent.parent
-SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','SUPPORT.md','CODE_OF_CONDUCT.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt','deploy','app','packaging','site','assets','licenses','docs']
+SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','SUPPORT.md','CODE_OF_CONDUCT.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt','deploy','app','packaging','site','assets','licenses','docs','connect']
 
 def sha(p):
  h=hashlib.sha256()
  with p.open('rb') as f:
   for b in iter(lambda:f.read(4*1024**2),b''):h.update(b)
  return h.hexdigest()
+
+def verify_package_reports(root,v):
+ """Reject stale successful reports from an earlier build of the same version."""
+ folder=root/'release/platforms'/v
+ windows=[root/'release'/('FreedomGPT-Setup-'+v+'.exe'),root/'release'/('FreedomGPT-'+v+'-Windows-x64.zip')]
+ ubuntu=[folder/('FreedomGPT-'+v+'-Ubuntu-x64.tar.gz'),folder/('FreedomGPT-Setup-'+v+'-Ubuntu-x64.run'),folder/('FreedomGPT-'+v+'-Ubuntu-amd64.deb')]
+ packages=windows+ubuntu+[folder/('FreedomGPT-'+v+'-macOS-AppleSilicon.zip'),root/'release/update.json',folder/'update-ubuntu-x64.json',folder/'update-macos-arm64.json']
+ for kind,inputs in [('windows-clean-pc-verification',windows),('ubuntu-clean-pc-verification',ubuntu[:1]),('ubuntu-installers-verification',ubuntu[1:]),('platform-artifacts-verification',packages),('source-alignment-verification',packages)]:
+  report=root/'logs'/(kind+'-'+v+'.json')
+  if not report.is_file() or not json.loads(report.read_text(encoding='utf8')).get('passed'):raise ValueError('Passed verification required: '+kind)
+  if any(not p.is_file() for p in inputs) or report.stat().st_mtime<max(p.stat().st_mtime for p in inputs):raise ValueError('Fresh package verification required: '+kind)
+
+def verify_native_macos(root,v):
+ """Bind native execution evidence to the exact archive being published."""
+ spec=json.loads((root/'packaging/native-validation.json').read_text(encoding='utf-8'))
+ report=json.loads((root/'logs'/('native-macos-verification-'+v+'.json')).read_text(encoding='utf-8'))
+ asset=spec['macos'];file=root/'release/platforms'/v/asset['file']
+ workflow=report.get('workflow',{})
+ if spec['version']!=v or report.get('version')!=v or report.get('platform')!='macos-arm64' or not report.get('passed'):raise ValueError('Native macOS verification required')
+ if report.get('asset')!=asset or file.stat().st_size!=asset['bytes'] or sha(file)!=asset['sha256']:raise ValueError('Native macOS report does not match final archive')
+ if workflow.get('status')!='completed' or workflow.get('conclusion')!='success' or workflow.get('headSha')!=report.get('source_commit'):raise ValueError('Successful exact-commit native macOS CI required')
+ if not report.get('checks') or not all(report['checks'].values()):raise ValueError('Native macOS checks did not all pass')
+ return report
 
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--approved-version',required=True);p.add_argument('--phase',choices=['source','upload','publish'],required=True);a=p.parse_args()
@@ -17,12 +40,14 @@ def main():
  approval=ROOT/'.private'/('publication-approval-'+v+'.json')
  def permitted():
   value=json.loads(approval.read_text()) if approval.is_file() else {}
+  if time.time()<float(value.get('deferred_until',0)):raise RuntimeError('Publication deferred by owner')
   if value.get('version')!=v or value.get('enabled') is not True or (ROOT/'.private'/('release-stop-'+v)).exists():raise RuntimeError('Version-scoped publication approval is disabled. Older holds are preserved.')
   gate=ROOT/'.private'/('publish-after-video-test-'+v+'.json')
   if gate.is_file():
    decision=json.loads(gate.read_text())
    if decision.get('required') and not (decision.get('passed') and decision.get('visual_review_passed')):raise RuntimeError('Real video generation and visual review must pass before publication.')
  permitted()
+ verify_native_macos(ROOT,v)
  out=ROOT/'release/platforms'/v;status=ROOT/'logs'/('publication-'+v+'.json');env=github_env();gh=shutil.which('gh')
  if not gh:
   gh=next((pathlib.Path(os.environ['LOCALAPPDATA'])/'Microsoft/WinGet/Packages').glob('GitHub.cli_*/bin/gh.exe'),None)
@@ -41,55 +66,35 @@ def main():
  def state(**kw):
   status.write_text(json.dumps({'version':v,'phase':a.phase,'time':time.time(),**kw},indent=2));print(json.dumps(kw),flush=True)
  if a.phase=='source':
-  run(['git','add','--',*SAFE]);names=run(['git','diff','--cached','--name-only']).stdout.splitlines()
-  forbidden={'.private','.tmp','.cache','node_modules','vendor','runtime','data'}
-  for name in names:
-   path=pathlib.PurePosixPath(name)
-   if forbidden.intersection(path.parts) or path.name in {'auth.json','.env','state.db','interface.sqlite','private-runtime.json'} or path.suffix in {'.pem','.gguf','.safetensors','.pyc'}:raise ValueError('Private source path staged: '+name)
-  staged=run(['git','diff','--cached','--quiet'],check=False)
-  if staged.returncode==1:run(['git','commit','-m','Release Freedom GPT '+v+' for Windows, Ubuntu and Apple Silicon'])
-  elif staged.returncode!=0:raise RuntimeError('Cannot inspect staged source')
-  commit=run(['git','rev-parse','HEAD']).stdout.strip();run(['git','push','origin','main'],timeout=300)
-  run([gh,'repo','edit',repo,'--description','Free, open-source local AI on your PC. Chat, coding and images without a subscription or local token fees. Windows, Ubuntu and a Mac preview. English / Русский.','--homepage','https://aionpc.ru'])
-  state(source_pushed=True,commit=commit);return
- for kind in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification']:
-  if not json.loads((ROOT/'logs'/(kind+'-'+v+'.json')).read_text()).get('passed'):raise ValueError('Verification required: '+kind)
+  pinned=json.loads(approval.read_text()).get('source_commit')
+  if not pinned:raise ValueError('Freeze the reviewed release source before uploading')
+  if not re.fullmatch('[0-9a-f]{40}',pinned):raise ValueError('Invalid pinned source commit')
+  run(['git','cat-file','-e',pinned+'^{commit}'])
+  run(['git','push','origin',pinned+':refs/heads/main'],timeout=300)
+  metadata=json.loads(run(['git','show',pinned+':docs/repository-metadata.json']).stdout)
+  run([gh,'repo','edit',repo,'--description',metadata['description'],'--homepage','https://aionpc.ru'])
+  topic_file=ROOT/'.tmp/release-topics.json';topic_file.write_text(json.dumps({'names':metadata['topics']}))
+  run([gh,'api','--method','PUT','repos/'+repo+'/topics','--input',topic_file])
+  state(source_pushed=True,commit=pinned);return
+ verify_package_reports(ROOT,v)
  manifest=json.loads((out/'release.json').read_text());assets=[out/f['name'] for f in manifest['files']]+[out/'release.json',out/'platforms.json',out/'SHA256SUMS.txt',out/'README-BUILDS.md']
  if len({f.name for f in assets})!=len(assets):raise ValueError('Duplicate release assets')
  expected={f.name:{'bytes':f.stat().st_size,'sha256':sha(f)} for f in assets}
- notes=ROOT/'release'/('notes-'+tag+'.md')
- notes.write_text(f'''# Freedom GPT {v} 💛
-
-## English
-Free local AI workspace: chat, code, files, images and model discovery.
-Windows EXE/ZIP and Ubuntu .run/DEB/TAR.GZ include Python, Node.js, agent libraries and engines. Model weights download separately. Signed updates preserve chats and models.
-
-**macOS candidate:** Apple Silicon M1+, macOS 26.2+. Unsigned, not notarized; native Mac execution is not verified. **Video Studio is experimental.** Windows 11 / RTX 4080 passed a real 512x288, 33-frame, 20-step generation in 52.68 s including coder restoration, plus full decode and local HTTP Range checks. Video rendering on other hardware and operating systems remains unverified. No universal generation-speed guarantee.
-
-Choose your OS asset below. See README for commands and SHA256SUMS.txt for checksums.
-[Website](https://aionpc.ru) · [Telegram support](https://t.me/AI1rus) · [English guide](https://github.com/{repo}#readme)
-
-## Русский
-Бесплатные локальные чаты, код, файлы, изображения и поиск моделей.
-В пакетах Windows и Ubuntu уже есть Python, Node.js, библиотеки агента и движки. Модели скачиваются отдельно. Подписанные обновления сохраняют чаты и модели.
-
-**macOS — кандидат:** M1+, macOS 26.2+, без подписи и нотарификации; запуск на Mac ещё не проверен. **Видеостудия экспериментальная.** На Windows 11 / RTX 4080 проверен реальный ролик 512x288, 33 кадра, 20 шагов: 52,68 с с возвратом модели кода, полное декодирование и HTTP Range. Генерация видео на других ПК и ОС ещё не проверена. Скорость зависит от компьютера и задачи.
-
-[Установка на русском](https://github.com/{repo}/blob/main/README.ru.md) · [Поддержка](https://t.me/AI1rus)
-
-Спасибо за отзывы и звёзды 💛 Развиваю агента, новые модели и локальную генерацию видео. Добровольная поддержка: [страница проекта](https://github.com/{repo}#support-development).
-''',encoding='utf-8')
+ if expected!=json.loads(approval.read_text()).get('assets'):raise ValueError('Frozen release assets changed; do not publish')
+ reviewed_notes=json.loads(approval.read_text()).get('release_notes',{})
+ notes=pathlib.Path(reviewed_notes.get('path','')).resolve()
+ if not notes.is_relative_to(ROOT) or not notes.is_file() or sha(notes)!=reviewed_notes.get('sha256'):raise ValueError('Frozen reviewed release notes required; notes may not change during publication')
  result=run([gh,'release','view',tag,'--repo',repo,'--json','isDraft,tagName'],check=False)
  if result.returncode:
   if not any(s in result.stderr.lower() for s in ['release not found','not found','http 404']):raise RuntimeError('Cannot inspect the existing release: '+result.stderr[-500:])
   if a.phase!='upload':raise RuntimeError('Create and upload a draft first')
-  commit=run(['git','rev-parse','HEAD']).stdout.strip();run([gh,'release','create',tag,'--repo',repo,'--draft','--target',commit,'--title','Freedom GPT '+v+' · Windows / Ubuntu / macOS candidate','--notes-file',notes])
+  commit=run(['git','rev-parse','origin/main']).stdout.strip();run([gh,'release','create',tag,'--repo',repo,'--draft','--target',commit,'--title','Freedom GPT '+v+' · Windows / Ubuntu / macOS candidate','--notes-file',notes])
  release_id=json.loads(run([gh,'release','view',tag,'--repo',repo,'--json','databaseId']).stdout)['databaseId']
  release_path='repos/'+repo+'/releases/'+str(release_id)
  release=api(release_path)
  if a.phase=='upload':
   if not release.get('draft'):raise RuntimeError('Refusing to change already-public release assets')
-  commit=run(['git','rev-parse','HEAD']).stdout.strip()
+  commit=run(['git','rev-parse','origin/main']).stdout.strip()
   run([gh,'release','edit',tag,'--repo',repo,'--notes-file',notes,'--target',commit])
   for number,file in enumerate(assets):
    release=api(release_path);existing=next((x for x in release['assets'] if x['name']==file.name),None);good=existing and existing.get('state')=='uploaded' and existing['size']==expected[file.name]['bytes'] and existing.get('digest')=='sha256:'+expected[file.name]['sha256']
@@ -97,7 +102,7 @@ Choose your OS asset below. See README for commands and SHA256SUMS.txt for check
     if existing:run([gh,'api','--method','DELETE','repos/'+repo+'/releases/assets/'+str(existing['id'])])
     for attempt in range(3):
      state(uploading=file.name,completed=number,total=len(assets),attempt=attempt+1)
-     r=run([gh,'release','upload',tag,file,'--repo',repo],timeout=3600,check=False)
+     r=run([gh,'release','upload',tag,file,'--repo',repo],timeout=10800,check=False)
      if not r.returncode:break
      if attempt==2:raise RuntimeError('Upload failed: '+file.name+' '+r.stderr[-500:])
      current=api(release_path);partial=next((x for x in current['assets'] if x['name']==file.name),None)
@@ -108,7 +113,9 @@ Choose your OS asset below. See README for commands and SHA256SUMS.txt for check
   actual=uploaded.get(name)
   if not actual or actual.get('state')!='uploaded' or actual['size']!=info['bytes'] or actual.get('digest')!='sha256:'+info['sha256']:raise ValueError('GitHub asset verification failed: '+name)
  if set(uploaded)!=set(expected):raise ValueError('Unexpected release asset')
- run([gh,'release','edit',tag,'--repo',repo,'--draft=false','--latest']);latest=api('repos/'+repo+'/releases/latest')
+ commit=json.loads(approval.read_text()).get('source_commit')
+ if not commit or not re.fullmatch('[0-9a-f]{40}',commit):raise ValueError('Pinned source commit is required')
+ run([gh,'release','edit',tag,'--repo',repo,'--target',commit,'--notes-file',notes,'--draft=false','--latest']);latest=api('repos/'+repo+'/releases/latest')
  if latest['tag_name']!=tag or latest['draft']:raise RuntimeError('Published latest release differs')
  state(published=True,url=latest['html_url'],verified_assets=len(expected))
 if __name__=='__main__':main()

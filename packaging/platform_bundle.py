@@ -113,6 +113,8 @@ def prepare(target,donor):
   skill.write_text(text,encoding='utf-8')
  marker={'product':'Freedom GPT','version':VERSION,'platform':target,'hermes_commit':json.loads((donor/'freedom-bundle.json').read_text())['hermes_commit'],'personal_data_included':False,'model_weights_included':False}
  (app/'freedom-bundle.json').write_text(json.dumps(marker,indent=2));(app/'licenses/Runtime-provenance.json').write_text(json.dumps(native,indent=2))
+ from feature_payload import apply as stage_features
+ stage_features(app)
  result=manifest(app,target);print('STAGED '+target+' '+str(sum(f['bytes'] for f in result['files']))+' bytes',flush=True);return app,result
 
 def add_tar_file(tar,path,name,file_mode):
@@ -179,7 +181,7 @@ def package_mac(app,out):
  payload=resources/'App';tree(app,payload)
  launcher='#!/bin/sh\nset -eu\ncase "$(uname -m)" in arm64|aarch64) ;; *) printf "%s\\n" "This build requires Apple Silicon (M1 or later)." >&2; exit 1;; esac\nBASE=$(CDPATH= cd -- "$(dirname -- "$0")/../Resources/App" && pwd)\nexec "$BASE/runtime/python/bin/python3" -B -s "$BASE/runtime/freedom/portable_install.py" --source "$BASE" "$@"\n'
  (macos/'FreedomGPT').write_text(launcher,newline='\n')
- info={'CFBundleName':'Freedom GPT','CFBundleDisplayName':'Freedom GPT','CFBundleIdentifier':'org.freedomgpt.desktop','CFBundleExecutable':'FreedomGPT','CFBundlePackageType':'APPL','CFBundleShortVersionString':VERSION,'CFBundleVersion':VERSION,'LSMinimumSystemVersion':'26.2','LSArchitecturePriority':['arm64'],'NSHighResolutionCapable':True,'CFBundleDevelopmentRegion':'en','CFBundleLocalizations':['en','ru']}
+ info={'CFBundleName':'Freedom GPT','CFBundleDisplayName':'Freedom GPT','CFBundleIdentifier':'org.freedomgpt.desktop','CFBundleExecutable':'FreedomGPT','CFBundlePackageType':'APPL','CFBundleShortVersionString':VERSION,'CFBundleVersion':VERSION,'LSMinimumSystemVersion':'26.2','LSArchitecturePriority':['arm64'],'NSHighResolutionCapable':True,'CFBundleDevelopmentRegion':'en','CFBundleLocalizations':['en','ru','zh-Hans']}
  (folder/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
  # ICO PNG entries can be embedded in ICNS without redrawing the artwork.
  ico=(APP/'freedom.ico').read_bytes();count=struct.unpack_from('<H',ico,4)[0]

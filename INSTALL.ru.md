@@ -1,4 +1,4 @@
-# Freedom GPT 1.4.2 — понятная установка
+# Freedom GPT 1.6.0 — понятная установка
 
 [Website](https://aionpc.ru/#download) · [Telegram @AI1rus](https://t.me/AI1rus) · [English](INSTALL.md)
 
@@ -6,7 +6,7 @@
 
 ## Windows
 
-**[Скачать для Windows](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe)**
+**[Скачать для Windows](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0.exe)**
 
 1. **Скачайте приложение.** Нажмите «Скачать для Windows» выше. Откройте скачанный EXE-файл.
 2. **Выберите папку.** Выберите язык и новую пустую папку на SSD, затем нажмите «Установить».
@@ -22,10 +22,10 @@
   $freedomInstallPath = Read-Host 'New empty SSD folder (for example D:\FreedomGPT)'
   if ([string]::IsNullOrWhiteSpace($freedomInstallPath)) { throw 'Choose an empty folder.' }
   $freedomInstallPath = [IO.Path]::GetFullPath($freedomInstallPath)
-  $freedomSetupPath = Join-Path (Get-Location) 'FreedomGPT-Setup-1.4.2.exe'
-  $freedomHash = 'c7862b0c5e90ebcf454b405fa84047c76c966cd2346e1dae25392574dcd4317a'
+  $freedomSetupPath = Join-Path (Get-Location) 'FreedomGPT-Setup-1.6.0.exe'
+  $freedomHash = 'df9c9b031e7b72054248bdfb64002d7395c6164417d8bf28ae4b4a8ac12d8947'
   if (!(Test-Path -LiteralPath $freedomSetupPath) -or (Get-FileHash -LiteralPath $freedomSetupPath -Algorithm SHA256).Hash -ne $freedomHash) {
-    curl.exe -fL -C - --retry 4 -o $freedomSetupPath 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2.exe'
+    curl.exe -fL -C - --retry 4 -o $freedomSetupPath 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0.exe'
     if ($LASTEXITCODE -ne 0) { throw 'Download failed. Run again to resume.' }
   }
   if ((Get-FileHash -LiteralPath $freedomSetupPath -Algorithm SHA256).Hash -ne $freedomHash) { throw 'SHA256 mismatch. Installation stopped.' }
@@ -37,13 +37,13 @@
 
 ## macOS · Apple Silicon
 
-**[Скачать для Mac](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip)**
+**[Скачать для Mac](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-macOS-AppleSilicon.zip)**
 
 1. **Проверьте свой Mac.** Тестовая сборка требует Apple Silicon M1+ и macOS 26.2+. Для Intel Mac она не подходит.
 2. **Распакуйте ZIP.** Нажмите «Скачать для Mac», распакуйте ZIP и перенесите Freedom GPT.app в «Программы».
-3. **Откройте приложение.** Запустите Freedom GPT.app. Для сборки без подписи может потребоваться ручное разрешение macOS; запуск на настоящем Mac ещё не проверен.
+3. **Откройте приложение.** Запустите Freedom GPT.app. Запуск ядра проверен в ARM64 CI с тестовым ответом модели; генерация на GPU не проверена. Для сборки без подписи может потребоваться разрешение macOS.
 
-Тестовая сборка Mac: запуск и эти команды ещё не проверены на настоящем Mac; может понадобиться ручное разрешение ОС.
+Нативный ARM64 CI проверяет точный архив и ядро с тестовым ответом модели. Генерация на GPU/медиа и команды скачивания через терминал не входят в эту проверку. Сборка без подписи и нотарификации.
 
 ### Скачать и установить через терминал
 
@@ -54,12 +54,12 @@
   set -eu
   [ "$(uname -m)" = arm64 ] || { echo 'Apple Silicon is required.'; exit 1; }
   sw_vers -productVersion | awk -F. '{ exit !($1 > 26 || ($1 == 26 && $2 >= 2)) }' || { echo 'macOS26.2+ is required.'; exit 1; }
-  freedom_file='FreedomGPT-1.4.2-macOS-AppleSilicon.zip'
-  freedom_sha='361c4703cb45f5c44c8b9bd2a4a4cb9a817b1cb9380a16ab9fb52cd75caf1d71'
-  freedom_folder='./FreedomGPT-1.4.2-macOS'
+  freedom_file='FreedomGPT-1.6.0-macOS-AppleSilicon.zip'
+  freedom_sha='68f60acb7d3ea1e0af9a8e4f8463d5300ad8edb70c1b161b46c3c96346ad87d2'
+  freedom_folder='./FreedomGPT-1.6.0-macOS'
   [ ! -e "$freedom_folder" ] || { echo 'The extraction folder already exists. Choose a new folder.'; exit 1; }
   if ! printf '%s  %s\n' "$freedom_sha" "$freedom_file" | shasum -a 256 -c - >/dev/null 2>&1; then
-    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-1.4.2-macOS-AppleSilicon.zip'
+    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-macOS-AppleSilicon.zip'
   fi
   printf '%s  %s\n' "$freedom_sha" "$freedom_file" | shasum -a 256 -c -
   ditto -x -k "$freedom_file" "$freedom_folder"
@@ -69,14 +69,14 @@
 
 ## Ubuntu Linux
 
-**[Скачать для Ubuntu](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run)**
+**[Скачать для Ubuntu](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0-Ubuntu-x64.run)**
 
 1. **Скачайте установщик.** Нажмите «Скачать для Ubuntu». Рекомендуемый файл заканчивается на .run.
 2. **Запустите через терминал.** Откройте терминал в папке со скачанным файлом. Скопируйте и выполните короткую команду ниже.
 3. **Выберите модель.** Дождитесь открытия приложения. Оно проверит компьютер и предложит подходящие модели.
 
 ```sh
-sh ./FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
+sh ./FreedomGPT-Setup-1.6.0-Ubuntu-x64.run
 ```
 
 ### Скачать и установить через терминал
@@ -86,10 +86,10 @@ sh ./FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
 ```sh
 (
   set -eu
-  freedom_file='FreedomGPT-Setup-1.4.2-Ubuntu-x64.run'
-  freedom_sha='c6e4100867c74ee963f32cddbeb2ad3191562f791ee22e2cd64bace82e684910'
+  freedom_file='FreedomGPT-Setup-1.6.0-Ubuntu-x64.run'
+  freedom_sha='524c5656a95c2039a8939e2e777a430dc744833ef339b0a9f899da382b76fa42'
   if ! printf '%s  %s\n' "$freedom_sha" "$freedom_file" | sha256sum -c - >/dev/null 2>&1; then
-    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.4.2/FreedomGPT-Setup-1.4.2-Ubuntu-x64.run'
+    curl -fL -C - --retry 4 -o "$freedom_file" 'https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0-Ubuntu-x64.run'
   fi
   printf '%s  %s\n' "$freedom_sha" "$freedom_file" | sha256sum -c -
   sh "./$freedom_file"
@@ -104,4 +104,4 @@ sh ./FreedomGPT-Setup-1.4.2-Ubuntu-x64.run
 
 ## Переход с 1.4.x
 
-Остановите приложение, сохраните резервную копию и один раз запустите полный установщик 1.5.0 в прежнюю папку Freedom GPT. Чаты и модели сохраняются. Старый автоматический канал не устанавливает 1.5.0. Начиная с 1.5.0 обновления запускаются только кнопкой «Проверить обновления».
+Остановите приложение, сохраните резервную копию и один раз запустите полный установщик текущей версии в прежнюю папку Freedom GPT. Чаты и модели сохраняются. Старый автоматический канал не устанавливает эту версию. Начиная с 1.5.0 обновления запускаются только кнопкой «Проверить обновления».

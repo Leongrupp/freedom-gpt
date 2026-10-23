@@ -1,5 +1,3 @@
-> This describes the upcoming 1.6.0 preview; public 1.4.2 downloads do not include all new capabilities. / Описана готовящаяся 1.6.0; в публичной 1.4.2 ещё нет всех новых функций.
-
 # Freedom GPT — your local AI agent
 
 **Model + tools + project memory.** Describe an outcome; the agent works with available tools and presents the result. Free and open source, with no subscription for local inference.
@@ -27,7 +25,7 @@ Version 1.6.0 adds the capabilities below. Previous releases remain available. U
 
 ## Start simply
 
-1. Install for your OS. Mac remains an unsigned preview requiring real-device validation.
+1. Install for your OS. The unsigned Mac core passed native ARM64 CI with a model fixture; GPU generation remains untested.
 2. Check the PC, select a compatible model and complete download verification.
 3. Choose a project folder and verify a small tool-using task.
 4. For longer work, define a goal and clear acceptance checks.
