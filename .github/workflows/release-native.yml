@@ -10,6 +10,10 @@ permissions:
 
 jobs:
   macos:
+    # GitHub hides draft releases from a read-only installation token.
+    # Scope write access to this job so its token can download the draft asset.
+    permissions:
+      contents: write
     runs-on: macos-26
     timeout-minutes: 25
     env:
