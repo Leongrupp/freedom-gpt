@@ -22,6 +22,31 @@ def run(stage,args):
     if p.returncode:raise RuntimeError(stage+' failed; inspect '+str(OUT/(stage+'.log')))
 
 
+def clone_native(source,dest):
+    def copy(a,b):
+        rel=pathlib.Path(a).relative_to(source).as_posix()
+        target_path=pathlib.Path(b)
+        if target_path.is_file():
+            sa,sb=os.stat(a),os.stat(b)
+            if sa.st_size==sb.st_size and sa.st_mtime_ns==sb.st_mtime_ns:return b
+            target_path.unlink()
+        if rel.startswith(('runtime/python/','runtime/node/','runtime/llama/','runtime/sd/','runtime/wheels/')):
+            os.link(a,b);return b
+        return shutil.copy2(a,b)
+    def ignore(parent,names):
+        blocked={'__pycache__'}|{n for n in names if n.endswith('.pyc')}
+        if pathlib.Path(parent)==source:blocked|={'data','.tmp','.cache','logs','output','uploads','workspaces','.hermes'}
+        return [n for n in names if n in blocked]
+    shutil.copytree(source,dest,dirs_exist_ok=True,copy_function=copy,ignore=ignore)
+    # A directory can exist after an interrupted copy. Assert the complete
+    # donor payload before overlaying the current application sources.
+    missing=[p.relative_to(source).as_posix() for p in source.rglob('*')
+             if p.is_file() and '__pycache__' not in p.parts and p.suffix!='.pyc'
+             and p.relative_to(source).parts[0] not in {'data','.tmp','.cache','logs','output','uploads','workspaces','.hermes'}
+             and not (dest/p.relative_to(source)).is_file()]
+    if missing:raise RuntimeError('Incomplete native runtime: '+str(missing[:10]))
+
+
 def main():
     from platform_bundle import ROOT_FILES
     windows=ROOT/'build'/('FreedomGPT-'+VERSION)
@@ -31,20 +56,16 @@ def main():
     for target in ('ubuntu-x64','macos-arm64'):
         source=ROOT/'build/platforms/1.6.0'/target/'App'
         dest=ROOT/'build/platforms'/VERSION/target/'App'
-        if not dest.exists():
-            def copy(a,b):
-                rel=pathlib.Path(a).relative_to(source).as_posix()
-                if rel.startswith(('runtime/python/','runtime/node/','runtime/llama/','runtime/sd/','runtime/wheels/')):
-                    os.link(a,b);return b
-                return shutil.copy2(a,b)
-            shutil.copytree(source,dest,copy_function=copy,ignore=shutil.ignore_patterns('data','.tmp','.cache','logs','output','uploads','workspaces','__pycache__','*.pyc'))
+        clone_native(source,dest)
         for folder in ('dist','public'):
             shutil.copytree(ROOT/'app'/folder,dest/folder,dirs_exist_ok=True)
         marker=dest/'freedom-bundle.json'
         data=json.loads(marker.read_text());data['version']=VERSION
         marker.write_text(json.dumps(data,indent=2),encoding='utf8')
         run(target+'-packages',['packaging/release_platform.py','--target',target])
-    run('windows-packages',['packaging/release.py'])
+    # Windows already has its independent clean-install proof; native repair
+    # need not rewrite identical Windows archives.
+    if '--posix-only' not in sys.argv:run('windows-packages',['packaging/release.py'])
     print('PACKAGES_BUILT',VERSION,flush=True)
 
 

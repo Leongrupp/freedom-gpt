@@ -54,7 +54,7 @@ def main():
     deadline=time.monotonic()+3600
     state('waiting_for_final_native_packages')
     source_stamp=max(p.stat().st_mtime for p in (ROOT/'app').glob('*.py'))
-    source_stamp=max(source_stamp,(ROOT/'app/README.txt').stat().st_mtime)
+    source_stamp=max(source_stamp,(ROOT/'app/README.txt').stat().st_mtime,(ROOT/'packaging/build_current_release.py').stat().st_mtime)
     while not all((OUT/(t+'.json')).is_file() and (OUT/(t+'.json')).stat().st_mtime>=source_stamp for t in ['macos-arm64','ubuntu-x64']):
         allowed()
         if time.monotonic()>deadline:raise TimeoutError('Native package build did not complete')
