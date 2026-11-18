@@ -21,6 +21,19 @@ The screenshots show Windows, not a native Mac or Ubuntu desktop test. The Engli
 Снимки показывают Windows и не подтверждают запуск на настоящем Mac. В английском интерфейсе сохранена та же демонстрационная переписка на русском. Железо и время работы — примеры, а не гарантии скорости.
 
 
+## Release 1.7.0 / Версия 1.7.0
+
+Captured on 18 November 2026 from the actual Windows interface in an isolated
+clean profile. External Codex and Claude project homes were redirected to empty
+demo directories. No owner's chats, project names or credentials are shown.
+
+- [Russian workspace](../assets/screenshots/workspace-170-ru.png)
+- [English workspace](../assets/screenshots/workspace-170-en.png)
+- [Specialist team](../assets/screenshots/team-170-ru.png): the real role catalog.
+- [Neurosphere](../assets/screenshots/neurosphere-170-ru.png): six neutral demo
+  project folders, no imported personal conversations. This illustrates the
+  project view and does not claim completed tasks or revenue.
+
 ## Release 1.6.0 panels / Панели 1.6.0
 
 Captured on Windows on 22 October 2026 in a separate clean installation with version 1.6.0. These are real UI captures, not mockups. The installation had no private chats, connected accounts or phone-pairing key. The settings and phone panel show their actual state; the achievement profile is a fresh level-one profile with zero rewards. These panels do not claim a completed model task. The older ExpenseLab captures above remain the record of a real agent task.

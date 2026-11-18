@@ -11,7 +11,7 @@ PROJECT=json.loads((ROOT/'site/project.json').read_text(encoding='utf-8'))
 SITE=PROJECT['support']['website'].rstrip('/')
 REPO=PROJECT['support']['github']
 VERSION=PROJECT['version']
-CONTENT_DATE='2026-10-23'
+CONTENT_DATE='2026-11-18'
 from agent_content import guide as agent_guide
 from phone_content import guide as phone_guide
 PAGES={
@@ -38,8 +38,8 @@ PAGES={
   'en':('Choose a local AI model: RAM, VRAM and model sizes','Compare the Freedom GPT model library: small Qwen models, Huihui Coder 27B, image generation and experimental video. File sizes and memory trade-offs.','Choose an AI model for your hardware')},
 }
 HOME={
- 'ru':('Freedom GPT — бесплатный локальный ИИ-агент на вашем ПК','Бесплатный ИИ-агент с открытым кодом для вашего ПК. Код, файлы и локальные модели; в новой версии — телефон, награды и автонастройка моделей. Без подписки.'),
- 'en':('Freedom GPT — free local AI agent for your computer','Free, open-source AI agent for your PC. Code, files and local models; preview phone access, achievements and automatic model selection in the next version.')}
+ 'ru':('Freedom GPT — бесплатный локальный ИИ-агент на вашем ПК','Бесплатный ИИ-агент с открытым кодом для вашего ПК. Нейросфера проектов, команда специалистов, код, файлы и локальные модели. Без подписки.'),
+ 'en':('Freedom GPT — free local AI agent for your computer','Free, open-source AI agent for your PC. Project Neurosphere, specialist AI team, coding, files and local models. No subscription for local use.')}
 
 def url(lang,path=''):
     return SITE+'/'+('en/' if lang=='en' else '')+path

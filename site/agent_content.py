@@ -8,7 +8,7 @@ COPY={'ru': {'title': 'Ваш ИИ-агент.<br>На вашем ПК.',
         'heading': 'Поручите результат.<br>Работайте с агентом.',
         'lead': 'От задачи до файлов проекта: агент использует модель для рассуждений, инструменты для '
                 'действий и память для продолжения работы.',
-        'preview': 'Новый релиз · 1.6.0',
+        'preview': 'Новый релиз · 1.7.0',
         'status': 'Три языка, локальные GGUF и API, выбор моделей в одном чате. Турбо, контекст, работа с '
                   'телефона и продолжение после ошибок — в одной версии.',
         'cards': [('01',
@@ -75,7 +75,7 @@ COPY={'ru': {'title': 'Ваш ИИ-агент.<br>На вашем ПК.',
         'heading': 'Describe the outcome.<br>Work with an agent.',
         'lead': 'From a task to project files: the model reasons, tools perform actions and project memory '
                 'helps the agent pick up work again.',
-        'preview': 'New release · 1.6.0',
+        'preview': 'New release · 1.7.0',
         'status': 'Three languages, local GGUF and API models in one chat. Turbo, context controls, a phone '
                   'companion and tool-loop recovery in one release.',
         'cards': [('01',
@@ -142,6 +142,16 @@ def configure(text,copies):
   copies[lang]['faq']=[(q,a) for q,a in copies[lang]['faq'] if q not in ('Как приходят обновления?','How do updates arrive?')]
   copies[lang]['faq'].append(('Как обновляется новая версия агента?' if lang=='ru' else 'How does the new agent version update?', 'Проверка и загрузка начинаются только по кнопке «Проверить обновления». Подписанная установка ждёт завершения задач и сохраняет пользовательские данные.' if lang=='ru' else 'Checking and downloading start only when you click Check for updates. Signed installation waits for idle tasks and preserves user data.'))
 
+# Current release capabilities; native media models stay separate downloads.
+for language, additions in {
+ 'ru': [('Нейросфера проектов','Общая 3D-карта проектов и чатов: цветные категории, связи, поиск и предложения по развитию.'),('Команда ИИ-агентов','Создавайте специалистов, задавайте роли и общайтесь с каждым в отдельном чате. Включайте, редактируйте и удаляйте помощников.'),('Характер и самостоятельность','Настройте стиль общения и юмор. Цели, память и проверка результата помогают агенту продолжать работу.'),('Сохранение быстрого профиля','Турбо повторно использует проверенные настройки и восстанавливает их после запуска. Скорость зависит от модели, контекста и оборудования.')],
+ 'en': [('Project Neurosphere','A shared 3D map of projects and chats, with colored categories, links, search and development suggestions.'),('Your team of AI agents','Create specialists, assign roles and talk to each in a dedicated chat. Enable, edit and remove assistants.'),('Personality and autonomy','Adjust conversation style and humor. Goals, memory and result checks help the agent continue its work.'),('Persistent speed profiles','Turbo reuses measured settings and restores them on startup. Speed depends on the model, context and hardware.')]
+}.items():
+ old=COPY[language]['cards']
+ cards=[('',title,text) for title,text in additions]+old
+ COPY[language]['cards']=[(f'{i:02d}',title,text) for i,(_,title,text) in enumerate(cards,1)]
+ COPY[language]['status'] += (' Дополнительные голосовые и камерные модели устанавливаются отдельно; личные голоса автора в релиз не входят.' if language=='ru' else ' Optional voice and camera models are installed separately; the author’s personal voice profiles are not distributed.')
+
 def section(lang):
  d=COPY[lang];e=html.escape
  cards=''.join(f'<article><span class="agent-index">{n}</span><h3>{e(title)}</h3><p>{e(body)}</p></article>' for n,title,body in d['cards'])
@@ -164,11 +174,11 @@ def gallery(lang):
 
 def release_panels(lang):
  en=lang=='en'
- title='New controls. Less friction.' if en else 'Новые возможности. Меньше лишнего.'
- lead='Real 1.6.0 Windows preview from an isolated installation: compact settings, notifications, achievements and phone pairing. No private chats or keys.' if en else 'Настоящая Windows-сборка 1.6.0 в отдельной установке: настройки, уведомления, достижения и подключение телефона. Без личных чатов и ключей.'
- labels=[('notifications-160','Reply notifications and separate sound control' if en else 'Уведомления об ответах и отдельный звук'),('rewards-160','Achievements and creator progression' if en else 'Достижения и развитие создателя'),('phone-160','Pair a phone when you need it' if en else 'Подключите телефон, когда нужно')]
+ title='Your projects. Your AI team.' if en else 'Ваши проекты. Ваша команда ИИ.'
+ lead='Real Windows 1.7.0 screenshots from an isolated profile. The map uses example project folders; no author chats or credentials are shown.' if en else 'Настоящая Windows-сборка 1.7.0 в отдельном профиле. Для карты созданы примеры папок проектов; личные чаты и ключи автора не показываются.'
+ labels=[('workspace-170-en' if en else 'workspace-170-ru','The new workspace' if en else 'Новое рабочее пространство'),('team-170-ru','72 specialist roles and your own assistants' if en else '72 роли специалистов и собственные помощники'),('neurosphere-170-ru','Example project map with categories and links' if en else 'Пример карты проектов с категориями и связями')]
  images=''.join('<figure class="release-panel"><a href="/media/screenshots/'+name+'.png" target="_blank" rel="noopener"><img src="/media/screenshots/'+name+'.png" alt="'+html.escape(label)+'" loading="lazy" decoding="async"></a><figcaption>'+html.escape(label)+'</figcaption></figure>' for name,label in labels)
- return '<section class="section wrap release-panels"><div class="section-heading"><div><div class="eyebrow">FREEDOM GPT / 1.6.0</div><h2>'+title+'</h2></div><p>'+lead+'</p></div><div class="release-panels-grid">'+images+'</div></section>'
+ return '<section class="section wrap release-panels"><div class="section-heading"><div><div class="eyebrow">FREEDOM GPT / 1.7.0</div><h2>'+title+'</h2></div><p>'+lead+'</p></div><div class="release-panels-grid">'+images+'</div></section>'
 
 
 def decorate(page,lang):

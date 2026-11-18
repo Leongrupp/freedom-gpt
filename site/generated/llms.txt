@@ -15,6 +15,6 @@ Model weights download separately and have their own licenses. Hardware, electri
 - [Choose an AI model for your hardware](https://aionpc.ru/en/guides/choose-model/): Compare the Freedom GPT model library: small Qwen models, Huihui Coder 27B, image generation and experimental video. File sizes and memory trade-offs.
 - [Русский](https://aionpc.ru/): приложение, модели и инструкции.
 - [Source code](https://github.com/Leongrupp/freedom-gpt): MIT source and component notices.
-- [Releases](https://github.com/Leongrupp/freedom-gpt/releases/tag/v1.6.0): installers and SHA256 checksums.
+- [Releases](https://github.com/Leongrupp/freedom-gpt/releases/tag/v1.7.0): installers and SHA256 checksums.
 - [Verification](https://github.com/Leongrupp/freedom-gpt/blob/main/VERIFICATION.md): actual checks and limitations.
 - [Support](https://t.me/AI1rus): author support.

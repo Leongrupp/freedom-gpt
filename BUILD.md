@@ -89,10 +89,10 @@ the public release creates a clean local profile.
 
 See CROSS-PLATFORM.md for platform requirements, private runtimes, reproducible packaging, real verification and Mac limitations. Build locally first, verify the packages, then publish only the explicitly approved version. Older model-download and release-worker holds remain separate. The version-scoped publisher is packaging/publish_platforms.py.
 
-### Reviewed 1.6.0 publication
+### Reviewed 1.7.0 publication
 
 The current multi-platform path uses `packaging/freeze_release_source.py` followed
-by `packaging/publish_platforms.py --approved-version 1.6.0 --phase upload`,
+by `packaging/publish_platforms.py --approved-version 1.7.0 --phase upload`,
 `--phase source` and `--phase publish`. It requires a private, explicit
 version-scoped approval, passing reports newer than the tested packages, and
 frozen source, asset hashes and bilingual release notes. A release stop marker

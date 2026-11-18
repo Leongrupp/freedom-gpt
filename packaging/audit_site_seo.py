@@ -74,7 +74,10 @@ def main():
  for path in sorted(resources):checks['asset:'+path]=fetch(path)[0]==200
  # Full-size screenshot links are valid assets, with HTTP checked above.
  # Keep rejecting undeclared HTML routes and unverified file links.
- unresolved_internal=sorted(internal-(set(documents)|resources))
+ # Online is a separately deployed application, preserved by static releases.
+ service_routes=internal & {'/online/'}
+ for path in service_routes:checks['separate_service:'+path]=fetch(path)[0]==200
+ unresolved_internal=sorted(internal-(set(documents)|resources|service_routes))
  checks['internal_links_resolve']=not unresolved_internal
  status,data,headers,_=fetch('/sitemap.xml');sitemap=ET.fromstring(data);ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9','x':'http://www.w3.org/1999/xhtml'}
  entries=sitemap.findall('s:url',ns);locs=[entry.findtext('s:loc',namespaces=ns) for entry in entries]

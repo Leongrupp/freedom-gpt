@@ -4,7 +4,7 @@
 
 [Русский](README.ru.md) · **English**
 
-> **Freedom GPT 1.7.0.** Windows, Ubuntu and Apple Silicon packages, phone companion, achievements and reply notifications. Read the platform requirements and verification limits.
+> **Freedom GPT 1.7.0.** Project Neurosphere, specialist AI agents, personality, goals and memory. Windows, Ubuntu and Apple Silicon packages. Read the platform requirements and verification limits.
 
 Freedom GPT brings compatible models, tools and project memory together. Delegate an outcome: the agent can edit real files, run commands, work with websites and continue a project within one chat.
 
@@ -12,7 +12,7 @@ Freedom GPT brings compatible models, tools and project memory together. Delegat
 
 [🌐 Website and downloads](https://aionpc.ru/en/) · [⬇ Latest release](https://github.com/Leongrupp/freedom-gpt/releases/latest) · [💬 Telegram](https://t.me/AI1rus)
 
-![Actual Freedom GPT interface](assets/screenshots/workspace-160-en.png)
+![Actual Freedom GPT interface](assets/screenshots/workspace-170-en.png)
 
 ## Your computer works. Your phone keeps you connected.
 

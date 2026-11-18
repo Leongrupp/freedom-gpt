@@ -1,7 +1,7 @@
 """Current product showcase; release availability comes from the site's metadata."""
 import html,json,pathlib
 
-FEATURE_VERSION='1.6.0'
+FEATURE_VERSION='1.7.0'
 def public_version():
  return json.loads((pathlib.Path(__file__).parent/'project.json').read_text(encoding='utf-8'))['version']
 def pending():
@@ -17,7 +17,7 @@ def configure(text,copies):
   en=lang=='en';d=COPY[lang]
   d['preview']=('Coming in ' if en else 'Готовим обновление ')+FEATURE_VERSION if pending() else ('New release · ' if en else 'Новый релиз · ')+FEATURE_VERSION
   d['status']=availability(lang)
-  d['intro']=('A free AI agent for your computer. Build websites, work with files, create images and keep projects moving. Use a phone companion and earn achievements in the new version.' if en else 'Бесплатный ИИ-агент для вашего компьютера. Создавайте сайты, работайте с файлами, рисуйте и развивайте проекты. В новой версии — пульт с телефона и награды за результаты.')
+  d['intro']=('A free AI agent for your computer. Build websites, work with files, create images and keep projects moving. Explore the project Neurosphere and work with a team of specialist AI agents.' if en else 'Бесплатный ИИ-агент для вашего компьютера. Создавайте сайты, работайте с файлами, рисуйте и развивайте проекты. В новой версии — Нейросфера проектов и команда ИИ-специалистов.')
   text[lang].update(title=d['title'],titleSub='Create. Explore. Level up.' if en else 'Создавайте. Исследуйте. Прокачивайтесь.',intro=d['intro'])
   extras=[('13','Reply notifications' if en else 'Уведомления о готовом ответе','A small card and a soft chime when a reply is ready, including other chats. Notifications and sound have separate switches on each device. Phone notifications work while the agent page is open.' if en else 'Карточка и мягкий короткий звук, когда ответ готов, в том числе в другом чате. Уведомления и звук настраиваются на каждом устройстве. На телефоне — пока открыта страница агента.'),
    ('14','Optional accounts and APIs' if en else 'Аккаунты и API по желанию','Use your GitHub account for repository workflows and Hugging Face for compatible model downloads. Local GGUF files also work without signing in. External services may charge separately.' if en else 'Подключите свой GitHub для работы с репозиториями и Hugging Face для загрузки совместимых моделей. Можно использовать локальный GGUF без входа в аккаунты. Внешние сервисы могут быть платными.'),
@@ -25,7 +25,8 @@ def configure(text,copies):
    ('16','Watch the work live' if en else 'Ход работы вживую','Expand activity to see tool calls, commands and results as the agent works. Send a correction, queue a follow-up or stop the task.' if en else 'Раскрывайте активность: смотрите вызовы инструментов, команды и результаты по ходу работы. Передавайте поправки, добавляйте следующие задачи или останавливайте ход.'),
    ('17','Applications and Blender' if en else 'Приложения и Blender','Use installed command-line tools, Python scripts and available app controls, including Blender workflows. The application and its automation tools must be installed and accessible.' if en else 'Используйте установленные CLI, Python-скрипты и доступные средства управления приложениями, в том числе Blender. Программа и её инструменты автоматизации должны быть установлены и доступны агенту.'),
    ('18','Personal Windows experiments' if en else 'Эксперименты Windows-сборки','Optional local speech, voice cloning and a camera/avatar studio are being developed in the personal Windows profile. These experiments are not yet included in public installers.' if en else 'В персональном Windows-профиле развиваются необязательная локальная озвучка, клонирование голоса и камера/аватар. Эти эксперименты пока не входят в публичные установщики.')]
-  d['cards']=[card for card in d['cards'] if card[0] not in {str(i) for i in range(13,19)}]+extras
+  d['cards']=[card for card in d['cards'] if card[1] not in {extra[1] for extra in extras}]+extras
+  d['cards']=[(f'{i:02d}',title,body) for i,(_,title,body) in enumerate(d['cards'],1)]
   faq=copies[lang]['faq']
   faq[:]=[(q,a) for q,a in faq if '100' not in q and q not in ['Is Freedom GPT really free?','Freedom GPT действительно бесплатный?']]
   faq[:0]=[
@@ -40,8 +41,8 @@ def highlights(lang):
        ('02','Your phone stays connected' if en else 'Телефон держит в курсе','Watch progress and send the next task while your computer keeps running.' if en else 'Смотрите прогресс и ставьте задачи, пока компьютер продолжает работать.','#phone'),
        ('03','Your results become progress' if en else 'Результаты становятся прогрессом','Achievements, XP, ranks and a personal Freedom game balance.' if en else 'Достижения, опыт, ранги и личный игровой баланс Freedom.','#rewards')]
  cards=''.join('<a href="'+url+'"><small>'+n+'</small><h3>'+html.escape(title)+'</h3><p>'+html.escape(body)+'</p><span aria-hidden="true">↗</span></a>' for n,title,body,url in rows)
- src='/media/screenshots/workspace-160-'+lang+'.png'
- caption='Real Windows 1.6.0 preview. Your workspace starts with a clean slate.' if en else 'Настоящая Windows-сборка 1.6.0. Ваше рабочее пространство начинается с чистого листа.'
+ src='/media/screenshots/workspace-170-'+lang+'.png'
+ caption='Real Windows 1.7.0 preview. Your workspace starts with a clean slate.' if en else 'Настоящая Windows-сборка 1.7.0. Ваше рабочее пространство начинается с чистого листа.'
  shot='<figure class="wrap showcase-workspace"><a href="'+src+'" target="_blank" rel="noopener"><img src="'+src+'" alt="'+html.escape(caption)+'" width="1280" height="720" loading="lazy"></a><figcaption>'+html.escape(caption)+'</figcaption></figure>'
  return '<section class="wrap showcase-highlights" aria-label="'+('Why Freedom GPT' if en else 'Зачем вам Freedom GPT')+'">'+cards+'</section>'+shot
 
@@ -55,10 +56,15 @@ def rewards(lang):
 
 def decorate(page,lang):
  en=lang=='en'
+ # Retain the separately deployed online-model service in the primary nav.
+ i=page.find('<nav class="desktop-nav"')
+ if i>=0:
+  end=page.index('>',i)+1
+  page=page[:end]+'<a href="/online/">'+('Online AI' if en else 'Нейросети онлайн')+'</a>'+page[end:]
  if pending():
   from agent_content import COPY
   intro=COPY[lang]['intro']
-  note=('1.6.0 preview · current download '+public_version()) if en else ('Обзор 1.6.0 · сейчас скачивается '+public_version())
+  note=('1.7.0 preview · current download '+public_version()) if en else ('Обзор 1.7.0 · сейчас скачивается '+public_version())
   page=page.replace(intro,intro+'<small class="showcase-hero-status">'+html.escape(note)+'</small>',1)
  marker='<section class="section wrap panel-gallery" id="workspace">'
  page=page.replace(marker,highlights(lang)+marker,1)

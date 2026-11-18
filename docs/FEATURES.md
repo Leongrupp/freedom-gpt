@@ -1,6 +1,16 @@
 # Freedom GPT: complete feature tour
 
-This guide describes Freedom GPT 1.6.0. Download the package for your system; the screenshots show the actual Windows interface. See the verification guide for platform-specific limits.
+This guide describes Freedom GPT 1.7.0. Download the package for your system; the screenshots show the actual Windows interface. See the verification guide for platform-specific limits.
+
+## New workspace tools
+
+Explore the shared project Neurosphere with category colors, labels and links.
+Create specialist AI agents, assign roles and use their dedicated chats.
+Configure conversation personality and humor. Goals, memory and continuation
+controls help keep work moving; inspect results and tests before accepting them.
+The updated navigation includes chat renaming/deletion and an animated brand.
+Measured Turbo settings now survive startup recovery. Actual speed depends on
+the model, context, hardware and workload.
 
 ## Free by design
 

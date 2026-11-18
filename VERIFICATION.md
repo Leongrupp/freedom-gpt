@@ -1,6 +1,6 @@
 # Freedom GPT verification history
 
-**Current release: 1.6.0.** See [current checks and limits](docs/RELEASE-1.6.0-VERIFICATION.md)
+**Current release: 1.7.0.** See [current checks and limits](docs/RELEASE-1.7.0-VERIFICATION.md)
 and [actual interface captures](docs/SCREENSHOTS.md). Updates in 1.5.0 start only
 with Check for updates. The earlier automatic-update and rendering results below
 are historical checks; they do not claim a fresh benchmark on every platform.

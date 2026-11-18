@@ -56,7 +56,7 @@ def deploy():
   checks['github_image:'+name]=code==200 and hashlib.sha256(pixels).hexdigest()==item['sha256']
  for readme,lang in [('README.md','en'),('README.ru.md','ru')]:
   code,raw,_=fetch('https://raw.githubusercontent.com/Leongrupp/freedom-gpt/'+commit+'/'+readme)
-  checks['github_readme:'+lang]=code==200 and ('assets/screenshots/overview-'+lang+'.png') in raw.decode('utf-8') and 'https://aionpc.ru' in raw.decode('utf-8')
+  checks['github_readme:'+lang]=code==200 and ('assets/screenshots/workspace-170-'+lang+'.png') in raw.decode('utf-8') and 'https://aionpc.ru' in raw.decode('utf-8')
  matrix=json.loads(fetch('https://aionpc.ru/api/platforms')[1]);checks['three_platforms']=matrix.get('version')==VERSION and len(matrix.get('platforms',[]))==3
  checks['macos_native_metadata']=any(p.get('id')=='macos-arm64' and p.get('native_tested') is True and p.get('native_verification_url') for p in matrix.get('platforms',[]))
  downloads=[f for p in matrix['platforms'] for f in p['files']];checks['six_downloads']=len(downloads)==6
@@ -65,6 +65,9 @@ def deploy():
   with urllib.request.urlopen(req,timeout=60) as response:checks['download:'+file['name']]=response.status==206 and response.headers.get('Content-Range')=='bytes 0-4095/'+str(file['bytes']) and len(response.read(4096))==4096
  public=json.loads(fetch('https://api.github.com/repos/Leongrupp/freedom-gpt/releases/tags/v1.4.2')[1]);old=json.loads((ROOT/'logs/previous-release-1.4.2.json').read_text())
  checks['previous_release_unchanged']={a['name']:(a['size'],a.get('digest')) for a in public['assets']}=={a['name']:(a['size'],a.get('digest')) for a in old['assets']}
+ public=json.loads(fetch('https://api.github.com/repos/Leongrupp/freedom-gpt/releases/tags/v1.6.0')[1]);old=json.loads((ROOT/'logs/release-1.7.0/previous-release-1.6.0.json').read_text(encoding='utf8'))
+ checks['previous_stable_160_unchanged']={a['name']:(a['size'],a.get('digest')) for a in public['assets']}=={a['name']:(a['size'],a.get('digest')) for a in old['assets']}
+ checks['online_service_link_preserved']='/online/' in fetch('https://aionpc.ru/')[1].decode('utf8')
  from publish_platforms import verify_native_macos
  native=verify_native_macos(ROOT,VERSION)
  report={'passed':all(checks.values()),'checks':checks,'version':VERSION,'mac_native_execution_tested':True,'mac_model_generation_tested':False,'mac_native_ci_url':native['workflow']['url'],'website':'https://aionpc.ru','release':'https://github.com/Leongrupp/freedom-gpt/releases/tag/v'+VERSION}
