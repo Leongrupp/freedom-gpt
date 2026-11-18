@@ -27,11 +27,14 @@ LEARNING_NOTE = ('Если в ходе этой задачи найден нов
 EXECUTION_NOTE = 'Работай без зацикливания. На простой вопрос отвечай прямо, не запускай терминал без необходимости. Для обычной диагностики задавай timeout 10–30 секунд, для обычной команды — не более 45 секунд. Долгие сборки, загрузки и серверы запускай как управляемые фоновые процессы; для конечных задач включай notify_on_complete. Сохрани ID процесса, не запускай копию; проверяй статус и небольшой хвост журнала, не опрашивай постоянно. Отсутствие вывода само по себе не доказывает зависание: учитывай CPU, изменение файлов и журналов. После первой ошибки выясни причину и измени существенный параметр или способ. После двух одинаковых ошибок не повторяй команду, не меняй только оформление и не увеличивай таймаут. Попробуй другой инструмент или выполни независимые части задания; если нужен внешний доступ/ответ владельца, коротко назови препятствие. На Windows используй корректную оболочку, короткие команды и файлы скриптов вместо сложного вложенного экранирования. Не останавливай модель, пользовательские серверы или чужие процессы ради отмены одной операции.'
 
 EXECUTION_NOTE += '\nДля проверки созданного сайта используй встроенный preview_browser: open адрес dev server, затем look со скриншотом и проверка 390×844 и 1280×800. Обычные browser_exec, Chrome, Яндекс, Opera и Tor остаются отдельными инструментами. Если preview_browser отсутствует в старом чате, прочитай навык built-in-preview и используй локальный CLI с последующим vision_analyze. Не называй чтение HTML визуальной проверкой. Итоговые изображения и видео сохраняй в файл и сообщай точный путь: интерфейс покажет превью.'
+EXECUTION_NOTE += '\nВо время визуальной проверки сайта работай в том же preview_browser, который видит владелец: панель откроется автоматически, покажет реальные движения курсора, клики и ввод и свернётся после завершения ответа. Не создавай вторую копию страницы ради демонстрации. Для уже авторизованного обычного браузера продолжай использовать его настоящий профиль отдельными браузерными инструментами.'
 
 class WorkspaceFeatures:
     def __init__(self, root, portable, db, bridge):
         self.root, self.portable, self.db, self.bridge = root, portable, db, bridge
         self.queue_order = QueueOrder(root, portable.HOME)
+        from chat_recovery import ChatRecovery
+        self.recovery = ChatRecovery(bridge, self.queue_order)
         self.edit_locks = {}
         with db() as conn:
             conn.executescript('''
@@ -153,10 +156,12 @@ class WorkspaceFeatures:
                   'elapsed_seconds':max(0,finished-started) if finished and started else None,
                   'first_output_seconds':max(0,current['first_output']-started) if current.get('first_output') and started else None}
         pending = []
+        from human_queue import human_input
+        human_receipts = set(turns) | {note['admission_id'] for note in notes}
         for row in snapshot.get('pending',[]):
-            if row.get('status') == 'queued' or row.get('steering'):
+            if (row.get('status') == 'queued' or row.get('steering')) and human_input(row, human_receipts):
                 local = turns.get(row.get('admission_id'),{})
-                pending.append({**row,'text':local.get('text') or row.get('text',''),'created':local.get('created'),'files':json.loads(local.get('file_ids') or '[]')})
+                pending.append({**row,'user_input':True,'text':local.get('text') or row.get('text',''),'created':local.get('created'),'files':json.loads(local.get('file_ids') or '[]')})
         pending_by_id = {row['admission_id']:row for row in pending}
         for note in notes:
             row = pending_by_id.get(note['admission_id'], {})
@@ -180,11 +185,19 @@ class WorkspaceFeatures:
         snapshot.update(messages=messages,queue=pending,notes=notes,work_usage=usage,
                         work_active=active_record if snapshot.get('running') else None,
                         work_preferences=self.preferences(sid))
+        from library import library
+        local_model=(snapshot.get('info') or {}).get('model')
+        local_row=next((row for row in library.session_models() if row['id']==local_model or (row['loaded'] and local_model==self.portable.model_id())),None)
+        if local_row:snapshot['local_route']=local_row
         if getattr(self,'cloud',None):
+            if self.cloud.auto:snapshot['auto_route']=self.cloud.auto.public(sid)
             model=(snapshot.get('info') or {}).get('model') or ''
             if model.startswith('freedom-api-'):
                 target=self.cloud.target(model)
                 snapshot['cloud_route']={**(target or {'id':model,'name':model}),'available':bool(target),'stats':self.cloud.calls.get(model,{})}
+            elif model.startswith('freedom-auto-') and (snapshot.get('auto_route',{}).get('current') or {}).get('kind')=='cloud':
+                target=self.cloud.target(model);current=snapshot['auto_route']['current']
+                snapshot['cloud_route']={**(target or {}),'paid':current.get('paid',False),'available':bool(target),'stats':self.cloud.calls.get(model,{})}
         return snapshot
 
     async def access(self, request):
@@ -261,8 +274,12 @@ class WorkspaceFeatures:
             await self.bridge.broadcast({'type':'queue.changed','session_id':sid})
             return web.json_response(result)
         # Native cancel may interrupt if claim races this read. Never offer it on running rows.
-        result = await self.bridge.rpc('prompt.cancel' if action=='cancel' else 'prompt.steer_queued',
-                                       session_id=sid,admission_id=row['admission_id'])
+        from chat_recovery import has_unknown
+        if action=='steer' and has_unknown(snapshot):
+            result = await self.recovery.after_input(sid,row['admission_id'])
+        else:
+            result = await self.bridge.rpc('prompt.cancel' if action=='cancel' else 'prompt.steer_queued',
+                                           session_id=sid,admission_id=row['admission_id'])
         if action=='steer':
             with self.db() as conn:
                 local=conn.execute('SELECT * FROM turns WHERE session_id=? AND admission_id=?',(sid,row['admission_id'])).fetchone()
@@ -362,12 +379,21 @@ class WorkspaceFeatures:
             old = conn.execute('SELECT * FROM workspace_notes WHERE input_id=?',(input_id,)).fetchone()
             if old and (old['session_id']!=sid or old['text']!=text):
                 raise ValueError('Идентификатор заметки уже использован.')
-        receipt = await self.bridge.rpc('prompt.submit',session_id=sid,input_id=input_id,text=text,queued=True)
+        from web_research import research_requested,research_note
+        turn_params={}
+        if research_requested(text,data.get('web_search',False)):
+            if data.get('web_browser') is not None and hasattr(self,'preview'):
+                self.preview.select_browser(sid,data['web_browser'],data.get('search_engine','auto'))
+            turn_params['api_text']=text+'\n\n[Настройки владельца: выполнение и память]\n'+research_note(sid)
+        receipt = await self.bridge.rpc('prompt.submit',session_id=sid,input_id=input_id,text=text,queued=True,**turn_params)
         with self.db() as conn:
             conn.execute('INSERT OR IGNORE INTO workspace_notes VALUES(?,?,?,?,?)',(input_id,sid,text,time.time(),receipt['admission_id']))
         self.admitted(sid,input_id,receipt,self.selected_model(sid))
+        recovered = await self.recovery.after_input(sid,receipt['admission_id'])
         state = 'queued'
-        if receipt.get('status')=='queued':
+        if recovered.get('recovered'):
+            state = 'recovered'
+        elif receipt.get('status')=='queued':
             try:
                 receipt = await self.bridge.rpc('prompt.steer_queued',session_id=sid,admission_id=receipt['admission_id'])
                 state = 'steering'
@@ -385,31 +411,46 @@ class WorkspaceFeatures:
         return web.json_response({'state':state,'receipt':receipt})
 
     async def model_options(self, request):
+        from library import library
         body={'data':[]}
         try:
             async with ClientSession(timeout=ClientTimeout(total=4)) as http:
                 async with http.get(self.portable.model_url()+'/models',allow_redirects=False) as response:
                     if response.status==200:body=await response.json()
         except (OSError,ClientError,asyncio.TimeoutError):pass
-        rows=[{'id':m['id'],'name':m.get('name') or m['id'],'kind':'local'} for m in body.get('data',[]) if isinstance(m.get('id'),str)]
-        if not any(m['id']==self.portable.model_id() for m in rows):rows.append({'id':self.portable.model_id(),'name':'Huihui Coder · локально','kind':'local','available':False})
+        rows=library.session_models()
+        from managed_models import catalog_id
+        known={m['id'] for m in rows}
+        for m in body.get('data',[]):
+            if not isinstance(m.get('id'),str) or m['id'] in known or catalog_id(m['id']):continue
+            if rows and m['id']==self.portable.model_id():continue
+            rows.append({'id':m['id'],'name':m.get('name') or m['id'],'kind':'local','available':True})
+        if not rows:rows.append({'id':self.portable.model_id(),'name':'Локальная модель','kind':'local','available':False})
         if getattr(self,'cloud',None):rows.extend(self.cloud.models())
         return web.json_response({'models':rows,
                                   'url':self.portable.model_url()})
 
     async def model_set(self, request):
+        from library import library
         sid = request.match_info['sid'];data = await request.json()
         selected = str(data.get('model') or '').strip()
         options = json.loads((await self.model_options(request)).body)
-        if selected not in {row['id'] for row in options['models']}:
+        if selected not in {row['id'] for row in options['models']} and not (getattr(self,'cloud',None) and self.cloud.auto and self.cloud.auto.target(selected)):
             raise ValueError('Выберите модель, доступную на подключённом локальном API.')
         snapshot = await self.bridge.resume(sid)
-        if (snapshot.get('info') or {}).get('model')==selected:
+        item=library.route_item(selected)
+        if (snapshot.get('info') or {}).get('model')==selected and not data.get('force') and (not item or library.active_id()==item['id']):
             return web.json_response({'status':'unchanged','model':selected})
         if snapshot.get('running') or snapshot.get('pending'):
             raise ValueError('Переключите модель после выполнения очереди. История чата сохраняется.')
+        if item and library.active_id()!=item['id']:
+            if any(s.get('running') or s.get('pending') for s in self.bridge.snapshots.values()):
+                raise ValueError('Локальная модель используется в другом чате. Остановите ответ и очередь перед переключением.')
+            await library.ensure_active(item['id'])
         if getattr(self,'cloud',None):await asyncio.to_thread(self.cloud.sync_aliases)
-        payload = {'model':selected if self.cloud.target(selected) else 'freedom-local-runtime','provider':'custom'}
+        # Named route aliases carry their endpoint and credential pointer. An explicit
+        # bare "custom" bypasses alias resolution and picks the old default endpoint.
+        payload = {'model':selected if item or self.cloud.target(selected) else 'freedom-local-runtime'}
         if data.get('confirm'):
             payload['confirm']=data['confirm']
         result = await self.bridge.rpc('session.mutate',session_id=sid,request_id=uuid.uuid4().hex,
@@ -419,6 +460,7 @@ class WorkspaceFeatures:
                 conn.execute('INSERT INTO workspace_preferences(session_id,selected_model) VALUES(?,?) ON CONFLICT(session_id) DO UPDATE SET selected_model=excluded.selected_model',(sid,selected))
                 endpoint=self.cloud.proxy_url() if self.cloud.target(selected) else self.portable.model_url()
                 conn.execute('INSERT OR REPLACE INTO routes VALUES(?,?,?)',(sid,selected,endpoint.rstrip('/')))
+            if self.cloud.auto and not selected.startswith('freedom-auto-'):self.cloud.auto.manual(sid)
         return web.json_response(result)
 
     def skill_rows(self):
@@ -470,3 +512,5 @@ class WorkspaceFeatures:
         app.router.add_post('/api/sessions/{sid}/model',self.model_set)
         app.router.add_get('/api/skills',self.skills)
         app.router.add_post('/api/skills',self.skill_save)
+
+EXECUTION_NOTE += '\nДля обычного поиска в интернете используй web_search, для чтения страниц web_extract: здесь они подключены к выбранному владельцем браузеру, который виден в этом же чате или в настоящем окне Chrome/Яндекс. При ошибке поискового сервиса попробуй preview_browser с action search; для известного URL используй open и затем read. Чтение текста не требует vision-модели. Не ограничивайся обещанием открыть браузер: выполни действие и используй реальный результат. Капча и вход требуют участия владельца, защиту сайта не обходи.'

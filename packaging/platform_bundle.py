@@ -181,7 +181,7 @@ def package_mac(app,out):
  payload=resources/'App';tree(app,payload)
  launcher='#!/bin/sh\nset -eu\ncase "$(uname -m)" in arm64|aarch64) ;; *) printf "%s\\n" "This build requires Apple Silicon (M1 or later)." >&2; exit 1;; esac\nBASE=$(CDPATH= cd -- "$(dirname -- "$0")/../Resources/App" && pwd)\nexec "$BASE/runtime/python/bin/python3" -B -s "$BASE/runtime/freedom/portable_install.py" --source "$BASE" "$@"\n'
  (macos/'FreedomGPT').write_text(launcher,newline='\n')
- info={'CFBundleName':'Freedom GPT','CFBundleDisplayName':'Freedom GPT','CFBundleIdentifier':'org.freedomgpt.desktop','CFBundleExecutable':'FreedomGPT','CFBundlePackageType':'APPL','CFBundleShortVersionString':VERSION,'CFBundleVersion':VERSION,'LSMinimumSystemVersion':'26.2','LSArchitecturePriority':['arm64'],'NSHighResolutionCapable':True,'CFBundleDevelopmentRegion':'en','CFBundleLocalizations':['en','ru']}
+ info={'CFBundleName':'Freedom GPT','CFBundleDisplayName':'Freedom GPT','CFBundleIdentifier':'org.freedomgpt.desktop','CFBundleExecutable':'FreedomGPT','CFBundlePackageType':'APPL','CFBundleShortVersionString':VERSION,'CFBundleVersion':VERSION,'LSMinimumSystemVersion':'26.2','LSArchitecturePriority':['arm64'],'NSHighResolutionCapable':True,'CFBundleDevelopmentRegion':'en','CFBundleLocalizations':['en','ru','zh-Hans']}
  (folder/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
  # ICO PNG entries can be embedded in ICNS without redrawing the artwork.
  ico=(APP/'freedom.ico').read_bytes();count=struct.unpack_from('<H',ico,4)[0]

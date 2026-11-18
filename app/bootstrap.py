@@ -20,6 +20,8 @@ try:
  os.environ.setdefault('SSL_CERT_FILE',certifi.where())
 except ImportError:pass
 sys.path[:0]=[str(SOURCE),str(SITE_PACKAGES),str(ROOT/'runtime/freedom')]
+from startup_support import configure_local_proxy
+configure_local_proxy()
 from platform_support import PROCESS_FLAGS
 _DLL_DIRECTORIES=[]
 if os.name=='nt' and hasattr(os,'add_dll_directory'):
@@ -52,6 +54,8 @@ def config():return {'active':None,'model_port':19135,'ui_port':19166,**read(ROO
 def workspace_root():return pathlib.Path(PRIVATE.get('workspace_root') or ROOT/'workspaces').resolve()
 def ensure_private_model():
  if not PRIVATE.get('preserve_agent_config'):return
+ from private_port import repair
+ repair()
  import subprocess,urllib.request
  try:
   with urllib.request.urlopen(model_url().removesuffix('/v1')+'/health',timeout=2) as response:
@@ -72,6 +76,8 @@ def local_history(sessions,previous=None):
 def context_size():return config().get('external_context') or read(STACK/'server-settings.json',{}).get('context',65536)
 def write_hermes(context=None):
  if PRIVATE.get('preserve_agent_config'):return
+ from startup_support import install_bundled_features
+ install_bundled_features(ROOT,HOME)
  import hermes_yaml as yaml
  context=context or context_size()
  cfg=config();url=model_url();ident=model_id()
@@ -79,13 +85,13 @@ def write_hermes(context=None):
        'model_aliases':{'freedom-active':{'model':ident,'provider':'custom','base_url':url,'api_key':'local'}},
        'custom_providers':[{'name':'direct-local','base_url':url,'api_key':'local'}],
        'toolsets':['hermes-cli','vision','image_gen'],'terminal':{'backend':'local','cwd':str(ROOT/'workspaces')},
-       'compression':{'enabled':True,'threshold_tokens':min(32768,int(context*.75))},
+       'compression':{'enabled':True,'threshold':.5},
          'tool_loop_guardrails':{'hard_stop_enabled':True,'warnings_enabled':True,
                                  'hard_stop_after':{'exact_failure':2,'idempotent_no_progress':3,'same_tool_failure':8},
                                  'warn_after':{'exact_failure':1,'idempotent_no_progress':2,'same_tool_failure':2}},
        'auxiliary':{'vision':{'provider':'custom','model':ident,'base_url':url,'api_key':'local','timeout':240},
                     'compression':{'provider':'custom','model':ident,'base_url':url,'api_key':'local'}},
-       'telemetry':{'enabled':False},'database':{'journal_mode':'delete','synchronous':'FULL'},'plugins':{'enabled':['coding-continuity','local-qwen-image','freedom-accounts','freedom-preview']},
+       'telemetry':{'enabled':False},'database':{'journal_mode':'delete','synchronous':'FULL'},'plugins':{'enabled':['coding-continuity','local-qwen-image','freedom-accounts','freedom-preview','freedom-progress']},
        'image_gen':{'provider':'local-qwen-image'},'memory':{'provider':'coding-continuity'}}
  path=HOME/'config.yaml'
  previous=path.read_text(encoding='utf-8-sig') if path.exists() else None

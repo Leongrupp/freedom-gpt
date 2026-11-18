@@ -1,0 +1,8 @@
+.program-update{margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
+.program-update-button{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:43px;padding:11px 16px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-bg);color:var(--accent);font-size:12px;font-weight:500;transition:background .15s,border-color .15s}
+.program-update-button:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 18%,var(--panel))}
+.program-update-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.program-update-button:disabled{opacity:.6;cursor:wait}
+.program-update-status{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:10px;line-height:1.65;color:var(--muted)}
+.program-update-status small{font-size:9px;white-space:nowrap}
+.program-update>.error-text{margin:10px 0 0;font-size:11px;overflow-wrap:anywhere}

@@ -66,8 +66,8 @@ def queued_controls(authority, row):
     extra=set(payload)-_TEXT_ONLY
     # Freedom's API-only suffix contains the same text plus owner execution preferences,
     # not a finite run/model override. Keep its original suffix when editing a queued turn.
-    cli=payload.get('cli_turn_v1')
-    if cli and set(cli)=={'api_text'} and isinstance(cli.get('api_text'),str) and isinstance(text,str) and cli['api_text'].startswith(text+'\n\n[Настройки владельца: выполнение и память]\n'):
+    from gateway.queued_api_suffix import managed_suffix
+    if managed_suffix(text,payload.get('cli_turn_v1')) is not None:
         extra.discard('cli_turn_v1')
     if (row.get('status') != 'queued' or extra-{'attachments'} or not isinstance(text, str) or not text.strip()
             or (payload.get('display_v1') or {}).get('kind') == 'hidden'
@@ -239,10 +239,9 @@ async def replace_queued(connection, ref, params):
     receipt, row = await _queued(connection, ref, old_id)
     fields={key:value for key,value in params.items() if key!='admission_id'}
     original=row.get('payload') or {}
-    old_text=original.get('text','')
-    api_text=(original.get('cli_turn_v1') or {}).get('api_text','')
-    if isinstance(api_text,str) and api_text.startswith(old_text+'\n\n[Настройки владельца: выполнение и память]\n'):
-        fields['api_text']=fields['text']+api_text[len(old_text):]
+    from gateway.queued_api_suffix import retained_api_text
+    api_text=retained_api_text(original,fields['text'])
+    if api_text is not None:fields['api_text']=api_text
     request = connection.submission(ref, fields)
     replacement = await asyncio.to_thread(find_session_admission, authority.db, principal_id=actor.subject,
                                           session_id=ref.session_id, request_id=request.request_id)

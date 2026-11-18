@@ -1,0 +1,25 @@
+.completion-settings{margin:0 0 16px;border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:17px 18px}
+.completion-settings header{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.completion-settings-icon{width:34px;height:34px;display:grid;place-items:center;flex-shrink:0;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--border));border-radius:10px;background:var(--accent-bg);color:var(--accent)}
+.completion-settings header strong{font-size:12px;font-weight:500}.completion-settings header p{font-size:10px;line-height:1.6;color:var(--muted);margin:4px 0 0}
+.completion-setting-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:39px;font-size:11px}
+.completion-setting-row>span{display:flex;align-items:center;gap:7px}.completion-setting-row>span>svg{color:var(--muted)}
+.completion-setting-row.is-disabled{opacity:.45}.completion-settings button:disabled{cursor:default;opacity:.5}
+.completion-settings footer{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.completion-settings footer small{font-size:9px;line-height:1.6;color:var(--muted)}
+.completion-preview-button{font-size:10px;border:1px solid var(--border);border-radius:7px;padding:7px 10px;white-space:nowrap;color:var(--secondary)}
+.completion-preview-button:hover:not(:disabled){color:var(--text);background:var(--surface-hover)}
+.completion-notifications{position:fixed;z-index:240;right:max(20px,env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));width:350px;max-width:calc(100vw - 28px);pointer-events:none}
+.completion-notifications ul{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:0}
+.completion-card{position:relative;display:flex;align-items:flex-start;gap:11px;padding:16px 37px 16px 15px;pointer-events:auto;border:1px solid color-mix(in srgb,var(--accent) 27%,var(--border));border-radius:13px;background:var(--panel);color:var(--text);box-shadow:0 8px 36px #0003;animation:completion-arrive .22s ease-out}
+.completion-ready-icon{display:grid;place-items:center;flex-shrink:0;width:31px;height:31px;background:color-mix(in srgb,var(--green) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--green) 30%,var(--border));border-radius:10px;color:var(--green);margin-top:2px}
+.completion-card-open{text-align:left;min-width:0;display:flex;flex-direction:column;gap:6px;flex:1;padding:0;border:0;background:none;color:inherit;cursor:pointer}
+.completion-card-brand{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:9px;color:var(--muted);line-height:1.5}.completion-card-brand i{width:3px;height:3px;background:var(--muted);border-radius:50%}
+.completion-card-open strong{font-size:12px;font-weight:500;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.completion-card-action{display:flex;gap:3px;align-items:center;font-size:10px;line-height:1.5;color:var(--accent)}
+.completion-card-close{position:absolute;right:8px;top:9px;display:grid;place-items:center;width:26px;height:26px;border-radius:6px;color:var(--muted);background:none;border:0;cursor:pointer}.completion-card-close:hover{background:var(--surface-hover);color:var(--text)}
+.completion-card button:focus-visible,.completion-settings button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+body:has(.reward-live-toast) .completion-notifications{bottom:calc(132px + env(safe-area-inset-bottom))}
+@keyframes completion-arrive{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.completion-notifications{right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));width:350px;max-width:calc(100vw - 24px)}.completion-card{padding-top:13px;padding-bottom:13px}.completion-settings{padding:15px}.completion-card-close{width:30px;height:30px;right:6px;top:6px}}
+@media(prefers-reduced-motion:reduce){.completion-card{animation:none}}

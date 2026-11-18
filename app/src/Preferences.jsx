@@ -1,16 +1,47 @@
+import {NotificationSettings} from './CompletionNotifications.jsx';
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, ShieldCheck, Cpu, ChevronRight,UserRound } from 'lucide-react';
+import { RefreshCw, ShieldCheck, Cpu, ChevronRight,UserRound,ArrowRightLeft } from 'lucide-react';
 import { api } from './api.js';
 import {AgentAbout} from './AgentAbout.jsx';
 import { SupportCard } from './SupportCard.jsx';
+import {PhoneAccessLink} from './PhoneAccessLink.jsx';
 import { t, useLocale } from './i18n.js';
+import appVersion from '../version.json';
+import './program-update.css';
+import {JarvisSettings} from './JarvisSettings.jsx';
+import {SpeechSettings} from './SpeechOutput.jsx';
+import {ReplyLanguageSettings} from './ReplyLanguage.jsx';
+import {PersonalitySettings} from './PersonalitySettings.jsx';
+import SelfRepairSettings from './SelfRepair.jsx';
 export function LocaleSwitch() {
   const [locale, set] = useLocale();
-  return <div className="segmented language-switch" role="group" aria-label={t("Язык интерфейса")}><button className={locale === 'ru' ? 'active' : ''} onClick={() => set('ru')} aria-pressed={locale === 'ru'}>RU</button><button className={locale === 'en' ? 'active' : ''} onClick={() => set('en')} aria-pressed={locale === 'en'}>EN</button></div>;
+  return <div className="segmented language-switch" role="group" aria-label={t("Язык интерфейса")}>
+    <button className={locale === 'ru' ? 'active' : ''} onClick={() => set('ru')} aria-pressed={locale === 'ru'} title="Русский">RU</button>
+    <button className={locale === 'en' ? 'active' : ''} onClick={() => set('en')} aria-pressed={locale === 'en'} title="English">EN</button>
+    <button lang="zh-CN" className={locale === 'zh' ? 'active' : ''} onClick={() => set('zh')} aria-pressed={locale === 'zh'} title="简体中文">中文</button>
+  </div>;
 }
-export function Preferences({onAdvisor,onAccounts}) {
+export function Preferences({onAdvisor,onAccounts,onPhone,onConverter,voiceEnabled,jarvisEnabled,speechInfo}) {
+  return <>
+    <AgentAbout/>
+    <SelfRepairSettings/>
+    <JarvisSettings enabled={jarvisEnabled} speechInfo={speechInfo}/>
+    <PersonalitySettings/>
+    <ReplyLanguageSettings/>
+    <NotificationSettings/>
+    <SpeechSettings enabled={voiceEnabled}/>
+    {onConverter&&<button className="settings-advisor-link" onClick={onConverter}><ArrowRightLeft size={20}/><div><strong>Конвертер файлов</strong><p>Документы · фото · аудио · видео · таблицы · локально и бесплатно</p></div><ChevronRight size={15}/></button>}
+    <PhoneAccessLink onOpen={onPhone}/>
+    {onAccounts&&<button className="settings-advisor-link settings-accounts-link" onClick={onAccounts}><UserRound size={20}/><div><strong>{t('Аккаунты и подключения')}</strong><p>{t('GitHub для агента · Hugging Face для моделей · вход по желанию')}</p></div><ChevronRight size={15}/></button>}
+    {onAdvisor&&<button className="settings-advisor-link" onClick={onAdvisor}><Cpu size={20}/><div><strong>{t("Подбор моделей под ваш ПК")}</strong><p>{t("Проверка ПК и рекомендации для кода, чата, изображений и видео")}</p></div><ChevronRight size={15}/></button>}
+    <div className="manual-update-note"><ShieldCheck size={17}/><span>{t("Обновления только по вашей команде. Проверка и скачивание начинаются после нажатия кнопки ниже. Установка выполняется, когда агент свободен; чаты и модели сохраняются.")}</span></div>
+    <SupportCard/>
+  </>;
+}
+export function ProgramUpdate() {
   const [state, set] = useState(null),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [busy, setBusy] = useState(false);
   useEffect(() => {
     let closed = false;
     const load = async () => {
@@ -30,6 +61,7 @@ export function Preferences({onAdvisor,onAccounts}) {
   }, []);
   async function action(path, body) {
     try {
+      setBusy(true);
       setError('');
       set(await api('/updates/' + path, {
         method: 'POST',
@@ -37,6 +69,8 @@ export function Preferences({onAdvisor,onAccounts}) {
       }));
     } catch (e) {
       setError(e.message);
+    } finally {
+      setBusy(false);
     }
   }
   const labels = {
@@ -48,5 +82,16 @@ export function Preferences({onAdvisor,onAccounts}) {
     applying: t("Устанавливаем обновление. Окно восстановится автоматически."),
     error: t("Проверка недоступна. Нажмите кнопку, чтобы повторить.")
   };
-  return <><AgentAbout/>{onAccounts&&<button className="settings-advisor-link settings-accounts-link" onClick={onAccounts}><UserRound size={20}/><div><strong>{t('Аккаунты и подключения')}</strong><p>{t('GitHub для агента · Hugging Face для моделей · вход по желанию')}</p></div><ChevronRight size={15}/></button>}{onAdvisor&&<button className="settings-advisor-link" onClick={onAdvisor}><Cpu size={20}/><div><strong>{t("Подбор моделей под ваш ПК")}</strong><p>{t("Проверка ПК и рекомендации для кода, чата, изображений и видео")}</p></div><ChevronRight size={15}/></button>}<div className="settings-row"><div><strong>{t("Язык")}</strong><p>{t("Интерфейс на русском или английском")}</p></div><LocaleSwitch /></div><div className="manual-update-note"><ShieldCheck size={17}/><span>{t("Обновления только по вашей команде. Проверка и скачивание начинаются после нажатия кнопки ниже. Установка выполняется, когда агент свободен; чаты и модели сохраняются.")}</span></div><div className="update-status" role="status"><span>{t(labels[state?.state || 'idle'])}{state?.state === 'downloading' ? ' · ' + state.percent + '%' : ''}</span><small>Freedom GPT {state?.current_version || '1.2.0'}{state?.available_version ? ' → ' + state.available_version : ''}</small><button className="icon-text" disabled={['checking', 'downloading', 'applying'].includes(state?.state)} onClick={() => action('check', {})}><RefreshCw size={13} />{t("Проверить обновления")}</button></div>{error && <p role="alert">{t(error)}</p>}<SupportCard/></>;
+  const updating=busy||['checking','downloading','applying'].includes(state?.state);
+  return <section className="program-update">
+    <button type="button" className="program-update-button" disabled={updating} onClick={()=>action('check',{})}>
+      <RefreshCw size={16} className={updating?'spin':undefined}/>
+      <span>{t('Обновить программу')}</span>
+    </button>
+    <div className="program-update-status" role="status" aria-live="polite">
+      <span>{labels[state?.state||'idle']}{state?.state==='downloading'?' · '+state.percent+'%':''}</span>
+      <small>Freedom GPT {state?.current_version||appVersion.version}{state?.available_version?' → '+state.available_version:''}</small>
+    </div>
+    {error&&<p className="error-text" role="alert">{t(error)}</p>}
+  </section>;
 }

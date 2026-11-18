@@ -5,10 +5,10 @@ import {t} from './i18n.js';
 import {formatTime} from './WorkspacePanels.jsx';
 import './queue-controls.css';
 
-export function QueuePanel({items=[],notes=[],busy=false,onAction}) {
+export function QueuePanel({items=[],notes=[],busy=false,interrupted=false,onAction}) {
   const [working,setWorking]=useState(''),[error,setError]=useState(''),[menu,setMenu]=useState(null),[editing,setEditing]=useState(null);
   const trigger=useRef(null),popup=useRef(null),editor=useRef(null);
-  const waiting=items.filter(row=>row.status==='queued'&&!row.steering);
+  const waiting=items.filter(row=>row.status==='queued'&&!row.steering&&row.user_input===true);
   const order=waiting.map(row=>row.admission_id);
   const correction=busy?notes.find(note=>note.steering):null;
   const editable=editing&&waiting.some(row=>row.admission_id===editing.row.admission_id);
@@ -43,7 +43,7 @@ export function QueuePanel({items=[],notes=[],busy=false,onAction}) {
       <button className="pending-text" disabled={!row.controls?.includes('replace')||!!working} title={row.controls?.includes('replace')?t('Редактировать задание'):row.text} onClick={()=>edit(row)}>{row.text}</button>
       {!!row.files?.length&&<span className="pending-files" title={t('Вложения')}><Paperclip size={11}/>{row.files.length}</span>}
       <div className="pending-actions">
-        {busy&&row.controls?.includes('steer')&&<button className="pending-steer" disabled={!!working} onClick={()=>act(row,'steer')} title={t('Передать как поправку текущей задаче')}><CornerDownRight size={13}/><span>{t('Скорректировать')}</span></button>}
+        {(busy||interrupted)&&row.controls?.includes('steer')&&<button className="pending-steer" disabled={!!working} onClick={()=>act(row,'steer')} title={t(interrupted?'Продолжить чат с этой поправкой':'Передать как поправку текущей задаче')}><CornerDownRight size={13}/><span>{t('Скорректировать')}</span></button>}
         <button className="pending-icon" disabled={!!working} onClick={()=>act(row,'cancel')} aria-label={t('Убрать задание из очереди')+': '+row.text} title={t('Убрать из очереди')}>{working===row.admission_id?<LoaderCircle className="spin" size={14}/>:<Trash2 size={14}/>}</button>
         <button className="pending-icon" disabled={!!working} aria-haspopup="menu" aria-expanded={menu?.row.admission_id===row.admission_id} aria-label={t('Порядок задания')+': '+row.text} title={t('Порядок задания')} onClick={event=>openMenu(event,row)}><MoreHorizontal size={16}/></button>
       </div>
@@ -61,9 +61,9 @@ export function NotesPanel({notes=[],onAction}) {
   return <div className="notes-history"><p className="panel-intro">{t('Отправленные поправки остаются в истории чата.')}</p>{notes.map(note=><div className="notes-history-row" key={note.input_id}><div><time>{formatTime(note.created)}</time><p>{note.text}</p>{note.queued&&<small>{t('Ожидает передачи')}</small>}</div><button className="pending-icon" disabled={!!working} title={note.queued?t('Отменить ожидающую поправку'):t('Скрыть поправку из списка')} aria-label={(note.queued?t('Отменить ожидающую поправку'):t('Скрыть поправку из списка'))+': '+note.text} onClick={()=>act(note)}>{working===note.input_id?<LoaderCircle size={14} className="spin"/>:note.queued?<Trash2 size={14}/>:<EyeOff size={14}/>}</button></div>)}{!notes.length&&<p className="panel-intro">{t('Здесь пока нет поправок.')}</p>}{error&&<p className="panel-error" role="alert">{t(error)}</p>}</div>;
 }
 
-export function ComposerSendActions({busy,hasContent,canSubmit,canSteer,sending,onSend,onStop}) {
+export function ComposerSendActions({busy,interrupted=false,hasContent,canSubmit,canSteer,sending,onSend,onStop}) {
   return <>
-    {busy&&hasContent&&canSteer&&<button className="composer-steer" disabled={!canSubmit||sending} title={t('Передать как поправку текущей задаче')} onClick={()=>onSend('steer')}><CornerDownRight size={14}/><span>{t('Скорректировать')}</span></button>}
+    {(busy||interrupted)&&hasContent&&canSteer&&<button className="composer-steer" disabled={!canSubmit||sending} title={t(interrupted?'Продолжить чат с этой поправкой':'Передать как поправку текущей задаче')} onClick={()=>onSend('steer')}><CornerDownRight size={14}/><span>{t('Скорректировать')}</span></button>}
     {busy&&<button className="send-button stop" title={t('Остановить ответ')} aria-label={t('Остановить ответ')} onClick={onStop}><Square size={14} fill="currentColor"/></button>}
     {(!busy||hasContent||sending)&&<button className="send-button" disabled={!canSubmit||sending} title={busy?t('Добавить в очередь'):t('Отправить сообщение')} aria-label={busy?t('Добавить в очередь'):t('Отправить сообщение')} onClick={()=>onSend('queue')}>{sending?<LoaderCircle size={18} className="spin"/>:<ArrowUp size={20}/>}</button>}
   </>;

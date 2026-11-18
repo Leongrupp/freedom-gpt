@@ -1,0 +1,9 @@
+PBR textures: Poly Haven, CC0 1.0.
+Sources:
+https://polyhaven.com/a/wood_floor
+https://polyhaven.com/a/concrete_floor
+https://polyhaven.com/a/metal_plate
+License: https://polyhaven.com/license
+Each material includes 2K diffuse, OpenGL normal and roughness maps.
+Downloaded source URLs and SHA-256 checksums are recorded in manifest.json.
+Room geometry, procedural city and matrix texture are original Freedom VR code. No Cyberpunk 2077, GTA V or Matrix game/movie assets were extracted or bundled.

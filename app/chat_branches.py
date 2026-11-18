@@ -42,9 +42,9 @@ class ChatBranches:
         if not re.fullmatch(r'[A-Za-z0-9_-]{8,100}', identifier) or not 1 <= len(title) <= 160:
             return self.refused('Укажите название ветки до 160 символов.', 400)
         async with self.locks.setdefault(parent, asyncio.Lock()):
-            return await self._create(parent, identifier, title)
+            return await self._create(parent, identifier, title, request)
 
-    async def _create(self, parent, identifier, title):
+    async def _create(self, parent, identifier, title, request=None):
         with self.db() as conn:
             row = conn.execute('SELECT * FROM chat_branch_requests WHERE request_id=?', (identifier,)).fetchone()
         if row:
@@ -52,6 +52,8 @@ class ChatBranches:
             if row['parent_id'] != parent or row['title'] != title:
                 return self.refused('Этот запрос уже использован для другой ветки.')
             if row['child_id']:
+                cloud=getattr(self.workspace,'cloud',None)
+                if cloud and cloud.auto:await cloud.auto.clone(parent,row['child_id'],request)
                 return web.json_response({'id':row['child_id'], 'branch':self.rows().get(row['child_id'])})
             if row['error']:
                 return self.refused(row['error'])
@@ -91,7 +93,7 @@ class ChatBranches:
         info = snapshot.get('info') or {}
         model = info.get('model') or self.portable.model_id()
         cloud = getattr(self.workspace, 'cloud', None)
-        endpoint = cloud.proxy_url() if cloud and model.startswith('freedom-api-') else self.portable.model_url()
+        endpoint = cloud.proxy_url() if cloud and model.startswith(('freedom-api-','freedom-auto-')) else self.portable.model_url()
         preference = self.workspace.preferences(parent)
         now = time.time()
         with self.db() as conn:
@@ -128,6 +130,7 @@ class ChatBranches:
             conn.execute('INSERT OR IGNORE INTO chat_branches VALUES(?,?,?,?,?)',
                 (child,parent,row['parent_title'],result.get('copied_messages',0),now))
             conn.execute('UPDATE chat_branch_requests SET child_id=? WHERE request_id=?', (child,identifier))
+        if cloud and cloud.auto:await cloud.auto.clone(parent,child,request)
         return web.json_response({'id':child, 'branch':self.rows()[child]})
 
     def register(self, app):

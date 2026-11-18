@@ -348,6 +348,8 @@ class ToolCallGuardrailController:
         self._progress_since_failure: dict[ToolCallSignature, bool] = {}
         self._no_progress: dict[ToolCallSignature, tuple[str, int]] = {}
         self._halt_decision: ToolGuardrailDecision | None = None
+        self.recovery_count = 0
+        self._recovery_blocked_signatures: set[ToolCallSignature] = set()
         # Identical-call streak: CONSECUTIVE identical (tool, args, result) calls; any different call or
         # result resets it, so re-reads after edits and varied polling are never flagged.
         # Identical-call loop-breaker state (agent.stall_guards): tracks the CONSECUTIVE streak of identical
@@ -384,6 +386,21 @@ class ToolCallGuardrailController:
             self._halt_decision = decision
         return decision
 
+    def recover_from_halt(self, decision: ToolGuardrailDecision, limit: int) -> int:
+        """Release this loop halt, retaining turn caps and quarantining its signature."""
+        if self.recovery_count >= limit:
+            return 0
+        self.recovery_count += 1
+        if decision.signature is not None:
+            self._recovery_blocked_signatures.add(decision.signature)
+        self._halt_decision = None
+        self._identical_streak_sig = None
+        self._identical_streak_result_hash = ""
+        self._identical_streak_count = 0
+        self._identical_streak_first_call_id = ""
+        self._call_history.clear()
+        return self.recovery_count
+
     def before_call(self, tool_name: str, args: Mapping[str, Any] | None) -> ToolGuardrailDecision:
         args = _coerce_args(args)
         signature = ToolCallSignature.from_call(tool_name, args)
@@ -393,6 +410,12 @@ class ToolCallGuardrailController:
         cap_block = self._check_loop_cap(tool_name, args, signature)
         if cap_block is not None or not self.config.hard_stop_enabled:
             return cap_block or allow
+        if signature in self._recovery_blocked_signatures:
+            return self._decide(
+                "block", "auto_recovery_repeat_block", tool_name, self.recovery_count, signature,
+                message="This call already looped without progress and was not executed again. "
+                        "Change the approach or first fix the cause of its previous failure.",
+            )
         # A mutation since this call last failed makes the retry a new experiment.
         exact_count = 0 if self._progress_since_failure.get(signature) else self._exact_failure_counts.get(signature, 0)
         if exact_count >= self.config.exact_failure_block_after:
@@ -449,6 +472,7 @@ class ToolCallGuardrailController:
         # A successful mutation is progress for every failing signature still counted
         # this turn. Pure loops never mutate between attempts, so the replay detector keeps its teeth.
         if _real_progress(tool_name,args,result):
+            self._recovery_blocked_signatures.clear()
             self._progress_since_failure.update(dict.fromkeys(self._exact_failure_counts, True))
             self._same_tool_failure_counts.clear()
         if not self._is_idempotent(tool_name):

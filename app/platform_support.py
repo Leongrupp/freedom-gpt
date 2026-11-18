@@ -128,11 +128,14 @@ def native_environment(root,engine):
   env[key]=os.pathsep.join([*paths,env.get(key,'')])
  return env
 
-def open_browser(root,url):
+def open_browser(root,url,*,single_instance=False):
  if WINDOWS:
   paths=[pathlib.Path(os.environ.get('PROGRAMFILES(X86)','C:/Program Files (x86)'))/'Microsoft/Edge/Application/msedge.exe',pathlib.Path(os.environ.get('PROGRAMFILES','C:/Program Files'))/'Microsoft/Edge/Application/msedge.exe',pathlib.Path(os.environ.get('PROGRAMFILES','C:/Program Files'))/'Google/Chrome/Application/chrome.exe']
   browser=next((p for p in paths if p.is_file()),None)
   if browser:
+   if single_instance:
+    from window_instance import open_or_activate
+    return open_or_activate(root,url,browser)
    subprocess.Popen([str(browser),'--app='+url,'--user-data-dir='+str(pathlib.Path(root)/'.cache/browser'),'--no-first-run','--no-default-browser-check','--disable-background-networking','--window-size=1480,960']);return
  import webbrowser
  if not webbrowser.open(url):print('Freedom GPT: '+url,flush=True)

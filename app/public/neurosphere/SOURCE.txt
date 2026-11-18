@@ -1,0 +1,1 @@
+Freedom Neurosphere: procedural 3D star, corona and project graph. Generated locally with Three.js; no external anatomy or image assets are loaded.

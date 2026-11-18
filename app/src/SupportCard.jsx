@@ -16,10 +16,16 @@ export function SupportCard(){
   catch(e){setError(e.message)}
  }
  return <section className="support-card donation-card" aria-label={t('Поддержать Freedom GPT')}>
-  <header className="donation-header"><span className="donation-heart"><Heart size={19}/></span><div><strong>{t('Поддержать Freedom GPT')}</strong><p>{t('Приложение бесплатно. Если оно помогает вам в работе, можно поддержать развитие.')}</p></div></header>
-  <div className="donation-layout">
-   <div className="donation-qr-wrap"><a className="donation-qr" href={qrUrl} target="_blank" rel="noreferrer" title={t('Открыть QR-код')}><img src={qrUrl} width="196" height="196" alt={t('QR-код для поддержки Freedom GPT')}/></a><a className="donation-save" href={qrUrl} download="Freedom-GPT-Bitcoin-QR.svg"><Download size={12}/>{t('Сохранить QR-код')}</a></div>
-   <div className="donation-details"><span className="donation-network"><Bitcoin size={15}/>Bitcoin · BTC</span><p className="donation-instructions">{t('Отсканируйте QR-код в Bitcoin-кошельке')}</p><span className="donation-address-label">{t('Адрес кошелька')}</span><code className="donation-address">{address}</code><button type="button" className="donation-copy" onClick={copy}>{copied?<Check size={14}/>:<Copy size={14}/>}<span aria-live="polite">{copied?t('Скопировано'):t('Копировать адрес')}</span></button>{error&&<p role="alert" className="copy-error">{t(error)}</p>}<small className="donation-thanks"><Heart size={11}/>{t('Спасибо за поддержку проекта')}</small></div>
+  <a className="donation-qr" href={qrUrl} target="_blank" rel="noreferrer" title={t('Открыть QR-код')}><img src={qrUrl} width="98" height="98" alt={t('QR-код для поддержки Freedom GPT')}/></a>
+  <div className="donation-details">
+   <header className="donation-header"><Heart size={14}/><strong>{t('Поддержать Freedom GPT')}</strong></header>
+   <span className="donation-network"><Bitcoin size={12}/>Bitcoin · BTC</span>
+   <code className="donation-address">{address}</code>
+   <div className="donation-actions">
+    <button type="button" className="donation-copy" onClick={copy} aria-label={copied?t('Скопировано'):t('Копировать адрес')}>{copied?<Check size={12}/>:<Copy size={12}/>}<span aria-live="polite">{copied?t('Скопировано'):t('Копировать')}</span></button>
+    <a className="donation-save" href={qrUrl} download="Freedom-GPT-Bitcoin-QR.svg" title={t('Сохранить QR-код')} aria-label={t('Сохранить QR-код')}><Download size={14}/></a>
+   </div>
+   {error&&<p role="alert" className="copy-error">{t(error)}</p>}
   </div>
  </section>;
 }

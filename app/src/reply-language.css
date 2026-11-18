@@ -1,0 +1,11 @@
+.reply-language-settings{border:1px solid var(--border);border-radius:12px;padding:16px;margin:16px 0;background:var(--surface)}
+.reply-language-settings header{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.reply-language-settings header>svg{color:var(--accent)}
+.reply-language-settings header>div{flex:1}
+.reply-language-settings strong{font-size:12px;font-weight:500}
+.reply-language-settings header p,.reply-language-settings small{color:var(--muted);font-size:11px;line-height:1.6}
+.reply-language-settings label{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:12px;margin-bottom:10px}
+.reply-language-settings select{font:inherit;max-width:100%;padding:8px 10px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:7px;outline-offset:3px}
+.reply-language-settings small{display:block}
+.reply-language-settings .error-text{font-size:11px;margin-top:8px}
+@media(max-width:480px){.reply-language-settings label{align-items:stretch;flex-direction:column;gap:8px}.reply-language-settings select{width:100%}}

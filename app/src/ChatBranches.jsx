@@ -1,3 +1,4 @@
+import {localStore,sessionStore} from './browserStorage.js';
 import React,{useRef,useState} from 'react';
 import {GitBranch,ArrowUpRight,Folder,LoaderCircle} from 'lucide-react';
 import {api} from './api.js';
@@ -8,7 +9,7 @@ export function BranchDialog({source,onCreated,onCancel,onBusy}){
  const storage='freedom-branch-intent:'+source.id;
  const restored=useRef(null);
  if(!restored.current){
-  let saved=null;try{saved=JSON.parse(localStorage.getItem(storage)||'null')}catch{}
+  let saved=null;try{saved=JSON.parse(localStore.getItem(storage)||'null')}catch{}
   restored.current=saved?.request_id&&typeof saved.title==='string'?saved:{request_id:crypto.randomUUID(),title:(source.title.slice(0,130)+t(' · ветка')),pending:false};
  }
  const[title,setTitle]=useState(restored.current.title),[sealed,setSealed]=useState(!!restored.current.pending),[working,setWorking]=useState(false),[error,setError]=useState('');
@@ -17,12 +18,12 @@ export function BranchDialog({source,onCreated,onCancel,onBusy}){
   try{
    const intent={request_id:restored.current.request_id,title:sealed?restored.current.title:title.trim(),pending:true};
    // Keep the exact intent across a lost response, closed window or app reload.
-   localStorage.setItem(storage,JSON.stringify(intent));restored.current=intent;setSealed(true);
+   localStore.setItem(storage,JSON.stringify(intent));restored.current=intent;setSealed(true);
    const result=await api('/sessions/'+source.id+'/branch',{method:'POST',body:JSON.stringify(intent)});
-   localStorage.removeItem(storage);await onCreated(result);
+   localStore.removeItem(storage);await onCreated(result);
   }catch(e){
    if(e.code==='branch_refused'){
-    localStorage.removeItem(storage);restored.current={request_id:crypto.randomUUID(),title,pending:false};setSealed(false);
+    localStore.removeItem(storage);restored.current={request_id:crypto.randomUUID(),title,pending:false};setSealed(false);
    }
    setError(e.message);
   }finally{setWorking(false);onBusy(false)}

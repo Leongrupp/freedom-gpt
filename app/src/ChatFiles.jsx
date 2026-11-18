@@ -3,6 +3,7 @@ import {FileText, FolderOpen, Download, ChevronRight, Trash2, RotateCcw, Save, C
 import {api} from './api.js';
 import {copyText} from './clipboard.js';
 import {getLocale, t} from './i18n.js';
+import {EnhanceButton} from './EnhanceMedia.jsx';
 import './chat-files.css';
 
 const size = bytes => bytes == null ? '—' : new Intl.NumberFormat(getLocale(), {maximumFractionDigits: 1}).format(bytes < 1024 ? bytes : bytes < 1024**2 ? bytes / 1024 : bytes / 1024**2) + ' ' + t(bytes < 1024 ? 'байт' : bytes < 1024**2 ? 'КБ' : 'МБ');
@@ -21,7 +22,7 @@ export function ChatFiles({files = [], trash = [], onChanged, Modal, notify}) {
   if (!files.length && !trash.length) return null;
   return <section className={'chat-files'+(expanded?' is-open':'')} aria-label={t('Файлы этого чата')}>
     <header className="chat-files-heading"><button className="chat-files-toggle" onClick={()=>setExpanded(value=>!value)} aria-expanded={expanded} aria-controls={listId}><FolderOpen size={14}/><span>{t('Файлы этого чата')}</span><span className="chat-files-count">{files.length}</span><ChevronRight className="chat-files-chevron" size={12}/></button>{expanded&&!!trash.length&&<button className="chat-files-trash-toggle" onClick={()=>setTrashOpen(!trashOpen)} aria-expanded={trashOpen}><Trash2 size={12}/>{t('Корзина')} · {trash.length}</button>}</header>
-    <div id={listId} hidden={!expanded}><div className="chat-files-list">{files.map(file=><div key={file.id} className="chat-file-row">
+    <div id={listId} hidden={!expanded}><div className="chat-files-list">{files.map(file=><div key={file.id} className="chat-file-row" data-freedom-file-id={file.id}>
       <button className="chat-file-open" onClick={()=>setSelected(file)} title={t('Открыть файл') + ': ' + file.name}>
         {file.mime?.startsWith('image/') ? <ImageIcon size={16}/> : <FileText size={16}/>}
         <span className="chat-file-name">{file.name}</span><small>{size(file.bytes)}</small><ChevronRight size={12}/>
@@ -74,10 +75,11 @@ function FileEditor({file, Modal, onClose, onChanged, notify, onTrashed}) {
     try{await copyText(text);setCopied(true);setTimeout(()=>{if(alive.current)setCopied(false)},1600)}catch(e){setError(e.message)}
   }
   return <Modal wide title={file.name} subtitle={t('Локальный файл этого чата')} onClose={close}>
-    <div className="file-editor">
+    <div className="file-editor" data-freedom-file-id={file.id}>
       <div className="file-editor-toolbar"><span>{doc?size(doc.bytes):'—'}{doc?.editable && <> · {doc.encoding.toUpperCase()} · {new Intl.NumberFormat(getLocale()).format(text.split('\n').length)} {t('строк')}</>}{dirty && <i>{t('Есть правки')}</i>}</span>
         {doc?.editable && <button onClick={copy} disabled={!!pending}>{copied?<Check size={14}/>:<Copy size={14}/>} {t('Копировать')}</button>}
         <a href={file.url} download><Download size={14}/>{t('Скачать')}</a>
+        <EnhanceButton file={file}/>
       </div>
       {loading?<div className="file-loading"><LoaderCircle size={22} className="spin"/>{t('Открываем файл…')}</div>:doc?.editable?<textarea ref={draft} className="file-code-editor" aria-label={t('Содержимое файла')} value={text} onChange={e=>setText(e.target.value)} spellCheck={false} disabled={!!pending} onKeyDown={e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save()}}}/>:<div className="file-readonly">{doc?.preview_image && <img src={file.url} alt={file.name}/>}<p>{t(doc?.reason||'Предпросмотр недоступен. Можно скачать файл.')}</p></div>}
       {error && <div className="file-error" role="alert">{error}{conflict && <p>{t('Ваш текст остаётся в редакторе — скопируйте его перед загрузкой свежей версии.')} <button onClick={load}>{t('Загрузить свежую версию')}</button></p>}</div>}

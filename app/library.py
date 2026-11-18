@@ -21,7 +21,7 @@ class Library:
   self.catalog=read(ROOT/'catalog.json',[])+read(ROOT/'data/custom-models.json',[])
   self.device=read(ROOT/'data/hardware.json',{})
   self.jobs={};self.cancel={};self.pool=concurrent.futures.ThreadPoolExecutor(max_workers=2)
-  self.transition=threading.Lock();self.activation=None;self.download_locks={};self.catalog_lock=threading.RLock()
+  self.transition=threading.Lock();self.activation=None;self.download_locks={};self.catalog_lock=threading.RLock();self.metadata_cache={}
   from discovery import Discovery
   self.discovery=Discovery(self)
  def save_custom(self):
@@ -31,6 +31,70 @@ class Library:
  def model(self,ident):
   return next((item for item in self.catalog if item['id']==ident),None)
  def folder(self,item):return STACK/'creative-kit/models' if item['kind']=='image' else STACK/'models'/item['id']
+ def metadata(self,item):
+  path=self.folder(item)/'model.gguf'
+  if item['kind']!='chat' or not path.is_file():return {}
+  stat=path.stat();key=(str(path),stat.st_size,stat.st_mtime_ns)
+  if key not in self.metadata_cache:
+   from gguf_info import model_metadata
+   self.metadata_cache[key]=model_metadata(path)
+  return self.metadata_cache[key]
+ def active_id(self):
+  import bootstrap
+  if bootstrap.PRIVATE:
+   from managed_models import configured_id
+   return configured_id()
+  return config().get('active')
+ def native_context(self,item):
+  metadata=self.metadata(item);architecture=metadata.get('general.architecture')
+  value=metadata.get(str(architecture)+'.context_length')
+  if not isinstance(value,int) or value<=0:value=int(item.get('context') or 65536)
+  return value
+ def observe_context(self,context):
+  """Persist only a window actually reported by this installation's loaded server."""
+  if not isinstance(context,int) or context<=0:return
+  cfg=read(STACK/'server-settings.json',{});ident=cfg.get('catalog_id');item=self.model(ident)
+  if not item or ident!=self.active_id():return
+  if config().get('external_url') and config()['external_url'].rstrip('/')!=f"http://127.0.0.1:{cfg.get('port')}/v1":return
+  if self.activation and self.activation.get('state')=='loading':return
+  native=self.native_context(item)
+  changed=cfg.get('context')!=context or not cfg.get('context_verified')
+  if cfg.get('context')!=context or not cfg.get('context_verified'):
+   cfg.update(context=context,native_context=native,context_verified=True);write(STACK/'server-settings.json',cfg)
+  previous=read(ROOT/'data/model-contexts.json',{})
+  value={'context':context,'native_context':native,'mode':cfg.get('context_mode','manual')}
+  if previous.get(ident)!=value:previous[ident]=value;write(ROOT/'data/model-contexts.json',previous)
+  own=config()
+  if own.get('external_url') and own.get('external_context')!=context:
+   own['external_context']=context;write(ROOT/'data/settings.json',own)
+  return changed
+ def record_context(self,item,engine=None):
+  cfg=engine or read(STACK/'server-settings.json',{})
+  response=requests.get(f"http://127.0.0.1:{cfg['port']}/slots",timeout=5);response.raise_for_status();slots=response.json()
+  context=min(int(slot['n_ctx']) for slot in slots)
+  if context<=0:raise ValueError('Движок не сообщил рабочий контекст модели.')
+  cfg.update(context=context,native_context=self.native_context(item),context_verified=True);write(STACK/'server-settings.json',cfg)
+  previous=read(ROOT/'data/model-contexts.json',{})
+  previous[item['id']]={'context':context,'native_context':cfg['native_context'],'mode':cfg.get('context_mode','manual')};write(ROOT/'data/model-contexts.json',previous)
+  from compression_profile import sync_local_compression
+  sync_local_compression(cfg)
+  return context
+ def session_models(self):
+  from model_routes import alias
+  rows=[];engine=read(STACK/'server-settings.json',{});observed=read(ROOT/'data/model-contexts.json',{})
+  for item in self.catalog:
+   if item['kind']!='chat' or not self.ready(item):continue
+   native=self.native_context(item);loaded=self.active_id()==item['id'];known=observed.get(item['id'],{})
+   actual=engine.get('context') if loaded else known.get('context')
+   rows.append({'id':alias(item['id']),'catalog_id':item['id'],'name':item['name'],'kind':'local','available':True,
+                'loaded':loaded,'api_model':config().get('external_model') or 'freedom-local',
+                'context_length':actual,'native_context':native,'context_mode':engine.get('context_mode','manual') if loaded else known.get('mode','auto'),
+                'vision':any(f['name']=='mmproj.gguf' for f in item['files'])})
+  return rows
+ def route_item(self,value):
+  from model_routes import catalog_id
+  ident=catalog_id(value)
+  return self.model(ident) if ident else None
  def ready(self,item):
   verified=read(self.folder(item)/'.verified.json',{})
   return all((self.folder(item)/f['name']).is_file() and (self.folder(item)/f['name']).stat().st_size==f['bytes'] and verified.get(f['name'],{}).get('sha256')==f['sha256'] and verified.get(f['name'],{}).get('mtime_ns')==(self.folder(item)/f['name']).stat().st_mtime_ns for f in item['files'])
@@ -44,9 +108,10 @@ class Library:
   rows=[]
   for item in self.catalog:
    folder=self.folder(item);total=sum(f['bytes'] for f in item['files']);done=sum(min(f['bytes'],(folder/f['name']).stat().st_size if (folder/f['name']).exists() else (folder/(f['name']+'.part')).stat().st_size if (folder/(f['name']+'.part')).exists() else 0) for f in item['files'])
-   rows.append({**item,'installed':self.ready(item),'bytes':done,'total':total,'percent':round(done/total*100,1) if total else 0,'recommendation':self.recommendation(item),'job':self.jobs.get(item['id'])})
+   installed=self.ready(item)
+   rows.append({**item,**({'context':self.native_context(item)} if installed and item['kind']=='chat' else {}),'installed':installed,'bytes':done,'total':total,'percent':round(done/total*100,1) if total else 0,'recommendation':self.recommendation(item),'job':self.jobs.get(item['id'])})
   selected='huihui-qwen38-coder' if self.device.get('vram_gb',0)>=15.9 and self.device.get('ram_gb',0)>=31 else 'qwen35-4b' if self.device.get('ram_gb',0)>=12 else 'qwen35-08b'
-  return {'hardware':self.device,'models':rows,'active':config().get('active'),'external_model':config().get('external_model'),'recommended':selected,'activation':self.activation,'first_run':not config().get('onboarded'),'root':str(ROOT),'license_notice':'Лицензии и источники указаны у каждой модели. Модели загружаются отдельно от приложения.'}
+  return {'hardware':self.device,'models':rows,'active':self.active_id(),'external_model':config().get('external_model'),'recommended':selected,'activation':self.activation,'first_run':not config().get('onboarded'),'root':str(ROOT),'license_notice':'Лицензии и источники указаны у каждой модели. Модели загружаются отдельно от приложения.'}
  def scan(self,task='code'):
   self.device=hardware();write(ROOT/'data/hardware.json',self.device)
   self.discovery.start(task=task);return self.snapshot()
@@ -130,37 +195,88 @@ class Library:
   except (KeyError,psutil.NoSuchProcess):pass
  def engine_config(self,item):
   device=hardware();self.device=device;vram=max((g.get('free_gb') or 0 for g in device.get('gpus',[]) if g.get('cuda') or g.get('metal') or g.get('vulkan')),default=0);weight=sum(f['bytes'] for f in item['files'] if f['name']=='model.gguf')/GIB
-  context=min(65536,int(item.get('context') or 65536))
-  ngl='all' if device.get('gpu_accelerated') and vram>=weight+4 else str(max(0,int(24*max(0,vram-2)/max(weight,1)))) if device.get('gpu_accelerated') else '0'
+  metadata=self.metadata(item);architecture=metadata.get('general.architecture')
+  layers=max((value for key,value in metadata.items() if key.endswith('.block_count') and isinstance(value,int)),default=32)+1
+  # Qwen's hybrid attention uses much less KV memory than a full-attention 27B.
+  # Keep a compute/KV margin, then offload proportionally to the real layer count.
+  reserve=3.5 if architecture=='qwen35' else 4
+  context=self.native_context(item)
+  ngl='all' if device.get('gpu_accelerated') and vram>=weight+reserve else str(min(layers,max(0,int(layers*max(0,vram-reserve)/max(weight,1))))) if device.get('gpu_accelerated') else '0'
   overhead=max(2,min(5,1.5+weight*.35))
   required_ram=weight+overhead if device.get('unified_memory') else 4 if ngl=='all' else max(0,weight-max(0,vram-2))+overhead
   backend='metal' if device.get('metal') else 'cuda' if device.get('cuda') else 'vulkan' if device.get('vulkan') else 'cpu'
   from system_check import system
   backend=system.snapshot().get('text_backend') or backend
   if backend=='cpu':ngl='0';required_ram=weight+overhead
-  native_binary(ROOT,'llama',backend)
+  engine=native_binary(ROOT,'llama',backend)
+  help_text=subprocess.run([str(engine),'--help'],capture_output=True,text=True,encoding='utf8',errors='replace',timeout=15,creationflags=PROCESS_FLAGS).stdout
+  auto_context='--fit-ctx' in help_text and '--fit-target' in help_text
+  if not auto_context:context=min(context,int(item.get('context') or 65536))
+  if auto_context:ngl='auto' if backend!='cpu' else '0'
+  mode='auto' if auto_context else 'manual'
+  device_key=[backend,device.get('ram_gb'),[[gpu.get('name'),gpu.get('vram_gb')] for gpu in device.get('gpus',[])]]
+  verified=read(ROOT/'data/model-context-profiles.json',{}).get(item['id'],{})
+  if verified.get('device')==device_key and 0<int(verified.get('context') or 0)<=context:
+   # Keep a measured fast profile on the same PC; a new model or upgraded
+   # hardware goes through native-context fitting instead of this profile.
+   context=int(verified['context']);ngl=verified['ngl'];mode='verified'
+  selected=read(ROOT/'data/context-preferences.json',{}).get(item['id'],{})
+  selected_context=selected.get('context')
+  if type(selected_context) is int and 0<selected_context<=self.native_context(item):
+   context=selected_context
+   # Refit placement for this PC, preserving the exact user-selected window.
+   ngl='auto' if backend!='cpu' and auto_context else ngl;mode='auto' if auto_context else 'selected'
+   if selected.get('device')==device_key and selected.get('ngl') is not None:ngl=selected['ngl'];mode='selected'
   if device.get('ram_available_gb',0)<required_ram:raise ValueError('Недостаточно свободной RAM для этого режима: нужно примерно '+str(round(required_ram,1))+' ГБ. Закройте другие модели/тяжёлые приложения или выберите более лёгкую модель.')
-  return {'model':str(self.folder(item)/'model.gguf'),'mmproj':str(self.folder(item)/'mmproj.gguf') if any(f['name']=='mmproj.gguf' for f in item['files']) else None,
+  result={'model':str(self.folder(item)/'model.gguf'),'mmproj':str(self.folder(item)/'mmproj.gguf') if any(f['name']=='mmproj.gguf' for f in item['files']) else None,
           'context':context,'port':config()['model_port'],'alias':'freedom-local','threads':max(1,min(16,device.get('physical_cores') or 4)),
-          'backend':backend,'ngl':ngl,'mtp':bool(item.get('mtp') and ngl=='all'),'kv_cache':'q8_0'}
+          'backend':backend,'ngl':ngl,'mtp':bool((item.get('mtp') or any(key.endswith('.nextn_predict_layers') and value for key,value in metadata.items())) and ngl!='0'),'kv_cache':'q8_0',
+          'native_context':self.native_context(item),'context_mode':mode,'context_verified':False,
+          'fit_min_context':context if selected_context else min(65536,context),'fit_margin_mb':2048 if selected_context else 1024}
+  result['catalog_id']=item['id']
+  from engine_profiles import load
+  result.update(load(result))
+  return result
  def start_model(self,item):
-  cfg=self.engine_config(item);write(STACK/'server-settings.json',cfg);write_hermes(cfg['context'])
+  from model_routes import alias
+  cfg=self.engine_config(item);cfg.update(catalog_id=item['id'],api_alias=alias(item['id']));write(STACK/'server-settings.json',cfg);write_hermes(cfg['context'])
   (STACK/'.tmp/stop-server').unlink(missing_ok=True)
   with (ROOT/'logs/model-supervisor.log').open('ab') as log:
    process=subprocess.Popen([sys.executable,'-s',str(ROOT/'engine_supervisor.py')],cwd=ROOT,env=os.environ.copy(),stdout=log,stderr=log,creationflags=PROCESS_FLAGS)
   write(STACK/'.tmp/supervisor-process.json',{'pid':process.pid,'created':psutil.Process(process.pid).create_time()})
- def activate(self,ident):
+ def activate(self,ident,force=False):
   import bootstrap
-  if bootstrap.PRIVATE:
-   if ident=='huihui-qwen38-coder':
-    bootstrap.ensure_private_model();self.activation={'id':ident,'state':'ready'};return {'ok':True}
-   raise ValueError('Эта личная установка сохраняет текущий сервер модели. Другую модель можно подключить через локальный API.')
   if image_job_active():raise ValueError('Дождитесь завершения генерации изображения перед переключением модели.')
   if self.activation and self.activation.get('state')=='loading':raise ValueError('Дождитесь загрузки предыдущей модели.')
   item=self.model(ident)
   if not item or item['kind']!='chat' or not self.ready(item):raise ValueError('Сначала полностью загрузите и проверьте модель.')
+  from model_routes import route_ready
+  if not force and self.active_id()==ident and route_ready(ident):self.activation={'id':ident,'state':'ready'};return
+  if bootstrap.PRIVATE:
+   from managed_models import idle
+   idle()
   if self.device.get('ram_gb',0)<item.get('recommended_ram_gb',8):raise ValueError('Для этой модели недостаточно RAM. Выберите более лёгкую модель.')
-  self.activation={'id':ident,'state':'loading'};self.pool.submit(self._activate,item)
+  self.activation={'id':ident,'state':'loading'}
+  if bootstrap.PRIVATE:self.pool.submit(self._activate_private,item,force)
+  else:self.pool.submit(self._activate,item)
+ def _activate_private(self,item,force=False):
+  with self.transition:
+   try:
+    from managed_models import switch
+    switch(self,item,force=force);self.activation={'id':item['id'],'state':'ready'}
+   except Exception as exc:self.activation={'id':item['id'],'state':'error','error':str(exc)}
+ async def ensure_active(self,ident):
+  if self.active_id()==ident:
+   from model_routes import route_ready
+   if await asyncio.to_thread(route_ready,ident):return
+  self.activate(ident)
+  for _ in range(600):
+   state=self.activation or {}
+   if state.get('id')!=ident:raise ValueError('Выбранная модель изменилась во время переключения.')
+   if state.get('state')=='ready':return
+   if state.get('state')=='error':raise ValueError(state.get('error') or 'Модель не загрузилась.')
+   await asyncio.sleep(.5)
+  raise ValueError('Переключение модели ещё выполняется. Проверьте раздел локальных моделей.')
  def _activate(self,item):
   with self.transition:
    before=config();old=before.get('active')
@@ -176,6 +292,7 @@ class Library:
      except requests.RequestException:pass
      time.sleep(1)
     else:raise ValueError('Модель не загрузилась. Подробности в stack/logs; прежняя модель будет восстановлена.')
+    self.record_context(item);write_hermes()
     cfg=config();cfg.update(active=item['id'],onboarded=True);write(ROOT/'data/settings.json',cfg);self.activation={'id':item['id'],'state':'ready'}
    except Exception as exc:
     self.activation={'id':item['id'],'state':'error','error':str(exc)}
@@ -215,7 +332,7 @@ class Library:
     target=staging/'model.gguf';shutil.copy2(source,target)
     if target.stat().st_size!=size or digest(target)!=sha:raise ValueError('Исходный файл изменился во время импорта. Повторите импорт после завершения записи файла.')
     model_context(target)
-    item={'id':ident,'name':str(name or source.stem)[:100],'kind':'chat','quantization':'Импорт GGUF','context':min(65536,context),'recommended_ram_gb':max(8,math.ceil(size/GIB)+5),'recommended_vram_gb':math.ceil(size/GIB)+2,
+    item={'id':ident,'name':str(name or source.stem)[:100],'kind':'chat','quantization':'Импорт GGUF','context':context,'recommended_ram_gb':max(8,math.ceil(size/GIB)+5),'recommended_vram_gb':math.ceil(size/GIB)+2,
           'source':'Локальный файл','license':'Проверьте лицензию исходной модели','files':[{'name':'model.gguf','bytes':size,'sha256':sha,'url':None}]}
     write(staging/'.verified.json',{'model.gguf':{'sha256':sha,'mtime_ns':target.stat().st_mtime_ns}})
     os.replace(staging,folder);self.catalog.append(item)
@@ -260,7 +377,10 @@ def register(app):
  async def activate(request):
   from video import videos
   if videos.busy():raise ValueError('Дождитесь завершения видео перед переключением модели.')
-  library.activate((await request.json())['id']);return web.json_response({'ok':True})
+  value=await request.json();ident=value['id'];force=value.get('force') is True;bridge=request.app.get('bridge')
+  if (ident!=library.active_id() or force) and bridge and any(s.get('running') or s.get('pending') for s in bridge.snapshots.values()):
+   raise ValueError('Локальная модель используется в чате. Остановите ответ и очередь перед переключением.')
+  library.activate(ident,force=force);return web.json_response({'ok':True})
  async def imported(request):
   value=await request.json();return web.json_response(await asyncio.to_thread(library.import_local,value['path'],value.get('name')))
  async def hf(request):return web.json_response(await asyncio.to_thread(library.hf_files,(await request.json())['repo']))

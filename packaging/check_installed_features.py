@@ -37,7 +37,7 @@ def check(base,target,token):
  checks['steering_accepted']=True
  snapshot=wait(sid);checks['streamed_agent_answer']=any(m.get('role')=='assistant' and m.get('content') for m in snapshot['messages'])
  call(path+'/usage');checks['usage_available']=True
- branch=call(path+'/branch',{'request_id':'qa_branch_'+uuid.uuid4().hex,'title':'Feature QA branch'})
+ branch=call(path+'/branch',{'request_id':'qa_branch_'+uuid.uuid4().hex,'title':'Feature QA branch '+uuid.uuid4().hex[:8]})
  child=call('sessions/'+branch['id']);checks['branch_history_and_parent']=bool(child['messages']) and child['branch']['parent_id']==sid
  checks['branch_empty_queue']=not child.get('pending') and not child.get('running')
  # Import the installed provider, then ask the actual HTTP memory panel to read it.
@@ -48,5 +48,15 @@ def check(base,target,token):
  memory=call(path+'/memory?query=amber');checks['memory_panel_recalls_record']=bool(memory.get('items'))
  call('skills');checks['skills_list_available']=True
  checks['no_real_accounts']=not call('accounts')['github']['available'] and not call('accounts')['huggingface']['available']
+ options=call('session-models');checks['portable_model_selector']=bool(options.get('models'))
+ before_model=call(path)['info']['model']
+ auto=call(path+'/auto');local=next(row for row in auto['models'] if row['kind']=='local' and row['available'])
+ policy={'allowed':[local['id']],'roles':{'planning':'auto','code':'auto','review':'auto','image':'auto','video':'auto'},'allow_paid':False,'media_limit':1}
+ try:
+  enabled=call(path+'/auto',{'enabled':True,'policy':policy});checks['auto_mode_enabled']=enabled.get('enabled') is True
+  call(path+'/messages',{'text':'One short acknowledgement for the automatic local route, no tools.','input_id':'qa_auto_'+uuid.uuid4().hex,'files':[],'mode':'code'})
+  snapshot=wait(sid);checks['auto_local_route_completed']=any(m.get('role')=='assistant' and m.get('content') for m in snapshot['messages']) and bool(call(path+'/auto').get('current'))
+ finally:
+  restored=call(path+'/auto',{'enabled':False});checks['auto_manual_route_restored']=restored.get('enabled') is False and call(path)['info']['model']==before_model
  assert all(checks.values()),checks
  return checks

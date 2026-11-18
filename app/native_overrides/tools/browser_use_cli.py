@@ -799,8 +799,8 @@ def capture_screenshot(path=None, *args, **kwargs):
     folder = _fg_path.Path(_fg_os.environ["BH_AGENT_WORKSPACE"]) / "screenshots"
     folder.mkdir(parents=True, exist_ok=True)
     target = _fg_path.Path(path).resolve() if path else folder / (_fg_uuid.uuid4().hex + ".png")
-    if not target.resolve().is_relative_to(_fg_path.Path(_fg_os.environ["BH_AGENT_WORKSPACE"]).resolve()):
-        raise ValueError("Screenshot output must stay inside the current project workspace")
+    if not target.resolve().is_relative_to(_fg_path.Path(os.environ["FREEDOM_ROOT"]).resolve()):
+        raise ValueError("Screenshot output must stay inside the Freedom GPT installation")
     target.parent.mkdir(parents=True, exist_ok=True)
     return _fg_capture_original(str(target), *args, **kwargs)
 ''' + code

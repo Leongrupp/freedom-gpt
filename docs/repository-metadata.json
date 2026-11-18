@@ -1,5 +1,5 @@
 {
-  "description": "Freedom GPT: free, open-source local AI agent with models, tools, goals, project memory and browser workflows. Windows, Ubuntu, macOS preview.",
+  "description": "Freedom GPT: free, open-source AI agent for local models and APIs. Code, tools, phone companion, goals, achievements and notifications. Windows, Ubuntu, Apple Silicon.",
   "homepage": "https://aionpc.ru",
   "topics": [
     "ai-agent",
@@ -16,7 +16,9 @@
     "ubuntu",
     "macos",
     "huggingface",
-    "qwen"
+    "qwen",
+    "phone-companion",
+    "achievements"
   ],
   "apply_after_owner_acceptance": false
 }

@@ -1,169 +1,106 @@
-<p align="center"><img src="assets/screenshots/overview-en.png" alt="Actual Freedom GPT 1.5.0 on Windows — chats, files and project history" width="100%"></p>
+# Freedom GPT · Your AI agent. Your computer.
 
-<h1 align="center">Freedom GPT 💛</h1>
-<p align="center"><strong>A free, open-source AI agent. Your models, tools and project memory.</strong></p>
-<p align="center"><a href="https://aionpc.ru">🌐 Website</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/latest">⬇ Downloads</a> · <a href="README.ru.md">🇷🇺 Русский</a> · <a href="https://t.me/AI1rus">💬 Telegram support</a></p>
-<p align="center"><a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-silver" alt="MIT license"></a> <a href="https://github.com/Leongrupp/freedom-gpt/releases"><img src="https://img.shields.io/github/v/release/Leongrupp/freedom-gpt?color=647789" alt="Latest release"></a> <img src="https://img.shields.io/badge/interface-English%20%2F%20Русский-647789" alt="English and Russian"></p>
+[![Latest public release](https://img.shields.io/github/v/release/Leongrupp/freedom-gpt?color=a99bf1)](https://github.com/Leongrupp/freedom-gpt/releases/latest) [![MIT](https://img.shields.io/badge/source-MIT-8cc4ac)](LICENSE)
 
-<p align="center"><strong>Free to download. Free to use. Choose your platform.</strong></p>
-<table><tr>
-<td width="33%" align="center"><img src="assets/platforms/windows.svg" width="40" alt="Windows"><br><strong>Windows</strong><br><sub>Windows 10 / 11 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe">Download EXE ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Windows-x64.zip">Portable ZIP</a></td>
-<td width="33%" align="center"><img src="assets/platforms/apple.svg" width="40" alt="macOS"><br><strong>macOS · Preview</strong><br><sub>Apple Silicon · macOS 26.2+</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip">Download app ZIP ↗</a><br><sub>Unsigned; native Mac run not yet verified.</sub></td>
-<td width="33%" align="center"><img src="assets/platforms/ubuntu.svg" width="40" alt="Ubuntu Linux"><br><strong>Ubuntu Linux</strong><br><sub>Ubuntu 24.04 · x64</sub><br><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run">Download installer ↗</a><br><a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-amd64.deb">DEB</a> · <a href="https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz">TAR.GZ</a></td>
-</tr></table>
-<p align="center">Need a hand? <a href="https://t.me/AI1rus">Telegram @AI1rus</a> · Explore <a href="https://aionpc.ru">aionpc.ru</a> · Help the project grow with a star 💛</p>
+[Русский](README.ru.md) · **English**
 
-[📘 Step-by-step installation, automatic terminal commands and first model](INSTALL.md)
+> **Freedom GPT 1.7.0.** Windows, Ubuntu and Apple Silicon packages, phone companion, achievements and reply notifications. Read the platform requirements and verification limits.
 
-## 🏠 Your AI on your computer
+Freedom GPT brings compatible models, tools and project memory together. Delegate an outcome: the agent can edit real files, run commands, work with websites and continue a project within one chat.
 
-Freedom GPT is a free, MIT-licensed local AI workspace for compatible models. Local inference requires no paid API, subscription or per-token payment. You provide hardware, electricity and storage; models and components keep their own licenses. Downloaded models can run offline. Web tools and new downloads require internet.
+**Free and open source.** Local inference has no subscription or per-token charge from Freedom GPT. External APIs have their own pricing and models have separate licenses.
 
-**Practical guides:** [Windows](https://aionpc.ru/en/install/windows/) · [Ubuntu Linux](https://aionpc.ru/en/install/ubuntu/) · [Mac preview](https://aionpc.ru/en/install/macos/) · [How offline AI works](https://aionpc.ru/en/guides/local-ai/) · [Choose a model for your hardware](https://aionpc.ru/en/guides/choose-model/).
+[🌐 Website and downloads](https://aionpc.ru/en/) · [⬇ Latest release](https://github.com/Leongrupp/freedom-gpt/releases/latest) · [💬 Telegram](https://t.me/AI1rus)
 
-This independent project does not provide free access to proprietary cloud models. Quality and speed depend on the model and hardware.
+![Actual Freedom GPT interface](assets/screenshots/workspace-160-en.png)
 
-## 🎯 Freedom GPT — an agent for your projects
+## Your computer works. Your phone keeps you connected.
 
-**Model + tools + memory.** Delegate an outcome: the agent can work with files, the terminal and available applications. Capabilities and quality depend on the model you choose.
+Put Freedom GPT on your own computer: build a website, review files, explore ideas or create visuals. In the new version, pair your iPhone or Android browser, watch the same chats and send a task while your PC stays on. No App Store installation or mandatory account.
 
-### New in 1.5.0 · your local AI agent
+[Phone pairing guide](docs/PHONE-ACCESS.md) · [Complete feature tour](docs/FEATURES.md)
 
-- Goals with acceptance criteria, continuation, pause, history and retry.
-- Editable and reorderable task queue, removal and urgent steering.
-- Project memory, chat branches, skills and compatible model switching.
-- Built-in website preview, screenshots, clickable links and media previews.
-- Available applications and Blender through installed tools.
-- Hardware suggestions, your GGUF files, optional GitHub / Hugging Face and APIs.
-- Achievements, levels and Freedom game points, with no promised cash value.
-- Updates start with Check for updates and apply when the agent is idle.
+### Create something. Earn your next level.
 
-Version **1.5.0** includes the agent features below. Updates are checked and downloaded only when you click **Check for updates**. Blender, browsers and specialist utilities need separate installation; public packages do not include the author's entire personal toolkit. [Agent guide](docs/AGENT.md) · [Website guide](https://aionpc.ru/en/guides/ai-agent/).
+A first site, a generated image, a million processed model tokens: achievements turn work into a creator profile with XP, ranks and a skill constellation. New confirmed results keep adding to your counters. Games, code, content, SEO, research, analysis and authorized security work have their own paths. **Freedom points are local game rewards, not cryptocurrency or a promise of future income.**
 
-## ✨ What you can do
+![Actual creator profile in the Windows preview](assets/screenshots/rewards-160.png)
 
-- Chat locally, stream code, attach files and analyze photos with a compatible vision model.
-- Keep chats, project folders and coding continuity on your disk.
-- See generation speed, RAM, VRAM and GPU activity.
-- Check your hardware, find models on Hugging Face or the public Ollama registry, and choose what to download.
-- Resume interrupted downloads and verify model SHA256 hashes.
-- Generate images with a separate Qwen Image model pack. Video Studio is **experimental** and still being tested.
-- Use English or Russian and receive signed updates between tasks.
+## What the agent can do
 
-**Private Python, agent libraries, Node.js/npm and inference engines are included.** No preinstalled Python, Ollama or paid API is needed for local chat. Model weights download separately. GPU drivers and optional specialist tools are managed separately.
+- **Code and projects.** Build websites and applications: the agent reads and edits files, uses the terminal and runs available checks.
+- **Goals and task queue.** Define an outcome and acceptance criteria. Queue follow-up tasks and steer the current task with an urgent correction.
+- **Branches and memory.** Branch directly from a reply. Keep its conversation and files with a fresh empty queue. Project notes stay on disk.
+- **Browser beside the chat.** The preview opens while the agent works with a page. Review its actions and results; installed tools can also use ordinary browsers.
+- **Multiple models in one chat.** Choose models yourself or allow automatic selection for different stages: scripts, images, video and code.
+- **Local models and APIs.** Import a compatible GGUF or connect supported APIs. GitHub and Hugging Face sign-in are optional.
+- **Models for your hardware.** CPU, RAM, GPU and disk checks help select a model. Interrupted downloads resume and SHA256 hashes verify the files.
+- **Images and video.** View generated media previews in chat. Local generation needs separate models; cloud video supports fal.ai.
+- **Measured Turbo mode.** Compare engine settings on this computer and save an acceleration profile when it helps. Switching waits for an idle model.
+- **Context and reasoning.** Select an available context window and supported reasoning depth. Larger contexts need more memory and may be slower.
+- **Recovery after tool loops.** Full access permits up to three automatic continuations with instructions to change strategy. Unchanged repetitions are blocked; Stop remains effective.
+- **Phone companion.** Enable access in Settings and pair a phone with a QR code. Use chats, files and tasks in the browser while your computer stays on.
+- **Achievements and levels.** Earn achievements, activity counts, XP and Freedom game points. These are local rewards, not an issued cryptocurrency.
+- **Three languages, compact controls.** Русский, English and 中文, compact settings, light and dark themes. Additional tools live in one expandable menu.
 
-### A look inside
+- **Ready-reply notifications.** A card in the lower right and a soft short chime. Open the finished chat from the card; control notifications and sound separately on each device. On phones, the agent page must be open.
 
-These are real **1.5.0 Windows** captures, using a neutral project rather than private chats. The local agent created ExpenseLab, accepted a correction, passed six tests, wrote the queued README and completed its goal. The example conversation is in Russian; the interface below is English.
+- **Live activity.** Expand tool calls, commands and results; steer or stop the task as it works.
+- **Applications and Blender.** Use installed CLIs, Python scripts and available automation controls. The required applications are separate installations.
 
-| Goals and completion history | Hardware and model suggestions |
+## Current public downloads
+
+| System | Download | Requirements |
+|---|---|---|
+| Windows | [EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-Setup-1.7.0.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Windows-x64.zip) | Windows 10/11 x64 |
+| Ubuntu / Linux | [.run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-Setup-1.7.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04+ x64 / compatible glibc 2.39+ |
+| macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-macOS-AppleSilicon.zip) | M1+, macOS 26.2+; unsigned / not notarized |
+| iPhone / Android | [Phone pairing](docs/PHONE-ACCESS.md) | phone browser + an active computer |
+
+**Private Python, Node.js/npm, agent libraries and inference engines are included.** System Python and Ollama are not required. Download model weights separately. Git, automation browsers, Blender and specialist tools are separate installations.
+
+[Installation guide](INSTALL.md) · [Verification and limits](VERIFICATION.md) · [SHA256 checksums](https://github.com/Leongrupp/freedom-gpt/releases/latest/download/SHA256SUMS.txt)
+
+## Panels and workflow
+
+| Goals and completion history | Hardware and models |
 |---|---|
-| ![Actual goal panel](assets/screenshots/goal-en.png) | ![Actual model advisor](assets/screenshots/models-en.png) |
+| ![Goals](assets/screenshots/goal-en.png) | ![Models](assets/screenshots/models-en.png) |
 
-<details><summary>See the real task queue and an urgent correction</summary>
+The captures above show the actual Windows app using the neutral ExpenseLab project. See the new 1.7.0 panels below. [Capture details](docs/SCREENSHOTS.md).
 
-![Task queue and live steering in the Russian interface](assets/screenshots/agent-working-ru.png)
+![Actual reply notification and settings](assets/screenshots/notifications-160.png)
 
-</details>
+## Start in three steps
 
-[Capture details and more views](docs/SCREENSHOTS.md). These are Windows screenshots; native Mac execution remains unverified. The shown hardware is an example, not a minimum requirement.
+1. Install the package for your system on an SSD.
+2. Let the hardware check finish; download a suitable model or connect an API.
+3. Select a project folder and describe your task. Configure permissions for external actions.
 
-**During a task:** Enter queues the next prompt; **Steer / Alt+Enter** corrects the current task. Delivery occurs at a safe boundary; completed actions are not undone. Repeated identical tool failures are guarded.
+## Memory, speed and control
 
-## ⬇ Choose your system
+Turbo measures settings on your hardware. There is no universal 100-token/s or acceleration guarantee. Context is bounded by the model and available memory: a larger window may offload work to RAM and reduce speed. Reasoning depth and context size are separate controls.
 
-| Platform | Download | Requirements and status |
-|---|---|---|
-| Windows | [EXE installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe) · [Portable ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Windows-x64.zip) | Windows 10/11 x64; verified on Windows 11 |
-| Ubuntu Linux | [`.run` installer](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04 x64; clean offline container and Linux CUDA smoke tests |
-| macOS candidate | [Apple Silicon `.app` ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-1.5.0-macOS-AppleSilicon.zip) | **M1+, macOS 26.2+.** Unsigned, not notarized; native Mac execution is not yet verified. Intel Mac is not included. |
+History and project memory stay on disk. Memory is finite; exact files, Git and backups remain authoritative. Websites, downloads and APIs need internet. Update checks and downloads start with the update button; signed installation waits for idle tasks.
 
-[All releases and notes](https://github.com/Leongrupp/freedom-gpt/releases) · [SHA256 checksums](https://github.com/Leongrupp/freedom-gpt/releases/latest/download/SHA256SUMS.txt) · [Source](https://github.com/Leongrupp/freedom-gpt/releases/latest)
+### Personal Windows experiments
 
-### Windows — easiest way
+The developer’s local Windows profile also has optional local speech, voice cloning and camera/avatar experiments. They are being developed separately and are not claimed as included in the current public installer.
 
-Run the EXE, choose English/Russian and an empty SSD folder, then open **FreedomGPT.exe**. The first-run check suggests models for your hardware. Download and verify a model, activate it and start a chat.
+## Community and development
 
-Prefer a terminal? Open PowerShell in your chosen download folder:
+The project is growing around a free local agent: broader model compatibility, reliable tools and easier computer/phone workflows. Freedom game points are not currently cryptocurrency and carry no promise of exchange or returns.
 
-```powershell
-curl.exe -fL -C - --retry 4 -o FreedomGPT-Setup.exe https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0.exe
-.\FreedomGPT-Setup.exe
-```
+[Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Security](SECURITY.md) · [Build](BUILD.md)
 
-### Ubuntu — no Python installation
-
-```sh
-curl -fL -C - --retry 4 -o FreedomGPT.run https://github.com/Leongrupp/freedom-gpt/releases/download/v1.5.0/FreedomGPT-Setup-1.5.0-Ubuntu-x64.run
-sh FreedomGPT.run
-```
-
-If `curl` is absent, use a browser download or install your distribution's curl package. `.run` needs no root access. To choose a location: `FREEDOM_INSTALL_DIR=/mnt/ssd/FreedomGPT sh FreedomGPT.run`. Add `--install-only` to install without launching. DEB works through the normal package manager.
-
-### macOS — experimental candidate
-
-Extract the ZIP, move **Freedom GPT.app** to Applications and open it. The app includes its own Python and Metal engines. The current candidate requires **macOS 26.2+ on Apple Silicon**. It is unsigned/not notarized and needs real Mac validation. Do not disable OS protection globally.
-
-## 🧠 Models and hardware
-
-| Use | Model pack | Starting point |
-|---|---|---|
-| Standard code | Huihui Qwen3.8 Coder 27B IQ3_S3 + vision projector | 32 GB RAM, NVIDIA 16 GB VRAM |
-| Images | Qwen Image 2.1 Turbo Q5_K_M + encoder + VAE | A compatible GPU with enough memory; separate model download |
-| Lighter chat/code | Qwen3.5 4B or 0.8B GGUF | 8–16 GB RAM, with reduced coding/tool capability |
-| Experimental video | Wan 2.1 T2V 1.3B + encoder + VAE | Separate models and a compatible GPU; rendering validation is ongoing |
-
-These are estimates, not speed guarantees. Long context uses extra memory. CPU fallback is slower. Model licenses are separate. Plan at least **35 GB of free SSD space** for the standard app/model set, or **45 GB+** with video and update headroom.
-
-## 🔒 Local work and updates
-
-After downloading models, local inference, files and history work offline. Search, external websites, new downloads and update checks need internet. App/model APIs bind to **127.0.0.1**.
-
-Signed updates verify Ed25519 and SHA256, wait for idle tasks and preserve models, chats and settings. Windows, Ubuntu and macOS have separate update feeds. The Windows installer is not Authenticode-signed. An update signature is separate from an OS publisher certificate.
-
-Stop the app before disconnecting an SSD. Moving one physical SSD between different PCs is not yet verified. Keep Git and backups for your projects; model memory and generated code are not substitutes for them.
-
-## 🛠 Development and roadmap
-
-I am building Freedom GPT further: better agents, more compatible models, clearer setup and **local video generation**. Video Studio is experimental; finishing real rendering tests and expanding hardware support are next steps.
-
-- [x] Local chat, code, files and saved projects
-- [x] Hardware checks and model discovery
-- [x] Windows and Ubuntu packages
-- [ ] Real Mac validation, signing and broader macOS support
-- [ ] Stabilize video generation and improve GPU scheduling
-- [ ] More practical agent workflows and community contributions
-
-[Build instructions](BUILD.md) · [Platform details and verification limits](CROSS-PLATFORM.md) · [Contributing](CONTRIBUTING.md) · [Report a bug](https://github.com/Leongrupp/freedom-gpt/issues)
-
-## 🤝 Join the project
-
-[Discussions and ideas](https://github.com/Leongrupp/freedom-gpt/discussions) · [Report a bug](https://github.com/Leongrupp/freedom-gpt/issues/new/choose) · [Support guide](SUPPORT.md) · [Share the project](docs/SHARE.md)
-
-Built in the open by [Leongrupp](https://github.com/Leongrupp). Hardware/model reports, translations and focused contributions are welcome. Read [Contributing](CONTRIBUTING.md) and our [community guidelines](CODE_OF_CONDUCT.md).
-
-<a id="support-development"></a>
-## 💛 Support development
-
-Freedom GPT is free. If it helps you, a **GitHub star**, useful feedback or sharing the project means a lot. Questions and suggestions: **[Telegram @AI1rus](https://t.me/AI1rus)**.
-
-Thank you to everyone helping the project grow. I appreciate every contribution 💛
-
-<details><summary>Optional Bitcoin donation</summary>
-
-Donations are voluntary, support development and do not unlock paid features.
-
-**Bitcoin · BTC · main network**
-
-```text
-bc1qkkzx7rzx9qace3xvyphcdfy4d5up5k9gzyhdc6
-```
-
-</details>
+Optional development support: [project page](https://aionpc.ru/en/#support). The application remains free.
 
 ## Licenses
 
-Application source: [MIT](LICENSE). Third-party components retain their own notices in [licenses/](licenses/) and [NOTICE](NOTICE). Public installers exclude the author's chats, accounts, API keys, browser profiles and model weights. There are no paid API charges required for local inference; your hardware and electricity are your own.
+Freedom GPT source is MIT-licensed. Hermes and other components retain their licenses and attribution. See [NOTICE](NOTICE), [LICENSE](LICENSE) and [licenses](licenses). Clean packages exclude the author’s chats, credentials, model weights and private profile.
 
-### Video verified on Windows (1.4.2)
-Wan 2.1 generated a 512×288 silent clip (33 frames, 16 fps, 20 steps) on an RTX 4080. The final 1.4.2 repeat took 52.68 s end to end, including model switching. Full decode, local HTTP Range and a coder reply after GPU restoration passed. CUDA VAE is selected conservatively on 16 GB NVIDIA GPUs; other configurations use CPU, with memory-allocation fallback. Video remains experimental on other hardware and operating systems.
+## New in 1.7.0
+
+Shared project Neurosphere, specialist AI agents with dedicated chats, personality and conversation settings, updated navigation and persistent measured Turbo profiles. Voice models and personal profiles, optional camera tools and VR require separate setup and compatible hardware. No author data is bundled.
+
+![Freedom GPT 1.7.0](assets/screenshots/workspace-170-en.png)

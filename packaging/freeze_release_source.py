@@ -8,11 +8,11 @@ def main():
  if approval.get('source_commit'):raise ValueError('This release source is already frozen; do not replace its approved commit')
  verify_package_reports(ROOT,v)
  if run(['git','diff','--cached','--name-only']).stdout.strip():raise ValueError('Review the existing staged changes before freezing')
- run(['git','add','--',*[name for name in SAFE if name!='deploy'],'deploy/vps/update_design.py'])
+ run(['git','add','--',*[name for name in SAFE if name!='deploy'],'deploy/vps/update_design.py','deploy/vps/refresh_release.py'])
  forbidden={'.private','.tmp','.cache','node_modules','vendor','runtime','data','logs','output'}
  for name in run(['git','diff','--cached','--name-only']).stdout.splitlines():
   p=pathlib.PurePosixPath(name)
-  if forbidden.intersection(p.parts) or p.name in {'auth.json','.env','state.db','interface.sqlite','private-runtime.json'} or p.suffix in {'.pem','.gguf','.safetensors','.pyc'} or name.startswith('deploy/') and name!='deploy/vps/update_design.py':raise ValueError('Unreviewed/private staged path: '+name)
+  if forbidden.intersection(p.parts) or p.name in {'auth.json','.env','state.db','interface.sqlite','private-runtime.json'} or p.suffix in {'.pem','.gguf','.safetensors','.pyc'} or name.startswith('deploy/') and name not in {'deploy/vps/update_design.py','deploy/vps/refresh_release.py'}:raise ValueError('Unreviewed/private staged path: '+name)
  run(['git','commit','-m','Release Freedom GPT '+v+' agent features and portable installers'])
  approval['source_commit']=run(['git','rev-parse','HEAD']).stdout.strip()
  folder=ROOT/'release/platforms'/v;manifest=json.loads((folder/'release.json').read_text())

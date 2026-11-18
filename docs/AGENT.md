@@ -2,9 +2,9 @@
 
 **Model + tools + project memory.** Describe an outcome; the agent works with available tools and presents the result. Free and open source, with no subscription for local inference.
 
-## Version 1.5.0
+## Version 1.6.0
 
-Version 1.5.0 adds the capabilities below. Previous releases remain available. Use Check for updates when you choose to upgrade.
+Version 1.6.0 adds the capabilities below. Previous releases remain available. Use Check for updates when you choose to upgrade.
 
 | Capability | What it does |
 |---|---|
@@ -25,7 +25,7 @@ Version 1.5.0 adds the capabilities below. Previous releases remain available. U
 
 ## Start simply
 
-1. Install for your OS. Mac remains an unsigned preview requiring real-device validation.
+1. Install for your OS. The unsigned Mac core passed native ARM64 CI with a model fixture; GPU generation remains untested.
 2. Check the PC, select a compatible model and complete download verification.
 3. Choose a project folder and verify a small tool-using task.
 4. For longer work, define a goal and clear acceptance checks.
@@ -40,3 +40,6 @@ Chat, terminal, files, queue, steering, branches and visual preview are familiar
 Public packages do not include the author's entire personal toolkit. External actions need internet, appropriate permissions and user responsibility.
 
 [Website](https://aionpc.ru) · [Releases](https://github.com/Leongrupp/freedom-gpt/releases) · [Support @AI1rus](https://t.me/AI1rus) · [Русский](AGENT.ru.md)
+
+
+[Full current feature tour / Полный обзор](FEATURES.md) · [Русский обзор](FEATURES.ru.md)

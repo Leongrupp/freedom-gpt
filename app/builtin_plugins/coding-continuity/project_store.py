@@ -48,6 +48,7 @@ class ProjectStore:
               body TEXT,created REAL,updated REAL,evidence TEXT DEFAULT '');
             CREATE TABLE IF NOT EXISTS documents(path TEXT PRIMARY KEY,mtime INTEGER,bytes INTEGER);
             CREATE TABLE IF NOT EXISTS imported_checkpoints(path TEXT PRIMARY KEY,imported REAL);
+            CREATE TABLE IF NOT EXISTS checkpoint_versions(path TEXT PRIMARY KEY,digest TEXT NOT NULL);
             CREATE VIRTUAL TABLE IF NOT EXISTS recall_fts USING fts5(id UNINDEXED,body,tokenize='unicode61');
             ''')
             yield conn
@@ -80,6 +81,16 @@ class ProjectStore:
         identifier = 'request:' + hashlib.sha256((session+'\0'+body).encode()).hexdigest()
         self.remember(body[:32000],'user_request',session,identifier=identifier)
 
+    @staticmethod
+    def _forget_document(conn, relative):
+        prefix = 'doc:'+relative+':'
+        rows = conn.execute('SELECT id FROM items WHERE kind=? AND substr(id,1,?)=?',
+                            ('document',len(prefix),prefix)).fetchall()
+        for row in rows:
+            conn.execute('DELETE FROM recall_fts WHERE id=?',(row['id'],))
+            conn.execute('DELETE FROM items WHERE id=?',(row['id'],))
+        conn.execute('DELETE FROM documents WHERE path=?',(relative,))
+
     def index_documents(self):
         selected = ['.hermes/STATE.md','.hermes/TASKS.md','REQUIREMENTS.md','ARCHITECTURE.md','.hermes/DECISIONS.md','README.md']
         for pattern in ['.hermes/*.md','docs/adr/*.md','docs/decisions/*.md']:
@@ -87,6 +98,13 @@ class ProjectStore:
         selected = list(dict.fromkeys(selected))[:96]
         deadline = time.monotonic()+0.7
         with self.db() as conn:
+            # Deleted ADRs no longer appear in glob results. Reconcile indexed paths
+            # too, so retired requirements cannot survive indefinitely in recall.
+            for row in conn.execute('SELECT path FROM documents').fetchall():
+                path = self.project/row['path']
+                if (not path.resolve().is_relative_to(self.project) or not path.is_file()
+                        or path.stat().st_size > 524288):
+                    self._forget_document(conn,row['path'])
             for relative in selected:
                 path = self.project/relative
                 if not path.resolve().is_relative_to(self.project) or not path.is_file():
@@ -100,9 +118,7 @@ class ProjectStore:
                     continue
                 body = path.read_text(encoding='utf-8-sig',errors='replace')
                 prefix = 'doc:'+relative+':'
-                for row in conn.execute('SELECT id FROM items WHERE kind=? AND substr(id,1,?)=?',('document',len(prefix),prefix)).fetchall():
-                    conn.execute('DELETE FROM recall_fts WHERE id=?',(row['id'],))
-                    conn.execute('DELETE FROM items WHERE id=?',(row['id'],))
+                self._forget_document(conn,relative)
                 for offset in range(0,len(body),3000):
                     line = body.count('\n',0,offset)+1
                     self._put(conn,prefix+str(offset),'document','',str(path)+':'+str(line),clean(body[offset:offset+3400]))
@@ -125,9 +141,12 @@ class ProjectStore:
     def import_checkpoint(self,path,session):
         path=Path(path)
         if not path.is_file() or path.stat().st_size>12*1024**2:return
+        raw=path.read_bytes()
+        digest=hashlib.sha256(raw).hexdigest()
         with self.db() as conn:
-            if conn.execute('SELECT 1 FROM imported_checkpoints WHERE path=?',(str(path),)).fetchone():return
-        data=json.loads(path.read_text(encoding='utf-8-sig'))
+            previous=conn.execute('SELECT digest FROM checkpoint_versions WHERE path=?',(str(path),)).fetchone()
+            if previous and previous['digest']==digest:return
+        data=json.loads(raw.decode('utf-8-sig'))
         messages=[m for m in data.get('messages',[]) if m.get('role')=='user' and isinstance(m.get('content'),str)]
         if len(messages)>400:messages=messages[:100]+messages[-300:]
         with self.db() as conn:
@@ -137,6 +156,7 @@ class ProjectStore:
                 identifier='request:'+hashlib.sha256((session+'\0'+body).encode()).hexdigest()
                 self._put(conn,identifier,'user_request',session,'legacy-checkpoint:'+str(path),body[:32000])
             conn.execute('INSERT OR IGNORE INTO imported_checkpoints VALUES(?,?)',(str(path),time.time()))
+            conn.execute('INSERT OR REPLACE INTO checkpoint_versions VALUES(?,?)',(str(path),digest))
 
     def recent(self, limit=4):
         if not self.path.exists():return []

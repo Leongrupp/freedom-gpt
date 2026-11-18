@@ -1,0 +1,23 @@
+.turbo-compact{display:flex;align-items:center}
+.turbo-button .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.turbo-button{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #494354;border-radius:7px;padding:5px 8px;background:transparent;color:var(--muted,#a8a1b5);font-size:10px;line-height:1.2;cursor:pointer;white-space:nowrap;transition:background .18s,border-color .18s,color .18s}
+.turbo-button:hover:not(:disabled){border-color:#b4a0f3;color:#d7cbff;background:#a98de00f}
+.turbo-button.is-on{border-color:#8f72d1;background:#a285e025;color:#d0bcff;box-shadow:0 0 14px #a282dd13}
+.turbo-button.is-working{border-color:#76688e;color:#c2b0ed}
+.turbo-button:disabled{opacity:.45;cursor:default}
+.turbo-card{border:1px solid var(--border,#37343d);border-radius:10px;padding:12px;margin-top:16px;background:linear-gradient(130deg,#ac8ee009,transparent)}
+.turbo-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.turbo-heading>span{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text,#eee9f6)}
+.turbo-card p{font-size:10px!important;line-height:1.65!important;margin:10px 0 0!important;color:var(--muted,#9c94a9)}
+.turbo-card .turbo-footnote{font-size:9px!important;opacity:.85}
+.turbo-progress{height:3px;background:#a68cdb1c;border-radius:4px;overflow:hidden;margin-top:14px}
+.turbo-progress i{display:block;height:100%;background:#b39ce9;transition:width .5s}
+.turbo-result{display:flex;gap:10px;align-items:center;margin-top:14px}
+.turbo-result>strong{font-size:24px;font-weight:500;color:#bba4f2;letter-spacing:-1px}
+.turbo-result>span{font-size:11px;color:var(--text,#e5dfed)}
+.turbo-result small{display:block;font-size:8px;color:var(--muted,#9c94a9);margin-top:4px}
+.turbo-active{display:flex;align-items:center;gap:6px;font-size:9px;color:#a3c6b8;margin-top:10px}
+.turbo-active i{width:4px;height:4px;background:#9acbb4;border-radius:50%}
+.turbo-cancel{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted,#aaa);background:none;border:0;padding:8px 0 0;cursor:pointer}
+.turbo-card .turbo-notice{color:#d4b683}
+@media(max-width:600px){.turbo-compact .turbo-button{padding:5px}.turbo-compact .turbo-button>span:not(.sr-only){display:none}}

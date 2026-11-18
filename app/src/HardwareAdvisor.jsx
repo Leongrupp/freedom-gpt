@@ -1,14 +1,14 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {Cpu,Monitor,HardDrive,RefreshCw,Code2,MessageSquare,Image as ImageIcon,Video,Check,Download,ExternalLink,ChevronRight,Cloud,LoaderCircle,Search,Info} from 'lucide-react';
 import {api,CONNECTION_ERROR} from './api.js';
-import {t,getLocale} from './i18n.js';
+import {t,getIntlLocale} from './i18n.js';
 import './hardware-advisor.css';
 
 const gb=value=>Number.isFinite(value)?(value/1024**3).toFixed(1)+t(' ГБ'):'—';
 const tasks=[['code','Код',Code2],['chat','Чат',MessageSquare],['image','Изображения',ImageIcon],['video','Видео',Video]];
 const fitLabels={recommended:'Подходит для вашего ПК',cpu:'GPU + RAM / CPU',limited:'Есть ограничения'};
 
-export function HardwareAdvisor({onLibrary}){
+export function HardwareAdvisor({onLibrary,onMusic}){
  const[data,setData]=useState(null),[task,setTask]=useState('code'),[error,setError]=useState(''),[busy,setBusy]=useState('');
  const[secret,setSecret]=useState(''),[persist,setPersist]=useState(false);
  const alive=useRef(true);
@@ -25,9 +25,10 @@ export function HardwareAdvisor({onLibrary}){
  const rows=data?.recommendations?.[task]||[];
  const ready=data?.state==='complete';
  return <div className="hardware-advisor">
+  {onMusic&&<section className="api-music-entry"><h3>{t('Подобрать модель для музыки')}</h3><p>{t('Проверка видеокарты, RAM и места на диске — в музыкальной студии. Веса не скачиваются автоматически.')}</p><button onClick={onMusic}>{t('Открыть музыкальную студию')}</button></section>}
   <div className="advisor-intro"><div><span className="advisor-eyebrow">{t('ВАШ ПК · ВАШИ ВОЗМОЖНОСТИ')}</span><p>{t('Выберите задачу. Подберём поддерживаемые модели с учётом памяти, движка и места на диске.')}</p></div><button className="advisor-scan" disabled={checking||!!busy} onClick={()=>action('/advisor/scan')}><RefreshCw size={14} className={checking?'spin':''}/>{checking?t('Проверяем ПК…'):t('Проверить снова')}</button></div>
   <div className="advisor-hardware"><div><Cpu size={16}/><span>{t('Процессор')}</span><strong>{hw.cpu?.trim()||'—'}</strong><small>{hw.physical_cores||'—'} {t('ядер')} · {hw.threads||'—'} {t('потоков')}</small></div><div><Monitor size={16}/><span>{t('Видеокарта')}</span><strong>{hw.gpus?.map(g=>g.name).join(', ')||t('Не определена')}</strong><small>{hw.vram_gb||'—'} {t('ГБ VRAM')}{hw.unified_memory?' · '+t('Общая память'):''} · {hw.cuda?'CUDA':hw.metal?'Metal':hw.vulkan?'Vulkan':'CPU'}</small></div><div><HardDrive size={16}/><span>{t('Память и диск')}</span><strong>{hw.ram_gb||'—'} {t('ГБ RAM')}</strong><small>{hw.free_disk_gb??'—'} {t('ГБ свободно')}</small></div></div>
-  <div className="advisor-scan-meta"><span>{hw.os} {hw.os_version} · {hw.architecture}</span>{Number.isFinite(hw.ram_available_gb)&&<span>{t('Сейчас свободно')}: RAM {hw.ram_available_gb} {t('ГБ')} · GPU {Math.max(0,...(hw.gpus||[]).map(g=>g.free_gb||0))} {t('ГБ')}</span>}{data?.checked_at&&<time>{t('Проверено')}: {new Date(data.checked_at*1000).toLocaleString(getLocale()==='ru'?'ru-RU':'en-GB')}</time>}</div>
+  <div className="advisor-scan-meta"><span>{hw.os} {hw.os_version} · {hw.architecture}</span>{Number.isFinite(hw.ram_available_gb)&&<span>{t('Сейчас свободно')}: RAM {hw.ram_available_gb} {t('ГБ')} · GPU {Math.max(0,...(hw.gpus||[]).map(g=>g.free_gb||0))} {t('ГБ')}</span>}{data?.checked_at&&<time>{t('Проверено')}: {new Date(data.checked_at*1000).toLocaleString(getIntlLocale())}</time>}</div>
   <div className="advisor-task-tabs" role="tablist" aria-label={t('Для чего нужна модель')}>{tasks.map(([id,label,Icon])=><button key={id} type="button" role="tab" aria-selected={task===id} className={task===id?'selected':''} onClick={()=>setTask(id)}><Icon size={14}/>{t(label)}</button>)}</div>
   {error&&<p className="advisor-error" role="alert">{t(error)}</p>}
   {data?.error&&<p className="advisor-error" role="alert">{t(data.error)}</p>}

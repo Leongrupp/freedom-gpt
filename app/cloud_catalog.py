@@ -1,5 +1,5 @@
-"""Curated free allocations, verified against primary sources on 2026-10-21."""
-CHECKED='2026-10-21'
+"""Optional free and paid API catalog, verified against primary sources on 2026-10-22."""
+CHECKED='2026-10-22'
 PROVIDERS={
  'openrouter':{'name':'OpenRouter','kind':'chat','mark':'OR','recommended':True,'key_url':'https://openrouter.ai/settings/keys','pricing_url':'https://openrouter.ai/pricing','docs_url':'https://openrouter.ai/docs/guides/routing/model-variants/free',
  'summary':'Разные модели для кода и общения. Список обновляется по каталогу провайдера; допускаются только модели :free с нулевой ценой входа и выхода.',
@@ -20,7 +20,9 @@ PROVIDERS={
  'privacy':'Запросы отправляются в Groq. Используйте Free plan: приложение не может определить тариф аккаунта только по ключу.',
  'steps':['Создайте аккаунт Groq Console, оставьте Free plan.','Откройте API Keys → Create API Key. Не подключайте платный план.','Вставьте ключ. Для крупных проектов удобнее провайдер с большим бесплатным лимитом входа.'],
  'base':'https://api.groq.com/openai/v1','daily_cap':100,
- 'models':[{'remote_id':'openai/gpt-oss-120b','name':'GPT OSS 120B · Groq','context_length':8192,'vision':False},{'remote_id':'openai/gpt-oss-20b','name':'GPT OSS 20B · Groq','context_length':8192,'vision':False},{'remote_id':'qwen/qwen3.8-27b','name':'Qwen 3.8 27B · Groq','context_length':8192,'vision':False}]},
+ # Groq reports 131072 for these models; Freedom caps the working window at 65536.
+ # The free plan's tokens-per-minute allowance is a separate account rate limit.
+ 'models':[{'remote_id':'openai/gpt-oss-120b','name':'GPT OSS 120B · Groq','context_length':65536,'vision':False},{'remote_id':'openai/gpt-oss-20b','name':'GPT OSS 20B · Groq','context_length':65536,'vision':False},{'remote_id':'qwen/qwen3.8-27b','name':'Qwen 3.8 27B · Groq','context_length':65536,'vision':False}]},
  'cloudflare':{'name':'Cloudflare Workers AI','kind':'image','mark':'CF','key_url':'https://dash.cloudflare.com/profile/api-tokens','pricing_url':'https://developers.cloudflare.com/workers-ai/platform/pricing/','docs_url':'https://developers.cloudflare.com/workers-ai/get-started/rest-api/',
  'summary':'Генерация изображений FLUX.1 Schnell через API. Веса не скачиваются на компьютер.',
  'quota':'Workers Free: 10 000 Neurons в день на все модели аккаунта. После исчерпания запросы останавливаются. В приложении дополнительно не более 20 изображений/день.',
@@ -28,9 +30,53 @@ PROVIDERS={
  'steps':['Создайте аккаунт Cloudflare и оставьте Workers Free.','Workers AI → Use REST API: создайте токен с правом Workers AI Read для своего аккаунта.','Скопируйте Account ID (32 символа) из панели и API token. Введите их ниже.'],
  'daily_cap':20}
 }
-UNAVAILABLE=[
- {'name':'OpenAI / ChatGPT API','reason':'API оплачивается отдельно от ChatGPT. Постоянный бесплатный API для чата в этот каталог не включён.','url':'https://developers.openai.com/api/docs/pricing'},
- {'name':'DeepSeek напрямую','reason':'Прямой API тарифицируется по токенам. Если появится бесплатный вариант DeepSeek в OpenRouter, он попадёт в список только при нулевой цене.','url':'https://api-docs.deepseek.com/quick_start/pricing'},
- {'name':'Grok / xAI','reason':'Опубликованы платные цены API. Промокредиты не считаются постоянным бесплатным тарифом.','url':'https://docs.x.ai/developers/pricing'},
- {'name':'Видео через API','reason':'Подтверждённый общедоступный бесплатный API генерации видео пока не добавлен. Локальная генерация видео остаётся в своём разделе.','url':'https://ai.google.dev/gemini-api/docs/pricing#veo-3.1'}
-]
+PROVIDERS.update({
+ 'openai':{'name':'OpenAI','kind':'chat','mark':'AI','billing':'paid','base':'https://api.openai.com/v1','daily_cap':100,
+ 'key_url':'https://platform.openai.com/api-keys','pricing_url':'https://developers.openai.com/api/docs/pricing','docs_url':'https://developers.openai.com/api/docs/models',
+ 'summary':'GPT для диалогов, кода, инструментов агента и анализа изображений. Оплата API отдельно от подписки ChatGPT.',
+ 'quota':'Запросы оплачиваются в вашем проекте OpenAI. Настройте бюджет и уведомления в кабинете. Счётчик запросов Freedom не является денежным лимитом.',
+ 'privacy':'Контекст и выбранные файлы отправляются OpenAI по условиям вашего API-проекта.',
+ 'steps':['Создайте API-проект в OpenAI Platform и ознакомьтесь с тарифом.','Выпустите API-ключ проекта и настройте лимиты в кабинете OpenAI.','Вставьте ключ и разрешите платные запросы. Проверка подключения не запускает генерацию.'],
+ 'models':[{'remote_id':m,'name':n,'context_length':65536,'vision':True,'protocol':'responses'} for m,n in [('gpt-6-luna','GPT-6 Luna'),('gpt-6.1-sol','GPT-6.1 Sol'),('gpt-6-astra','GPT-6 Astra')]]},
+ 'deepseek':{'name':'DeepSeek','kind':'chat','mark':'DS','billing':'paid','base':'https://api.deepseek.com','daily_cap':100,
+ 'key_url':'https://platform.deepseek.com/api_keys','pricing_url':'https://api-docs.deepseek.com/quick_start/pricing/','docs_url':'https://api-docs.deepseek.com/api/create-chat-completion/',
+ 'summary':'Прямое подключение DeepSeek для кода и задач агента. Поддерживает режим с обдумыванием и быстрые ответы.',
+ 'quota':'Оплата токенов по тарифу DeepSeek. Стоимость зависит от модели, кеширования и времени запроса. Ограничение Freedom считает запросы, а не деньги.',
+ 'privacy':'Сообщения и результаты инструментов отправляются DeepSeek. Проверьте правила сервиса для своих данных.',
+ 'steps':['Откройте DeepSeek Platform и проверьте действующий тариф.','Создайте API-ключ в разделе API keys.','Вставьте ключ, разрешите платные запросы и выберите доступную модель.'],
+ 'models':[{'remote_id':'deepseek-flash','name':'DeepSeek Flash','context_length':65536,'vision':True},{'remote_id':'deepseek-v4-pro','name':'DeepSeek V4 Pro','context_length':65536,'vision':False}]},
+ 'xai':{'name':'Grok · xAI','kind':'chat','mark':'X','billing':'paid','base':'https://api.x.ai/v1','daily_cap':100,
+ 'key_url':'https://console.x.ai/','pricing_url':'https://docs.x.ai/developers/pricing','docs_url':'https://docs.x.ai/developers/grok-4-7',
+ 'summary':'Grok для общения, кода, анализа фото и инструментов агента. Это отдельный API от бесплатного Groq.',
+ 'quota':'API оплачивается по тарифу xAI. Подписка в приложении Grok не заменяет баланс API. Установите ограничения расходов в консоли провайдера.',
+ 'privacy':'Контекст и выбранные файлы отправляются xAI. Здесь подключаются инструменты Freedom, без автоматического включения дополнительных платных сервисов поиска.',
+ 'steps':['Создайте аккаунт в xAI Console и проверьте тариф API.','Выпустите ключ с доступом к нужной модели и задайте лимиты расходов.','Вставьте ключ и явно разрешите платные запросы.'],
+ 'models':[{'remote_id':'grok-4.7','name':'Grok 4.7','context_length':65536,'vision':True,'protocol':'responses'}]},
+ 'anthropic':{'name':'Claude · Anthropic','kind':'chat','mark':'C','billing':'paid','base':'https://api.anthropic.com/v1','daily_cap':100,
+ 'key_url':'https://platform.claude.com/settings/keys','pricing_url':'https://platform.claude.com/docs/en/about-claude/pricing','docs_url':'https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/openai-sdk',
+ 'summary':'Claude для кода, диалога, анализа изображений и инструментов Freedom. Это модели Anthropic по API; отдельный Claude Code CLI не требуется.',
+ 'quota':'API оплачивается в вашем аккаунте Anthropic. Подписка Claude или Claude Code не означает, что API-запросы включены в неё. Проверьте тариф и бюджет проекта.',
+ 'privacy':'Контекст и выбранные файлы отправляются Anthropic. Используется официальный совместимый API для текста и вызовов инструментов.',
+ 'steps':['Откройте Claude Platform и проверьте тариф API.','В разделе API keys создайте ключ проекта и настройте ограничения расходов.','Вставьте ключ и разрешите платные запросы. Затем выберите Claude в текущем или новом чате.'],
+ 'models':[{'remote_id':m,'name':n,'context_length':65536,'vision':True} for m,n in [('claude-haiku-5-5','Claude Haiku 5.5'),('claude-sonnet-5-5','Claude Sonnet 5.5'),('claude-opus-5-5','Claude Opus 5.5')]]},
+ 'fal':{'name':'fal.ai','kind':'video','mark':'fal','billing':'paid','daily_cap':20,
+ 'key_url':'https://fal.ai/dashboard/keys','pricing_url':'https://fal.ai/models/fal-ai/wan-25-preview/text-to-video','docs_url':'https://fal.ai/models/fal-ai/wan-25-preview/text-to-video/api',
+ 'summary':'Облачная генерация видео по тексту. Модель работает на стороне fal.ai, а готовый MP4 сохраняется на вашем компьютере.',
+ 'quota':'Генерации оплачиваются с вашего аккаунта fal.ai. Цена зависит от модели, разрешения и длительности. Перед запуском нужно подтвердить платную генерацию.',
+ 'privacy':'Описание сцены отправляется fal.ai и поставщику модели. Медиа по ссылке сервиса могут быть публично доступны; приложение сохраняет локальную копию.',
+ 'steps':['Откройте fal.ai/dashboard/keys и создайте ключ с пресетом API.','Проверьте стоимость модели и лимиты в кабинете fal.ai. Проверка ключа здесь только читает метаданные ваших запросов.','Сохраните ключ. В окне «Создать видео» выберите fal.ai, параметры и подтвердите оплату перед запуском.']}
+})
+# All previously listed services now have explicit, opt-in paid integrations.
+UNAVAILABLE=[]
+
+
+PROVIDERS['stability']={'name':'Stable Audio','kind':'music','mark':'♫','billing':'trial','daily_cap':10,
+ 'base':'https://api.stability.ai','key_url':'https://platform.stability.ai/account/keys',
+ 'pricing_url':'https://docs.stability.ai/pricing','docs_url':'https://docs.stability.ai/api-reference',
+ 'summary':'Инструментальная музыка через официальный Stable Audio API. Трек сохраняется на вашем ПК и открывается в плеере Freedom.',
+ 'quota':'Новым аккаунтам дают 25 стартовых кредитов без карты. Это разовый пробный запас, а не ежемесячный бесплатный тариф. Генерация расходует кредиты. После исчерпания остановитесь или используйте локальный ACE-Step.',
+ 'privacy':'Описание музыки отправляется Stability AI. Не подключайте платный биллинг для пробного режима. Приложение не может отличить подарочные и купленные кредиты; оно не покупает кредиты и не повторяет генерацию автоматически.',
+ 'steps':['Создайте аккаунт на официальной платформе Stability AI. Проверьте наличие стартовых кредитов; карту добавлять не нужно.',
+          'В Account → API keys создайте ключ. Вставьте его ниже: проверка только читает баланс, без генерации.',
+          'Откройте «Создать музыку» → «Через API». Подтвердите расход пробных кредитов перед запуском. Для постоянной бесплатной работы выберите локальную модель.'],
+ 'models':[]}

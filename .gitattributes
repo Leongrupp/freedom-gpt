@@ -9,6 +9,9 @@
 *.yml text eol=lf
 *.cs text eol=lf
 *.cmd text eol=crlf
+*.sh text eol=lf
+# These vendor deltas are verified byte for byte by native_overrides/manifest.json.
+app/native_overrides/** -text
 *.png binary
 *.jpg binary
 *.ico binary

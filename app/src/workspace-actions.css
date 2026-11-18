@@ -1,0 +1,12 @@
+.workspace-strip{flex-wrap:wrap;gap:6px 12px;padding:5px 10px}
+.workspace-strip .workspace-context{display:flex;align-items:center;gap:12px;min-width:0;max-width:100%}
+.workspace-strip .workspace-context>button{display:inline-flex;align-items:center;gap:6px;padding:0;min-width:0;max-width:230px;font-size:inherit;color:inherit}
+.workspace-strip .workspace-context>button>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.workspace-strip .workspace-context>button>svg{flex-shrink:0}
+.workspace-strip .workspace-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:4px;flex:0 0 auto;max-width:100%;margin-left:auto}
+.workspace-strip .workspace-actions .research-buttons{display:contents;margin:0}
+.workspace-strip .workspace-actions>.goal-button,.workspace-strip .workspace-actions .research-buttons>button,.workspace-strip .workspace-actions>.image-mode-close{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:5px 7px;border:1px solid transparent;border-radius:6px;font-size:9px;line-height:1.25;color:var(--muted);background:transparent;white-space:nowrap}
+.workspace-strip .workspace-actions>.goal-button:hover,.workspace-strip .workspace-actions .research-buttons>button:hover:not(:disabled),.workspace-strip .workspace-actions>.image-mode-close:hover{color:var(--text);background:var(--surface-hover)}
+.workspace-strip .workspace-actions>.goal-button.is-active,.workspace-strip .workspace-actions .research-buttons>button.selected{color:var(--accent);border-color:#b2a1ef40;background:var(--accent-bg)}
+.workspace-strip .workspace-actions>.image-mode-close{padding:5px 3px;color:var(--accent)}
+@media(max-width:760px){.workspace-strip .workspace-context{gap:10px}.workspace-strip .workspace-context>button{max-width:125px;font-size:9px}.workspace-strip .workspace-actions{gap:3px}.workspace-strip .workspace-actions>.goal-button,.workspace-strip .workspace-actions .research-buttons>button{padding:5px 6px}.workspace-strip .workspace-actions .goal-chip-status{display:none}}

@@ -19,13 +19,23 @@ os.environ.update(HERMES_HOME=str(portable.HOME),TEMP=str(ROOT/'.tmp'),TMP=str(R
 os.environ['PATH']=str(pathlib.Path(sys.executable).parent)+os.pathsep+os.environ['PATH']
 sys.path.insert(0,str(HERMES_SOURCE))
 from aiohttp import web, ClientSession, ClientTimeout
+from remote_client import RemoteClient
+from personal_voice import PersonalVoice
+from personal_speech import PersonalSpeech
+from file_converter import FileConverter
+from personal_enhance import PersonalEnhance
 from PIL import Image
 from updater import updates,META
 import psutil
 from hermes_cli.gateway_client import connect_gateway
+from activity_feed import ActivityFeed
+from reply_language import ReplyLanguage
 
 log=logging.getLogger('freedom')
 TOKEN=secrets.token_urlsafe(32)
+voice=PersonalVoice(ROOT,enabled=os.name=='nt' and bool(portable.PRIVATE))
+speech=PersonalSpeech(ROOT,enabled=os.name=='nt' and bool(portable.PRIVATE))
+enhance=PersonalEnhance(ROOT,enabled=os.name=='nt' and bool(portable.PRIVATE))
 ALLOWED_ORIGINS={f'http://127.0.0.1:{PORT}',f'http://localhost:{PORT}'}
 
 def db():
@@ -101,6 +111,16 @@ class Bridge:
     def __init__(self):
         self.client=None;self.ready=asyncio.Event();self.sockets=set();self.task=None
         self.error=None;self.snapshots={};self.live={};self.reconnected=0;self.resume_locks={}
+        self.activity=ActivityFeed();self.reasoning_display=set()
+        # One-shot handoff when this UI process is replaced; the independent agent keeps running.
+        handoff=ROOT/'.tmp/ui-activity-handoff.json'
+        saved=load_json(handoff,{})
+        if saved and time.time()-saved.get('created',0)<120:
+            self.live.update(saved.get('live',{}));self.snapshots.update({sid:{} for sid in self.live})
+            for sid,activity in saved.get('activity',{}).items():
+                activity['epoch']=self.activity.epoch
+                self.activity.sessions[sid]=activity
+            handoff.replace(handoff.with_name('ui-activity-handoff.consumed.json'))
     async def start(self):self.task=asyncio.create_task(self.loop())
     async def close(self):
         if self.task:
@@ -115,9 +135,16 @@ class Bridge:
             try:
                 async with connect_gateway() as client:
                     self.client=client;self.error=None;self.ready.set();self.reconnected+=1
+                    await reply_language.sync_owner_prompt()
                     for sid in list(self.snapshots):
                         with contextlib.suppress(Exception):
                             self.snapshots[sid]=await client.rpc('session.resume',session_id=sid)
+                            saved=self.live.get(sid,{})
+                            current=self.snapshots[sid]
+                            if current.get('running') and saved.get('active') and saved.get('generation')==current.get('execution_generation') and not self.activity.snapshot(sid):
+                                self.activity.adopt(sid,saved)
+                            elif not current.get('running'):
+                                saved.update(active=False,text='',tool=None)
                     await self.broadcast({'type':'gateway.connected','reconnected':self.reconnected})
                     while True:
                         event=await client.events.get()
@@ -125,6 +152,8 @@ class Bridge:
                         params=event.get('params') or {}
                         kind=params.get('type');sid=params.get('session_id');payload=params.get('payload') or {}
                         if sid:
+                            chat_history.record(sid,kind,params)
+                            self.activity.record(sid,kind,params)
                             workspace.event(sid,kind,params)
                             if kind=='session.control.update':
                                 goals.archive_goal(sid,(payload.get('control') or {}).get('goal'))
@@ -140,10 +169,12 @@ class Bridge:
                                 if assets:await self.broadcast({'type':'artifacts.changed','session_id':sid,'artifacts':assets})
                             elif kind=='message.complete':
                                 queue_completion=params.get('execution_generation') is None and payload.get('outcome') in {'cancelled','steered'}
-                                if not queue_completion:state.update(active=False,text='',tool=None)
+                                if not queue_completion:
+                                    state.update(active=False,text='',tool=None)
+                                    await preview.finish(sid)
                                 find_artifacts(sid,payload.get('text') or payload.get('content') or '')
                             elif kind=='session.info' and 'running' in payload:state['active']=bool(payload['running'])
-                        await self.broadcast({**params,'type':'gateway.event','event_type':kind})
+                        await self.broadcast({**params,'type':'gateway.event','event_type':kind,**self.activity.stamp(sid)})
             except asyncio.CancelledError:raise
             except Exception as exc:
                 self.error=str(exc);self.client=None;self.ready.clear()
@@ -153,13 +184,34 @@ class Bridge:
     async def rpc(self,method,**params):
         try:await asyncio.wait_for(self.ready.wait(),40)
         except asyncio.TimeoutError:raise ValueError('Freedom GPT пока недоступен. Повторите проверку через несколько секунд.')
-        return await self.client.rpc(method,**params)
+        while method=='prompt.submit' and getattr(self,'performance_hold',False):await asyncio.sleep(.25)
+        return await self.client.rpc(method,**reply_language.prepare(method,params))
     async def resume(self,sid):
         async with self.resume_locks.setdefault(sid,asyncio.Lock()):return await self._resume(sid)
+    async def enable_reasoning_display(self,sid):
+        if sid in self.reasoning_display:return
+        try:
+            # Native session display only: preserve model effort, requests and config files.
+            await self.rpc('config.set',session_id=sid,key='show_reasoning',value='1')
+            self.reasoning_display.add(sid)
+        except Exception as exc:
+            log.debug('reasoning display unavailable: %s',type(exc).__name__)
     async def _resume(self,sid):
         snapshot=await self.rpc('session.resume',session_id=sid)
+        await self.enable_reasoning_display(sid)
         info=snapshot.get('info') or {}
-        if portable.PRIVATE or str(info.get('model') or '').startswith('freedom-api-'):
+        migrations=portable.read(ROOT/'data/model-port-migrations.json',{})
+        if portable.PRIVATE and migrations and not snapshot.get('running') and not snapshot.get('pending'):
+            with db() as conn:old_route=conn.execute('SELECT model,url FROM routes WHERE session_id=?',(sid,)).fetchone()
+            target=portable.model_url().rstrip('/')
+            if old_route and migrations.get(old_route['url'].rstrip('/'))==target and old_route['model']==info.get('model'):
+                changed=await self.rpc('session.mutate',session_id=sid,request_id=uuid.uuid4().hex,
+                    expected_revision=snapshot['revision'],expected_generation=snapshot['execution_generation'],
+                    operation='model',payload={'model':'freedom-local-runtime' if info.get('model')==portable.model_id() else info['model']})
+                if changed.get('status')=='confirmation_required':raise ValueError('Требуется подтвердить восстановление подключения модели.')
+                with db() as conn:conn.execute('UPDATE routes SET url=? WHERE session_id=?',(target,sid))
+                snapshot=await self.rpc('session.resume',session_id=sid)
+        if portable.PRIVATE or str(info.get('model') or '').startswith(('freedom-api-','freedom-auto-')):
             self.snapshots[sid]=snapshot
             return snapshot
         with db() as conn:route=conn.execute('SELECT model,url FROM routes WHERE session_id=?',(sid,)).fetchone()
@@ -175,15 +227,25 @@ class Bridge:
         return snapshot
 
 bridge=Bridge()
+from chat_trash import ChatTrash
+chat_trash=ChatTrash(db,bridge)
+reply_language=ReplyLanguage(ROOT,db)
 from workspace_features import WorkspaceFeatures, LEARNING_NOTE, EXECUTION_NOTE
 workspace=WorkspaceFeatures(ROOT,portable,db,bridge)
+from chat_history import ChatHistory,recall_note
+chat_history=ChatHistory(ROOT,portable.HOME,bridge)
+from progress_guard import ProgressGuard
+progress_guard=ProgressGuard(ROOT,portable,bridge)
 from goal_workspace import GoalWorkspace
 goals=GoalWorkspace(db,bridge,workspace,videos.busy)
 from artifact_workspace import ArtifactWorkspace
 artifact_workspace=ArtifactWorkspace(ROOT,PROJECTS,STACK,db,bridge)
+from desktop_actions import DesktopActions
+desktop_actions=DesktopActions(artifact_workspace)
 from cloud_api import CloudAPI
 cloud=CloudAPI(ROOT,portable,db,bridge,register_artifact)
 workspace.cloud=cloud
+from auto_models import AutoModels
 from chat_branches import ChatBranches
 branches=ChatBranches(db,bridge,workspace,portable)
 from rewards import FreedomRewards
@@ -193,7 +255,14 @@ from model_advisor import ModelAdvisor
 from account_connections import AccountConnections
 accounts=AccountConnections(ROOT,portable)
 advisor=ModelAdvisor(library)
+from music import MusicStudio
+music=MusicStudio(ROOT,cloud,videos,advisor)
+from narration import NarrationStudio
+narration=NarrationStudio(ROOT,speech,voice.ffmpeg,music)
+goals.video_busy=lambda: videos.busy() or (music.busy() and music.current.get("source")=="local")
 preview=PreviewBrowser(ROOT,portable,bridge,register_artifact)
+from web_research import WebResearch,owner_notes as turn_owner_notes
+web_research=WebResearch(ROOT,preview)
 
 def image_status():
     item=next((m for m in library.snapshot()['models'] if m['kind']=='image'),None)
@@ -201,6 +270,53 @@ def image_status():
     return {'ready':item['installed'],'tested':False,'percent':item['percent'],'bytes':item['bytes'],'total':item['total'],
             'model':item['name'],'files':[dict(f,complete=(library.folder(item)/f['name']).is_file()) for f in item['files']],
             'phase':'ready' if item['installed'] else 'downloading','reference_editing':False}
+
+auto=AutoModels(ROOT,portable,db,cloud,workspace,bridge,videos,image_status,register_artifact)
+cloud.auto=auto
+from engine_performance import Performance
+performance=Performance(library,bridge,videos,image_status)
+from context_modes import ContextModes
+context_modes=ContextModes(performance,library,bridge,cloud,workspace,db)
+from team_agents import TeamAgents
+team_agents=TeamAgents(ROOT,portable,bridge)
+from camera_studio import CameraStudio
+camera_studio=CameraStudio(bridge)
+
+def enhance_source(url):
+    # Only files already owned by this installation; never fetch a client URL.
+    match=re.fullmatch(r'/api/(artifacts|files|video/files|enhance/files|cloud/images|cloud/videos)/([A-Za-z0-9_-]{1,128})(/file)?',str(url))
+    if not match:raise ValueError('Выберите готовое изображение или видео из этого приложения.')
+    kind,ident,suffix=match.groups();row=None
+    if kind in {'artifacts','files'} and not suffix:
+        with db() as conn:row=dict_row(conn.execute('SELECT * FROM '+kind+' WHERE id=?',(ident,)).fetchone())
+    elif kind=='video/files' and not suffix:
+        record=load_json(videos.records/(ident+'.json'),{})
+        if record.get('state')=='complete':row={'path':record.get('output'),'session_id':record.get('session_id')}
+    elif kind=='enhance/files' and not suffix:
+        record=enhance.jobs.get(ident,{})
+        if record.get('state')=='complete':row={'path':record.get('output_path'),'sid':record.get('sid')}
+    elif kind in {'cloud/images','cloud/videos'} and suffix:
+        with db() as conn:row=dict_row(conn.execute('SELECT * FROM '+('cloud_images' if kind=='cloud/images' else 'cloud_videos')+' WHERE id=? AND state=?',(ident,'completed')).fetchone())
+    path=local_asset(row.get('path')) if row and row.get('path') else None
+    if path is None:raise ValueError('Готовый файл не найден. Обновите список файлов.')
+    return {'path':str(path),'sid':row.get('session_id') or row.get('sid') or ''}
+
+def enhance_gate(app):
+    if app.get('update_applying') or app.get('performance_busy') or (library.activation or {}).get('state')=='loading':return 'Ждём окончания настройки модели.'
+    if app.get('prompt_admissions') or any(v.get('active') for v in list(bridge.live.values())) or app['runtime'].get('metrics',{}).get('processing'):return 'Сначала завершим текущую задачу агента.'
+    if videos.busy() or (music.busy() and music.current.get('source')=='local'):return 'Видеокарта занята созданием медиа.'
+    if camera_studio.state in {'starting','running'} and camera_studio.mode=='photo':return 'Видеокарта занята фоторежимом.'
+    from gpu_lease import active as image_gpu_active
+    if image_gpu_active():return 'Видеокарта занята генерацией изображения.'
+    gpu=app['runtime'].get('metrics',{}).get('gpu',{})
+    if not app.get('enhance_gpu_busy') and gpu.get('total_mb',0) and gpu['total_mb']-gpu.get('used_mb',0)<384:return 'Мало свободной видеопамяти. Дождёмся её освобождения; модель остаётся запущенной.'
+    return ''
+
+async def enhance_completed(job):
+    if job.get('sid') and not job.get('preview'):
+        register_artifact(job['sid'],job['output_path'])
+        await bridge.broadcast({'type':'artifacts.changed','session_id':job['sid']})
+    await bridge.broadcast({'type':'enhance.changed','job_id':job['id']})
 
 def read_timings():
     result={'tokens_per_second':None,'speed_kind':'last','generated_tokens':None,'prompt_tokens_per_second':None}
@@ -222,6 +338,18 @@ def read_timings():
     except (OSError,ValueError):pass
     return result
 
+def local_model_activity():
+    if videos.busy():
+        job=videos.current or {}
+        return {'kind':'video','state':job.get('state'),'phase':job.get('phase'),'progress':job.get('progress',0)}
+    if music.busy() and (music.current or {}).get('source')=='local':
+        return {'kind':'music','state':music.current.get('state')}
+    if camera_studio.state in {'starting','running'} and camera_studio.mode=='photo':
+        return {'kind':'camera','state':camera_studio.state}
+    from gpu_lease import active
+    if active():return {'kind':'image','state':'generating'}
+    return None
+
 async def monitor(app):
     async with ClientSession(timeout=ClientTimeout(total=2)) as http:
         while True:
@@ -236,6 +364,8 @@ async def monitor(app):
                     slot=slots[0]
                     data.update(model_ready=True,processing=bool(slot.get('is_processing')),
                         context_used=slot.get('n_prompt_tokens'),context_max=slot.get('n_ctx',65536))
+                    if await asyncio.to_thread(library.observe_context,slot.get('n_ctx')):
+                        await asyncio.to_thread(cloud.sync_aliases)
                     if not data['processing']:data['speed_kind']='last'
             except Exception:
                 data.update(processing=False)
@@ -252,7 +382,8 @@ async def monitor(app):
             except Exception:pass
             active=library.model(portable.config().get('active')) or {}
             data['active_model_name']=active.get('name',portable.config().get('external_model','Выберите модель'))
-            data['images']=image_status();app['runtime']['metrics']=data
+            data['local_model_activity']=local_model_activity()
+            data['images']=image_status();data['performance']=performance.status();data['camera_studio']={'state':camera_studio.state,'mode':camera_studio.mode};app['runtime']['metrics']=data
             await bridge.broadcast(data)
             await asyncio.sleep(2)
 
@@ -269,6 +400,19 @@ async def security(request,handler):
     if request.path.startswith('/api/') and request.method not in {'GET','HEAD'}:
         if request.headers.get('X-Freedom-Token')!=TOKEN:return error('Локальный сеанс обновлён. Восстанавливаем подключение.',403,'session_expired')
     if request.app.get('update_applying') and request.method not in {'GET','HEAD'}:return error('Обновление устанавливается. Соединение восстановится автоматически.',503,'updating')
+    inference_change=request.path.startswith(('/api/sessions','/api/library/activate','/api/library/connect','/api/video/generate','/api/music/generate','/api/updates'))
+    if camera_studio.state in {'starting','running'} and camera_studio.mode=='photo' and request.method not in {'GET','HEAD'} and request.path.startswith(('/api/library/activate','/api/library/connect','/api/video/generate','/api/music/generate','/api/performance','/api/context')):
+        return error('Видеокарта занята фоторежимом. Сначала остановите камеру.',409,'camera_gpu_busy')
+    if camera_studio.state in {'starting','running'} and camera_studio.mode=='photo' and request.method=='POST' and request.path.endswith('/goal') and (await request.json()).get('action') not in {'pause','save'}:
+        return error('Остановите фоторежим перед запуском цели агента.',409,'camera_gpu_busy')
+    if request.app.get('performance_busy') and inference_change and request.method not in {'GET','HEAD'} and not request.path.endswith(('/stop','/respond','/team-agents')):
+        return error('Настраиваем скорость локальной модели. Дождитесь окончания замера или отмените его кнопкой Турбо.',409,'performance_busy')
+    if request.method=='POST' and request.path.endswith('/messages') and (library.activation or {}).get('state')=='loading':
+        return error('Локальная модель переключается. Дождитесь её готовности.',409)
+    if music.busy() and music.current.get('source')=='local' and request.method not in {'GET','HEAD'} and request.path.startswith(('/api/library/activate','/api/library/connect','/api/performance','/api/context')):
+        return error('Видеокарта занята музыкой. Дождитесь завершения или остановите генерацию в музыкальной студии.',409,'music_gpu_busy')
+    if request.app.get('enhance_gpu_busy') and request.method not in {'GET','HEAD'} and request.path.startswith(('/api/library/activate','/api/library/connect','/api/performance','/api/context','/api/video/generate','/api/music/generate','/api/camera/start')):
+        return error('Сейчас улучшаем медиа. Дождитесь завершения или отмените улучшение; чат доступен.',409,'enhance_gpu_busy')
     admission=request.method=='POST' and request.path.endswith('/messages')
     if admission:request.app['prompt_admissions']=request.app.get('prompt_admissions',0)+1
     try:response=await handler(request)
@@ -280,16 +424,22 @@ async def security(request,handler):
         if admission:request.app['prompt_admissions']-=1
     response.headers.update({'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY',
         'Cache-Control':'no-store' if request.path.startswith('/api/') else 'no-cache'})
-    if response.content_type=='text/html':response.headers['Content-Security-Policy']=f"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws://127.0.0.1:{PORT} ws://localhost:{PORT}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+    if response.content_type=='text/html':response.headers['Content-Security-Policy']=f"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' blob: ws://127.0.0.1:{PORT} ws://localhost:{PORT}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+    if request.path=='/api/messenger/frame':
+        response.headers['Content-Security-Policy']=response.headers['Content-Security-Policy'].replace("frame-ancestors 'none'","frame-ancestors 'self'")
+        response.headers['X-Frame-Options']='SAMEORIGIN'
+    if request.path.startswith('/arcade/') and response.content_type=='text/html':
+        response.headers['Content-Security-Policy']="default-src 'self'; script-src 'self' blob: 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' blob:; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'none'; frame-ancestors 'self'; base-uri 'none'"
+        response.headers['X-Frame-Options']='SAMEORIGIN'
     return response
 
 async def health(request):return web.json_response({'application':'Freedom GPT','version':META['version'],'local_build':META.get('local_build'),'installation':hashlib.sha256(str(ROOT).encode()).hexdigest()[:16],'gateway_ready':bridge.ready.is_set()})
 async def bootstrap(request):
     active=library.model(portable.config().get('active')) or {}
     return web.json_response({'token':TOKEN,'name':'Freedom GPT','model':active.get('name',portable.config().get('external_model','Выберите модель')),'model_short':active.get('name',portable.config().get('external_model','Модель')),'model_id':portable.model_id(),'first_run':not portable.config().get('onboarded'),
-        'version':META['version'],'updates':updates.status(),'context':portable.context_size(),'skills':None,'default_project':str(portable.workspace_root()),'images':image_status(),
+        'version':META['version'],'ui_revision':META.get('ui_revision'),'updates':updates.status(),'context':portable.context_size(),'skills':None,'default_project':str(portable.workspace_root()),'images':image_status(),
         'metrics':request.app['runtime'].get('metrics',{}),'root':str(ROOT),'history_home':str(portable.HOME),'language':portable.config().get('language'),
-        'support':None if portable.PRIVATE else META.get('support')})
+        'support':None if portable.PRIVATE else META.get('support'),'voice':voice.status(),'speech':speech.status(),'converter':request.app['converter'].status(),'arcade':{'available':(ROOT.parent/'game-stick-pc/ui/index.html').is_file()},'camera_studio':camera_studio.supported,'enhance':{'enabled':enhance.enabled}})
 
 async def sessions(request):
     rows={}
@@ -298,26 +448,31 @@ async def sessions(request):
         for row in result.get('sessions',[]):
             sid=row.get('session_id') or row['id'];rows[sid]=row
     with db() as conn:meta={row['id']:dict(row) for row in conn.execute('SELECT * FROM chats')}
-    result=[];branch_rows=branches.rows()
+    result=[];branch_rows=branches.rows();trash_rows=chat_trash.rows()
     for sid,row in rows.items():
         settings=meta.get(sid,{})
         result.append({**row,'id':sid,'title':settings.get('title') or row.get('title') or 'Новый чат',
-            'archived':bool(settings.get('archived')),'pinned':bool(settings.get('pinned')),
-            'created':row.get('started_at'),'branch':branch_rows.get(sid),
+            'archived':bool(settings.get('archived')),'pinned':bool(settings.get('pinned')),'deleted':sid in trash_rows,
+            'created':row.get('started_at'),'branch':branch_rows.get(sid),'specialist_chat':team_agents.chats.describe(sid,team_agents.store),
             'updated':settings.get('updated') or row.get('started_at') or 0})
     return web.json_response({'sessions':sorted(result,key=lambda x:(x['pinned'],x['updated']),reverse=True)})
 
-async def new_session(request):
+async def new_session(request, *, request_id=None, toolsets=None, safe_mode=False):
     data=await body_json(request);cwd=local_project(data.get('cwd'))
+    effort='none' if data.get('mode','code')=='code' else data.get('reasoning') or 'low'
+    if effort not in {'none','low','medium','high','xhigh'}:raise ValueError('Выберите уровень обдумывания.')
     from hermes_cli.gateway_chat import shell_client_env
     target=cloud.target(data.get('model'))
     if data.get('model') and not target:raise ValueError('Выберите подключённую API-модель.')
     if target:await asyncio.to_thread(cloud.sync_aliases)
     selected=target['id'] if target else portable.model_id()
     endpoint=cloud.proxy_url() if target else portable.model_url()
-    snapshot=await bridge.rpc('session.create',request_id=uuid.uuid4().hex,source='cli',cwd=cwd,
-        provider='custom',base_url=endpoint,model=selected,**({'api_key':cloud.proxy_key} if target else {}),reasoning='none' if data.get('mode','code')=='code' else 'low',client_env=shell_client_env())
+    snapshot=await bridge.rpc('session.create',request_id=request_id or uuid.uuid4().hex,source='cli',cwd=cwd,
+        **({'toolsets':toolsets} if toolsets is not None else {}),
+        **({'safe_mode':True} if safe_mode else {}),
+        provider='custom',base_url=endpoint,model=selected,**({'api_key':cloud.proxy_key} if target else {}),reasoning='none' if data.get('mode','code')=='code' else effort,client_env=shell_client_env())
     sid=snapshot['stored_session_id'];bridge.snapshots[sid]=snapshot
+    await bridge.enable_reasoning_display(sid)
     access=data.get('access') or portable.config().get('default_access','manual')
     if access=='full':
         await bridge.rpc('config.set',session_id=sid,key='yolo',value='1')
@@ -328,21 +483,25 @@ async def new_session(request):
         conn.execute('INSERT OR IGNORE INTO chats(id,title,updated) VALUES(?,?,?)',(sid,data.get('title'),time.time()))
         conn.execute('INSERT OR REPLACE INTO routes VALUES(?,?,?)',(sid,selected,endpoint.rstrip('/')))
         if target:conn.execute('INSERT INTO workspace_preferences(session_id,selected_model) VALUES(?,?) ON CONFLICT(session_id) DO UPDATE SET selected_model=excluded.selected_model',(sid,selected))
+        conn.execute('INSERT INTO workspace_preferences(session_id,reasoning) VALUES(?,?) ON CONFLICT(session_id) DO UPDATE SET reasoning=excluded.reasoning',(sid,effort))
     if preview.process and preview.process.returncode is None:
         with contextlib.suppress(Exception):await preview.call(sid,{'action':'adopt','from':'workspace'})
-    return web.json_response({'id':sid,'snapshot':filter_snapshot(snapshot)})
+    return web.json_response({'id':sid,'snapshot':filter_snapshot({**snapshot,'work_preferences':workspace.preferences(sid)})})
 
 def filter_snapshot(snapshot):
     # The UI never needs credential hints, launch environment or provider secrets.
     info=snapshot.get('info') or {}
     return {**{k:v for k,v in snapshot.items() if k!='info'},'info':{k:info.get(k) for k in
-        ('title','model','provider','cwd','tool_count','reasoning_effort','yolo','started_at','last_active_at')},
+        ('title','model','provider','cwd','tool_count','reasoning_effort','context_length','yolo','started_at','last_active_at')},
         'live':bridge.live.get(snapshot.get('stored_session_id'),{}),
+        'activity':bridge.activity.snapshot(snapshot.get('stored_session_id')),
+        'progress_guard_notice':progress_guard.notice(snapshot.get('stored_session_id')),
         'route':{'provider':info.get('provider'),'model':info.get('model'),
                  'base_url':(info.get('launch_request') or {}).get('base_url')}}
 
 async def session_detail(request):
     sid=request.match_info['sid'];snapshot=await bridge.resume(sid)
+    team_agents.chats.track(sid,snapshot)
     files=[]
     with db() as conn:
         for turn in conn.execute("SELECT * FROM turns WHERE session_id=? AND admission_id<>'' ORDER BY created",(sid,)):
@@ -357,12 +516,20 @@ async def session_detail(request):
     artifacts,artifact_trash=await asyncio.to_thread(artifact_workspace.list,sid)
     result={**filter_snapshot(snapshot),'attachments':files,'artifacts':artifacts,'artifact_trash':artifact_trash,'branch':branches.rows().get(sid)}
     result=await workspace.decorate(result)
+    try:
+        await asyncio.to_thread(chat_history.capture,sid,result.get('messages',[]))
+        result['history_available']=True
+        result['messages']=result.get('messages',[])[-60:]
+    except Exception:
+        log.exception('Persistent history capture failed')
     try:result['goal_state']=await goals.snapshot(sid)
     except Exception:result['goal_state']={'unavailable':True}
+    result['specialist_chat']=team_agents.chats.describe(sid,team_agents.store)
     return web.json_response(result)
 
 async def chat_meta(request):
     sid=request.match_info['sid'];data=await body_json(request)
+    if 'title' in data and (not isinstance(data['title'],str) or not data['title'].strip() or len(data['title'])>160):raise ValueError('Название чата должно содержать от 1 до 160 символов.')
     with db() as conn:
         conn.execute('INSERT OR IGNORE INTO chats(id,updated) VALUES(?,?)',(sid,time.time()))
         for key in ('title','archived','pinned'):
@@ -372,22 +539,42 @@ async def chat_meta(request):
     return web.json_response({'ok':True})
 
 async def submit(request):
+    sid=request.match_info['sid']
+    async with chat_trash.locks.setdefault(sid,asyncio.Lock()):return await submit_open(request)
+
+async def submit_open(request):
     if videos.busy():return error('Сейчас создаётся видео. Дождитесь возврата модели кода или остановите видео.',409)
+    if music.busy() and music.current.get('source')=='local' and music.current.get('state')!='queued':return error('Сейчас создаётся музыка. Дождитесь возврата модели кода или остановите музыку в студии. Черновик сохранён.',409)
     sid=request.match_info['sid'];data=await body_json(request)
+    chat_trash.require_available(sid)
+    specialist_binding=team_agents.chats.binding(sid)
+    if specialist_binding:team_agents.store.role_prompt(specialist_binding['specialist_id'])
     text=str(data.get('text') or '').strip()
     if not text or len(text)>100000:return error('Сообщение должно содержать от 1 до 100 000 символов.')
     input_id=str(data.get('input_id') or uuid.uuid4().hex)
     if not re.fullmatch('[a-zA-Z0-9_-]{8,100}',input_id):return error('Некорректный идентификатор запроса.')
     identifiers=data.get('files') or []
     if not isinstance(identifiers,list) or len(identifiers)>8:return error('Не более восьми вложений.')
+    voice_id=str(data.get('voice_id') or '')
+    if voice_id and identifiers:return error('Голосовое задание отправляется без вложений. Файлы в черновике сохранены.')
+    voice_note=voice.validate_submission(str(voice_id),input_id,text,sid) if voice_id and voice.enabled else ''
+    if voice_note and data.get('jarvis'):
+        from jarvis_support import response_note
+        voice_note+='\n'+response_note(data['jarvis'])
     with db() as conn:prior=conn.execute('SELECT * FROM turns WHERE input_id=?',(input_id,)).fetchone()
     if prior:
         if prior['session_id']!=sid or prior['text']!=text or json.loads(prior['file_ids'])!=identifiers:return error('Идентификатор уже использован.',409)
-        if prior['admission_id']:return web.json_response({'admission_id':prior['admission_id'],'input_id':input_id,'duplicate':True})
+        if prior['admission_id']:
+            recovery=await workspace.recovery.after_input(sid,prior['admission_id'])
+            if voice_note:voice.accepted(voice_id,sid,{'admission_id':prior['admission_id']})
+            return web.json_response({'admission_id':prior['admission_id'],'input_id':input_id,'duplicate':True,**recovery})
     mode=data.get('mode','chat')
     if mode not in {'code','chat','image'}:return error('Неизвестный режим работы.')
+    from web_research import research_requested,research_note
+    web_search=False if getattr(request,'_freedom_analysis',False) is True else research_requested(text,data.get('web_search',False),mode)
     image_api_text=None
-    if mode=='image':
+    auto_enabled=bool((auto.row(sid) or {}).get('enabled'))
+    if mode=='image' and not auto_enabled:
         if not image_status()['ready']:return error('Модель изображений ещё скачивается. Прогресс доступен в разделе «Модели».',409)
         if identifiers:return error('Этот генератор работает по тексту. Сначала проанализируйте фото в обычном чате, затем используйте его описание для генерации.',409)
         job_folder=ROOT/'data/image-requests';job_folder.mkdir(exist_ok=True)
@@ -400,7 +587,10 @@ async def submit(request):
             '. Описание уже записано в JSON, не подставляй его в командную строку. '
             'Не подменяй результат SVG или текстовым описанием. После успеха сообщи путь к PNG. Описание: '+text)
     snapshot=await bridge.resume(sid)
+    team_agents.chats.track(sid,snapshot)
     was_running=bool(snapshot.get('running'))
+    from chat_recovery import has_unknown
+    interrupted=has_unknown(snapshot)
     if portable.PRIVATE:
         info=snapshot.get('info') or {}
         route_target=cloud.target(info.get('model'))
@@ -408,11 +598,37 @@ async def submit(request):
         # Creation launch_request is immutable after a canonical model mutation.
         # The accepted UI route is updated only after the owner commits that mutation.
         with db() as conn:accepted=conn.execute('SELECT model,url FROM routes WHERE session_id=?',(sid,)).fetchone()
-        if info.get('model')!=workspace.selected_model(sid) or info.get('provider') not in {'custom','direct-local'} or not accepted or accepted['model']!=info.get('model') or accepted['url'].rstrip('/')!=expected_url.rstrip('/'):
+        # Model mutation resolves named custom providers as custom:<profile-name>.
+        # Keep the selected model and accepted loopback route checks for both forms.
+        provider=str(info.get('provider') or '')
+        custom_provider=provider=='custom' or provider.startswith('custom:')
+        if info.get('model')!=workspace.selected_model(sid) or not (custom_provider or provider=='direct-local') or not accepted or accepted['model']!=info.get('model') or accepted['url'].rstrip('/')!=expected_url.rstrip('/'):
             return error('Этот сохранённый чат использует другой провайдер. Создайте новый чат для текущей локальной модели.',409)
-    reasoning='none' if mode=='code' else 'low'
-    if not was_running and (snapshot.get('info') or {}).get('reasoning_effort')!=reasoning:
+    local_item=library.route_item((snapshot.get('info') or {}).get('model'))
+    if camera_studio.mode=='photo' and camera_studio.state in {'starting','running'} and (local_item or (snapshot.get('info') or {}).get('model')==portable.model_id()):
+        return error('Для фоторежима освобождена видеокарта. Остановите камеру или выберите API-модель для чата.',409,'camera_gpu_busy')
+    if local_item and not was_running and not interrupted:
+        if library.active_id()!=local_item['id'] and any(other.get('running') or other.get('pending') for key,other in bridge.snapshots.items() if key!=sid):
+            return error('Другая локальная модель используется в чате. Остановите ответ перед переключением.',409)
+        await library.ensure_active(local_item['id'])
+    if not was_running and not interrupted:
+        snapshot=await context_modes.ensure_context(sid,snapshot)
+    requested_reasoning=data.get('reasoning')
+    if requested_reasoning is not None and requested_reasoning not in {'none','low','medium','high','xhigh'}:raise ValueError('Выберите уровень обдумывания.')
+    reasoning='none' if mode=='code' else requested_reasoning or context_modes.effort(sid)
+    if local_item or (snapshot.get('info') or {}).get('model')==portable.model_id():
+        supported=context_modes.status(sid)['reasoning_levels']
+        if reasoning not in supported:reasoning='low' if 'low' in supported else 'none'
+    if not was_running and not interrupted and (snapshot.get('info') or {}).get('reasoning_effort')!=reasoning:
         await bridge.rpc('config.set',session_id=sid,key='reasoning',value=reasoning,scope='session')
+    if not was_running and not interrupted:
+        with db() as conn:conn.execute('INSERT INTO workspace_preferences(session_id,reasoning) VALUES(?,?) ON CONFLICT(session_id) DO UPDATE SET reasoning=excluded.reasoning',(sid,reasoning))
+    if web_search and data.get('web_browser') is not None:
+        preview.select_browser(sid,data['web_browser'],data.get('search_engine','auto'))
+    research_result=None
+    if web_search and not was_running:
+        research_result=await web_research.prepare(sid,text,input_id)
+        if not research_result['ok']:return error(research_result['error'],409,'web_search_unavailable')
     attachments=[];file_refs=[];selected=[]
     with db() as conn:
         for identifier in identifiers:
@@ -441,24 +657,29 @@ async def submit(request):
     if image_api_text:turn_params['api_text']=image_api_text
     # Keep image annotations and file refs together in the canonical prompt. An api_text
     # override would replace the vision annotation assembled by this Hermes version.
-    wire_text=text+('\n\nПрикреплённые пользователем файлы:\n'+'\n'.join(file_refs) if file_refs else '')
+    wire_text=('Создай изображение: ' if auto_enabled and mode=='image' else '')+text+('\n\nПрикреплённые пользователем файлы:\n'+'\n'.join(file_refs) if file_refs else '')
+    if attachments and web_search:wire_text+='\n\n'+research_note(sid)+(web_research.context_note(research_result) if research_result else '')
     if not attachments and not image_api_text:
-        owner_notes=EXECUTION_NOTE+'\nТекущий чат для встроенного просмотра: '+sid
-        if workspace.preferences(sid).get('learning',True):owner_notes+='\n'+LEARNING_NOTE
+        owner_notes=turn_owner_notes(sid,web_search,EXECUTION_NOTE,recall_note(sid),LEARNING_NOTE if workspace.preferences(sid).get('learning',True) else '',voice_note)
+        if research_result:owner_notes+=web_research.context_note(research_result)
         turn_params['api_text']=wire_text+'\n\n[Настройки владельца: выполнение и память]\n'+owner_notes
     receipt=await bridge.rpc('prompt.submit',session_id=sid,input_id=input_id,text=wire_text,**turn_params)
     workspace.admitted(sid,input_id,receipt,(snapshot.get('info') or {}).get('model'))
+    progress_guard.clear(sid,discard_request=not was_running)
     with db() as conn:
         conn.execute('UPDATE turns SET admission_id=? WHERE input_id=?',(receipt.get('admission_id',''),input_id))
         conn.execute('INSERT OR IGNORE INTO chats(id,updated) VALUES(?,?)',(sid,time.time()))
         conn.execute('UPDATE chats SET updated=?,title=CASE WHEN title IS NULL OR title=\'\' THEN ? ELSE title END WHERE id=?',
             (time.time(),str(data.get('text'))[:70],sid))
+    recovery=await workspace.recovery.after_input(sid,receipt['admission_id'])
+    if voice_note:voice.accepted(voice_id,sid,receipt)
     if not was_running:
         bridge.live.setdefault(sid,{'text':'','active':True,'tool':None,'generation':receipt.get('execution_generation',0)})
-    return web.json_response(receipt)
+    return web.json_response({**receipt,**recovery})
 
 async def stop(request):
     sid=request.match_info['sid'];snapshot=await bridge.resume(sid)
+    await auto.stop(sid,request)
     # Completion receipts are stored by the native owner. Cancel only queued,
     # failed auto-notifications, preserving all human tasks and their payloads.
     # Otherwise Stop settles one turn and its failed subprocess notices wake it again.
@@ -528,6 +749,14 @@ async def projects(request):
     rows=[{'name':p.name,'path':str(p)} for p in portable.workspace_root().iterdir() if p.is_dir() and not p.name.startswith('.')]
     return web.json_response({'projects':sorted(rows,key=lambda x:x['name'].lower())})
 
+async def neurosphere_index(request):
+    from neurosphere_index import index_projects
+    from neurosphere_sources import discover
+    listed=await sessions(request)
+    rows=json.loads(listed.body)['sessions']
+    external=await asyncio.to_thread(discover,portable.workspace_root(),cached=getattr(request,'query',{}).get('refresh')!='1')
+    return web.json_response(await asyncio.to_thread(index_projects,portable.workspace_root(),portable.HOME,rows,dict(bridge.snapshots),external))
+
 async def models(request):return web.json_response({'coder':{'name':(library.model(portable.config().get('active')) or {}).get('name',portable.model_id()),'context':portable.context_size(),'local':True},'images':image_status()})
 
 async def ws(request):
@@ -550,12 +779,24 @@ async def startup(app):
     system.start()
     portable.write_hermes(portable.context_size())
     if cloud.models():await asyncio.to_thread(cloud.sync_aliases)
+    await chat_history.start()
     await bridge.start();app['monitor_task']=asyncio.create_task(monitor(app))
+    await progress_guard.start()
     await updates.start(app,bridge)
     await rewards.start()
     active=library.model(portable.config().get('active'))
-    if active and library.ready(active):library.activate(active['id'])
+    if active and library.ready(active):
+        from startup_support import activate_saved_model
+        await asyncio.to_thread(activate_saved_model,library,active['id'])
+    performance.start(app)
 async def cleanup(app):
+    await chat_history.close()
+    await progress_guard.close()
+    await enhance.close()
+    music.cancel()
+    music.pool.shutdown(wait=False,cancel_futures=True)
+    await performance.close()
+    await auto.close()
     await rewards.stop()
     advisor.pool.shutdown(wait=False,cancel_futures=True)
     await preview.stop()
@@ -568,13 +809,40 @@ async def cleanup(app):
 def create_app():
     app=web.Application(middlewares=[security],client_max_size=55*1024**2)
     app['runtime']={'metrics':{}}
+    app['bridge']=bridge
+    remote=RemoteClient()
+    from messenger_bridge import MessengerBridge
+    MessengerBridge(ROOT,TOKEN).register(app)
+    camera_studio.register(app,PORT)
+    remote.register(app)
+    voice.register(app)
+    speech.register(app)
+    converter=FileConverter(ROOT,enabled=os.name=='nt' and bool(portable.PRIVATE),artifact=register_artifact)
+    app['converter']=converter;converter.register(app)
+    enhance.register(app,enhance_source,enhance_completed,lambda:enhance_gate(app))
+    app['phone_access']=remote
+    performance.register(app)
+    context_modes.register(app)
+    team_agents.register(app)
+    chat_trash.register(app)
+    from self_repair import SelfRepair,LocalRuntime
+    self_repair=SelfRepair(ROOT,LocalRuntime(ROOT,portable,bridge,app,enhance_gate))
+    app['self_repair']=self_repair;self_repair.register(app)
+    from team_chats import TeamConversations
+    team_conversations=TeamConversations(team_agents,new_session,submit,cloud)
+    app['team_conversations']=team_conversations;team_conversations.register(app)
+    reply_language.register(app,bridge)
     register_library(app)
     register_video(app,bridge,register_artifact)
+    music.register(app,bridge,register_artifact)
+    narration.register(app,bridge,register_artifact)
     app.router.add_get('/api/updates',lambda r:web.json_response(updates.status()))
     app.router.add_post('/api/updates/check',update_check)
     app.router.add_post('/api/updates/settings',update_settings)
     register_system(app)
     workspace.register(app)
+    chat_history.register(app)
+    auto.register(app)
     cloud.register(app)
     branches.register(app)
     rewards.register(app)
@@ -582,15 +850,23 @@ def create_app():
     advisor.register(app)
     accounts.register(app)
     goals.register(app)
+    from neuro_development import NeuroDevelopment
+    development=NeuroDevelopment(ROOT,PROJECTS,db,bridge,branches,goals,new_session,submit,neurosphere_index,local_project)
+    app['neuro_development']=development;development.register(app)
     artifact_workspace.register(app)
+    desktop_actions.register(app)
+    import arcade_integration
+    arcade_integration.register(app)
     app.router.add_get('/api/health',health);app.router.add_get('/api/bootstrap',bootstrap)
     app.router.add_get('/api/sessions',sessions);app.router.add_post('/api/sessions',new_session)
     app.router.add_get('/api/sessions/{sid}',session_detail);app.router.add_patch('/api/sessions/{sid}',chat_meta)
     app.router.add_post('/api/sessions/{sid}/messages',submit);app.router.add_post('/api/sessions/{sid}/stop',stop)
     app.router.add_post('/api/sessions/{sid}/respond',respond);app.router.add_post('/api/uploads',upload)
     app.router.add_get('/api/files/{fid}',file_response);app.router.add_get('/api/artifacts/{fid}',artifact_response)
-    app.router.add_get('/api/projects',projects);app.router.add_get('/api/models',models);app.router.add_get('/api/ws',ws)
+    app.router.add_get('/api/projects',projects);app.router.add_get('/api/neurosphere/index',neurosphere_index);app.router.add_get('/api/models',models);app.router.add_get('/api/ws',ws)
     app.router.add_static('/assets/',ROOT/'dist/assets');app.router.add_get('/freedom.svg',lambda r:web.FileResponse(ROOT/'public/freedom.svg'))
+    app.router.add_static('/messenger/',ROOT/'public/messenger')
+    app.router.add_static('/neurosphere/',ROOT/'public/neurosphere')
     app.router.add_get('/',index);app.on_startup.append(startup);app.on_cleanup.append(cleanup)
     return app
 

@@ -10,7 +10,7 @@ class PublicationGuards(unittest.TestCase):
   for name in self.artifacts:
    p=self.root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(b'fixture');os.utime(p,(1000,1000))
   self.reports=[]
-  for name in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification']:
+  for name in ['windows-clean-pc-verification','ubuntu-clean-pc-verification','ubuntu-installers-verification','platform-artifacts-verification','source-alignment-verification']:
    p=self.root/'logs'/(name+'-1.5.0.json');p.parent.mkdir(exist_ok=True);p.write_text('{"passed": true}');os.utime(p,(2000,2000));self.reports.append(p)
  def tearDown(self):self.tmp.cleanup()
  def test_fresh_reports_pass(self):verify_package_reports(self.root,self.version)

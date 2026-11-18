@@ -73,7 +73,10 @@ class CodingContinuity(MemoryProvider):
         for directory in list(dict.fromkeys(directories))[-8:]:
             archives=sorted(directory.glob('precompress-*.json'))
             for path in [*archives[:1],directory/'latest-turn.json']:
-                if path.resolve().is_relative_to(self.root.resolve()):store.import_checkpoint(path,directory.name)
+                if path.resolve().is_relative_to(self.root.resolve()):
+                    try:store.import_checkpoint(path,directory.name)
+                    except (OSError,ValueError,TypeError,KeyError,sqlite3.Error) as exc:
+                        logging.getLogger(__name__).warning('Legacy checkpoint skipped (%s): %s',path,exc)
         self.seeded_projects.add(str(store.project))
 
     def _project(self, session_id=None):
@@ -200,7 +203,14 @@ class CodingContinuity(MemoryProvider):
             name = ('latest-turn' if kind == 'turn' else kind + '-' + stamp) + '.json'
             path = directory / name
             payload = {'session_id': sid, 'saved_at': stamp, 'kind': kind, 'messages': messages}
-            payload['project_files'] = self._project_files(session_id)
+            try:
+                payload['project_files'] = self._project_files(session_id)
+            except (OSError,ValueError,KeyError,TypeError) as exc:
+                # Project references are supplementary. A damaged binding must
+                # never prevent the full transcript checkpoint before compaction.
+                payload['project_files'] = {}
+                payload['checkpoint_warnings'] = ['Project references unavailable ('+type(exc).__name__+'); full transcript preserved.']
+                logging.getLogger(__name__).warning('Project references unavailable; transcript retained: %s',exc)
             temp = path.with_suffix('.tmp')
             with temp.open('w', encoding='utf-8') as f:
                 json.dump(payload, f, ensure_ascii=False, default=str)

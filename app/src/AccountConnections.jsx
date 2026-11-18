@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {GitBranch as Github,Brain,Check,ExternalLink,KeyRound,LoaderCircle,ShieldCheck,FolderOpen,ChevronRight,Cpu,Link2,LogOut,RefreshCw} from 'lucide-react';
 import {api,CONNECTION_ERROR} from './api.js';
-import {t,getLocale} from './i18n.js';
+import {t,getIntlLocale} from './i18n.js';
 import './accounts.css';
 
 export function AccountConnections({onAdvisor,onLibrary}){
@@ -18,7 +18,7 @@ export function AccountConnections({onAdvisor,onLibrary}){
   catch(e){if(alive.current)setError(e.message)}finally{actionRevision.current+=1;actionBusy.current=false;if(alive.current)setBusy('')}
  }
  const gh=data?.github||{},hf=data?.huggingface||{};
- const checked=value=>value?new Date(value*1000).toLocaleString(getLocale()==='ru'?'ru-RU':'en-GB'):'';
+ const checked=value=>value?new Date(value*1000).toLocaleString(getIntlLocale()):'';
  return <div className="account-connections">
   <div className="accounts-intro"><ShieldCheck size={18}/><p>{t('Подключения необязательны. Чаты, локальный агент и ваши GGUF работают без аккаунтов. Для GitHub и загрузок из сети нужен интернет.')}</p></div>
   {error&&<p className="accounts-error" role="alert">{t(error)}</p>}
