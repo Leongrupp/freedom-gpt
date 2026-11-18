@@ -23,3 +23,6 @@ does not change when it is selected in Freedom GPT.
 
 The public installer does not contain the author's chats, browser profile,
 authentication data, API credentials or personal runtime configuration.
+
+Freedom GPT 1.7.0 web visualization: Three.js and @pixiv/three-vrm (MIT); MediaPipe Tasks Vision (Apache-2.0, Copyright Google LLC). See Threejs-MIT.txt, Three-VRM-MIT.txt and Apache-2.0.txt.
+PBR textures: Poly Haven CC0 1.0; source URLs and hashes are in public/assets/vr/materials/manifest.json. Character asset: owner-provided Orange_Cat_3D, exported for this app. No commercial game or movie assets are bundled.

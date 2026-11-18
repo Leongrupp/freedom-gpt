@@ -166,7 +166,7 @@ class AutoModels:
           'Use your existing terminal tool to control routing: '+command+' --action select --role planning|code|review --model auto (or an allowed exact id). '
           'A role change applies to your NEXT model request, including the rest of the same turn; the full conversation stays. '
           'For multi-stage coding: plan, select code, implement, then select review and verify against the owner goal. Do not switch without a task reason or bounce in a loop. '
-          'For advertising: write a script and shot list; then create actual image/video files when requested. To generate, first write the prompt to a UTF-8 file under A:/CodexProjects, then use '+command+
+          'For advertising: write a script and shot list; then create actual image/video files when requested. To generate, first write the prompt to a UTF-8 file inside the selected project workspace, then use '+command+
           ' --action generate --role image|video --prompt-file <absolute-path> --input-id <unique-uuid>. Optional --source-image <absolute-path> creates image-to-video through an allowed capable model; local Wan is text-to-video only. '
           'The command starts a durable job, never silently resubmits it. Poll with --action status --job <id>. Reuse the SAME input-id after a lost response. '
           'Native terminal background completion is supported. Never announce a media result until state=completed and a real output path is returned. If a tool is unavailable, explain the missing capability instead of fabricating a file. '

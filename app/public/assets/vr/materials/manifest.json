@@ -1,0 +1,56 @@
+[
+  {
+    "file": "wood_floor_diff.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_floor/wood_floor_diff_2k.jpg",
+    "bytes": 2983667,
+    "sha256": "7c3ff1164c8dd0758ef2c048e9a266d28174120de01052ec40e6ca486177345c"
+  },
+  {
+    "file": "wood_floor_nor_gl.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_floor/wood_floor_nor_gl_2k.jpg",
+    "bytes": 1863576,
+    "sha256": "eff2e4db46bab930dc05997faf5085157eec4fd652cdfc6cd01fa11edd56ef10"
+  },
+  {
+    "file": "wood_floor_rough.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_floor/wood_floor_rough_2k.jpg",
+    "bytes": 2267559,
+    "sha256": "297eda0d75f2020cc541dbf242e1f5fd058053249567f49a4506fc2c5b1a172b"
+  },
+  {
+    "file": "concrete_floor_diff.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor/concrete_floor_diff_2k.jpg",
+    "bytes": 4169270,
+    "sha256": "72249ce8ba5cedd518ebb60840e882a3506a4b2a24958055d1b36752dbcfda36"
+  },
+  {
+    "file": "concrete_floor_nor_gl.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor/concrete_floor_nor_gl_2k.jpg",
+    "bytes": 4003915,
+    "sha256": "b540b5d2ecb3d9eae96dbfda158b488abae243fe5d77b3ea37cc5453015419bf"
+  },
+  {
+    "file": "concrete_floor_rough.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor/concrete_floor_rough_2k.jpg",
+    "bytes": 2347865,
+    "sha256": "03db782c91585efd510282792338b54a89742c416ede34c8a2a65ada6fbab778"
+  },
+  {
+    "file": "metal_plate_diff.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/metal_plate/metal_plate_diff_2k.jpg",
+    "bytes": 2670774,
+    "sha256": "864c9a653acd1f5034c9bbe7f955b18cc9687a81bbdfa805e7a2319939676910"
+  },
+  {
+    "file": "metal_plate_nor_gl.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/metal_plate/metal_plate_nor_gl_2k.jpg",
+    "bytes": 2516654,
+    "sha256": "146f8c00874a584bcc4a184643e72f160da2a7568d469198e02b26c9ff93cf43"
+  },
+  {
+    "file": "metal_plate_rough.jpg",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/metal_plate/metal_plate_rough_2k.jpg",
+    "bytes": 3045988,
+    "sha256": "3cdc139df4ec5b304dd986278c1fb026c67c42e6623f0ee5caa7f373d51c7bef"
+  }
+]

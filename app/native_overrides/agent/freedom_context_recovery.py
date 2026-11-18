@@ -13,6 +13,31 @@ from agent.freedom_local_runtime import managed_local_port
 log = logging.getLogger(__name__)
 
 
+def automatic_timeout_recovery(agent):
+    """The private local route opts into same-turn fallback on its FIRST stall.
+
+    The native owner still controls checkpoints, cancellation and commit fences;
+    this selects its existing recovery ladder, never replays a user task.
+    """
+    from agent.auxiliary_task_config import _get_auxiliary_task_config
+    url = urlsplit(str(getattr(agent, 'base_url', '') or ''))
+    if url.hostname not in {'127.0.0.1', 'localhost', '::1'} or url.port != managed_local_port():
+        return False
+    return _get_auxiliary_task_config('compression').get('automatic_recovery') is True
+
+
+def allow_deterministic_fallback(compressor, telemetry):
+    """Opt-in recovery overrides abort only for the owner's pinned stall fallback.
+
+    Auth, truncated output and other terminal failures are rejected by the caller
+    first. A normal failed summary still honors abort_on_summary_failure.
+    """
+    return not compressor.abort_on_summary_failure or (
+        telemetry.get('failure_class') == 'stall_deterministic_fallback'
+        and automatic_timeout_recovery(compressor)
+    )
+
+
 def local_context_pressure(agent, tokens, *, trigger=None, overflow_reason=None):
     try:
         url = urlsplit(str(getattr(agent, 'base_url', '') or ''))
@@ -52,9 +77,10 @@ def recovery_policy(agent, messages, *, force=False, tokens=None, trigger=None, 
              ('protect_first_n', 'protect_last_n', 'min_tail_user_messages', '_tail_token_budget')}
     try:
         compressor.protect_first_n = 0
-        compressor.protect_last_n = min(4, compressor.protect_last_n)
+        over_window=int(tokens or 0)>int(compressor.context_length)
+        compressor.protect_last_n = min(3 if over_window else 4, compressor.protect_last_n)
         compressor.min_tail_user_messages = 1
-        compressor.tail_token_budget = min(2048, compressor.tail_token_budget)
+        compressor.tail_token_budget = min(1024 if over_window else 2048, compressor.tail_token_budget)
         probe = force or reason == 'ineffective' or reason.startswith('structural_backoff:')
         log.info('Local context recovery: bounded compaction probe (session=%s pressure=%s reason=%s)',
                  getattr(agent, 'session_id', ''), tokens, reason or 'high_watermark')

@@ -1,6 +1,6 @@
 import {NotificationSettings} from './CompletionNotifications.jsx';
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, ShieldCheck, Cpu, ChevronRight,UserRound } from 'lucide-react';
+import { RefreshCw, ShieldCheck, Cpu, ChevronRight,UserRound,ArrowRightLeft } from 'lucide-react';
 import { api } from './api.js';
 import {AgentAbout} from './AgentAbout.jsx';
 import { SupportCard } from './SupportCard.jsx';
@@ -8,6 +8,11 @@ import {PhoneAccessLink} from './PhoneAccessLink.jsx';
 import { t, useLocale } from './i18n.js';
 import appVersion from '../version.json';
 import './program-update.css';
+import {JarvisSettings} from './JarvisSettings.jsx';
+import {SpeechSettings} from './SpeechOutput.jsx';
+import {ReplyLanguageSettings} from './ReplyLanguage.jsx';
+import {PersonalitySettings} from './PersonalitySettings.jsx';
+import SelfRepairSettings from './SelfRepair.jsx';
 export function LocaleSwitch() {
   const [locale, set] = useLocale();
   return <div className="segmented language-switch" role="group" aria-label={t("Язык интерфейса")}>
@@ -16,10 +21,16 @@ export function LocaleSwitch() {
     <button lang="zh-CN" className={locale === 'zh' ? 'active' : ''} onClick={() => set('zh')} aria-pressed={locale === 'zh'} title="简体中文">中文</button>
   </div>;
 }
-export function Preferences({onAdvisor,onAccounts,onPhone}) {
+export function Preferences({onAdvisor,onAccounts,onPhone,onConverter,voiceEnabled,jarvisEnabled,speechInfo}) {
   return <>
     <AgentAbout/>
+    <SelfRepairSettings/>
+    <JarvisSettings enabled={jarvisEnabled} speechInfo={speechInfo}/>
+    <PersonalitySettings/>
+    <ReplyLanguageSettings/>
     <NotificationSettings/>
+    <SpeechSettings enabled={voiceEnabled}/>
+    {onConverter&&<button className="settings-advisor-link" onClick={onConverter}><ArrowRightLeft size={20}/><div><strong>Конвертер файлов</strong><p>Документы · фото · аудио · видео · таблицы · локально и бесплатно</p></div><ChevronRight size={15}/></button>}
     <PhoneAccessLink onOpen={onPhone}/>
     {onAccounts&&<button className="settings-advisor-link settings-accounts-link" onClick={onAccounts}><UserRound size={20}/><div><strong>{t('Аккаунты и подключения')}</strong><p>{t('GitHub для агента · Hugging Face для моделей · вход по желанию')}</p></div><ChevronRight size={15}/></button>}
     {onAdvisor&&<button className="settings-advisor-link" onClick={onAdvisor}><Cpu size={20}/><div><strong>{t("Подбор моделей под ваш ПК")}</strong><p>{t("Проверка ПК и рекомендации для кода, чата, изображений и видео")}</p></div><ChevronRight size={15}/></button>}

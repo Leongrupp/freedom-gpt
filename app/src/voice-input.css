@@ -1,0 +1,22 @@
+.voice-input{position:relative;display:inline-flex;flex-shrink:0}
+.voice-mic{touch-action:none;user-select:none;-webkit-user-select:none}
+.voice-input.is-recording .voice-mic{color:#ed8d93;background:rgba(237,141,147,.13);box-shadow:0 0 0 1px rgba(237,141,147,.35)}
+.voice-popover{position:absolute;z-index:45;bottom:44px;left:-35px;width:min(350px,calc(100vw - 48px));padding:15px;border:1px solid var(--border);border-radius:14px;background:var(--panel);color:var(--text);box-shadow:0 12px 40px #0005;text-align:left;font-size:12px;line-height:1.55}
+.voice-popover header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.voice-popover header strong{font-size:13px}.voice-popover p{margin:10px 0;color:var(--muted)}
+.voice-popover .voice-transcript{max-height:140px;overflow:auto;white-space:pre-wrap;color:var(--text);padding:9px 11px;border:1px solid var(--border);border-radius:9px;overflow-wrap:anywhere}
+.voice-popover .voice-error{color:#e6a28b}.voice-working{display:flex;align-items:center;gap:8px}
+.voice-record-clock{display:flex;align-items:center;gap:9px;font-size:27px;font-variant-numeric:tabular-nums;margin-top:10px}
+.voice-record-clock i{width:7px;height:7px;background:#ed8d93;border-radius:50%;animation:voice-breathe 1.5s ease-in-out infinite}
+.voice-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 9px}
+.voice-actions button{display:flex;align-items:center;gap:6px;font:inherit;font-size:11px;border:1px solid var(--border);border-radius:8px;padding:7px 9px;background:transparent;color:var(--text);cursor:pointer}
+.voice-actions button.voice-primary{background:rgba(169,147,239,.13);border-color:rgba(169,147,239,.35)}
+.voice-popover small{font-size:10px;color:var(--muted)}
+@keyframes voice-breathe{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.voice-record-clock i{animation:none}}
+@media(max-width:600px){
+ .composer-footer:has(.voice-input) .composer-tools{gap:4px;flex-shrink:0}
+ .composer-footer:has(.voice-input) .access-picker{font-size:0;gap:3px;padding-left:3px;padding-right:3px}
+ .composer-footer:has(.voice-input) .composer-controls{min-width:0;justify-content:flex-end}
+ .composer-footer:has(.voice-input) .model-picker{min-width:0;max-width:118px;overflow:hidden;white-space:nowrap}
+}

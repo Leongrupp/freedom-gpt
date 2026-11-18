@@ -1,0 +1,23 @@
+import React,{useEffect,useState} from 'react';
+import {Sparkles,RotateCcw} from 'lucide-react';
+import {api} from './api.js';
+import './personality.css';
+const styles=[['professional','По делу','Чётко и спокойно'],['friend','Свой друг','Неформально и с теплом'],['gentle','Милая собеседница','Мягко и заботливо'],['mentor','Наставник','Объясняет и помогает расти'],['partner','Партнёр','Вместе развивает идеи'],['robot','Робот','Коротко и точно'],['creative','Соавтор','Воображение и новые подходы']];
+const signs=['Без знака','Овен','Телец','Близнецы','Рак','Лев','Дева','Весы','Скорпион','Стрелец','Козерог','Водолей','Рыбы'];
+const traits=[['humor','Юмор','Без шуток','Весёлый'],['talk','Разговорчивость','Только по делу','Болтун'],['warmth','Теплота','Сдержанный','Душевный'],['empathy','Сочувствие','Рациональный','Внимательный'],['directness','Прямота','Деликатный','Прямолинейный'],['initiative','Инициативность','Ждёт запроса','Предлагает идеи'],['fantasy','Фантазия','Реалист','Мечтатель']];
+const defaults={enabled:true,style:'professional',zodiac:'Без знака',address:'ты',custom:'',humor:35,talk:35,warmth:60,empathy:50,directness:70,initiative:50,fantasy:25};
+export function PersonalitySettings(){
+ const [value,set]=useState(null),[saved,setSaved]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[done,setDone]=useState(false);
+ useEffect(()=>{let closed=false;api('/personality').then(d=>{if(!closed){set(d);setSaved(JSON.stringify(d))}}).catch(e=>{if(!closed)setError(e.message)});return()=>{closed=true}},[]);
+ function change(patch){set(v=>({...v,...patch}));setDone(false)}
+ async function save(){setBusy(true);setError('');try{const d=await api('/personality',{method:'POST',body:JSON.stringify(value)});set(d);setSaved(JSON.stringify(d));setDone(true)}catch(e){setError(e.message)}finally{setBusy(false)}}
+ return <section className="personality-settings" aria-label="Характер агента"><header><Sparkles size={21}/><div><small>FREEDOM · ЛИЧНОСТЬ</small><h3>Твой агент. Твой характер.</h3><p>Настрой, как он общается с тобой.</p></div></header>{error&&<p role="alert">{error}</p>}{!value?<p>Загружаю настройки…</p>:<>
+ <label className="personality-toggle"><input type="checkbox" checked={value.enabled} disabled={busy} onChange={e=>change({enabled:e.target.checked})}/> Использовать мой характер</label>
+ <fieldset disabled={busy||!value.enabled}><legend>Кем он будет в разговоре</legend><div className="personality-styles">{styles.map(([id,name,desc])=><button type="button" key={id} aria-pressed={value.style===id} onClick={()=>change({style:id})}><strong>{name}</strong><small>{desc}</small></button>)}</div>
+ <div className="personality-selects"><label>Обращение<select aria-label="Обращение агента" value={value.address} onChange={e=>change({address:e.target.value})}><option value="ты">На ты</option><option value="вы">На вы</option></select></label><label>Знак зодиака<select aria-label="Знак зодиака агента" value={value.zodiac} onChange={e=>change({zodiac:e.target.value})}>{signs.map(s=><option key={s}>{s}</option>)}</select></label></div><p className="personality-hint">Знак — игровой образ, а не оценка личности. Тембр голоса остаётся выбранным.</p>
+ <div className="personality-traits">{traits.map(([id,name,min,max])=><label key={id}><span>{name}<b>{value[id]}%</b></span><input aria-label={name} type="range" min="0" max="100" step="5" value={value[id]} onChange={e=>change({[id]:Number(e.target.value)})}/><small><span>{min}</span><span>{max}</span></small></label>)}</div>
+ <p className="personality-hint">Фантазия и приукрашивание — в историях и творчестве. Факты, ошибки и результаты работы всегда сообщаются честно.</p>
+ <label className="personality-custom">Одна своя черта<input aria-label="Своя черта характера" maxLength="300" value={value.custom} onChange={e=>change({custom:e.target.value})} placeholder="Например: объясняй сложное через примеры из автосервиса"/><small>{value.custom.length}/300 · одно поле — одна дополнительная черта</small></label>
+ </fieldset><footer><button type="button" disabled={busy} onClick={()=>{set({...defaults});setDone(false)}}><RotateCcw size={14}/> Сбросить</button><button type="button" className="personality-save" disabled={busy||saved===JSON.stringify(value)} onClick={save}>{busy?'Сохраняю…':'Сохранить характер'}</button></footer><p role="status">{done?'Сохранено. Применится к следующим сообщениям.':saved!==JSON.stringify(value)?'Есть несохранённые изменения.':'Для следующих сообщений во всех чатах и ответов голосового помощника. Настройки не меняют доступ к компьютеру.'}</p>
+ </>}</section>
+}

@@ -8,7 +8,7 @@ import './queue-controls.css';
 export function QueuePanel({items=[],notes=[],busy=false,interrupted=false,onAction}) {
   const [working,setWorking]=useState(''),[error,setError]=useState(''),[menu,setMenu]=useState(null),[editing,setEditing]=useState(null);
   const trigger=useRef(null),popup=useRef(null),editor=useRef(null);
-  const waiting=items.filter(row=>row.status==='queued'&&!row.steering);
+  const waiting=items.filter(row=>row.status==='queued'&&!row.steering&&row.user_input===true);
   const order=waiting.map(row=>row.admission_id);
   const correction=busy?notes.find(note=>note.steering):null;
   const editable=editing&&waiting.some(row=>row.admission_id===editing.row.admission_id);

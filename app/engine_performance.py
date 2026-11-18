@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 import hashlib
 import json
+import logging
 import os
 import pathlib
 import statistics
@@ -21,7 +22,16 @@ from platform_support import PROCESS_FLAGS, file_lock, native_binary
 
 PROFILE = ROOT / 'data/performance-profiles.json'
 RECOVERY = ROOT / 'data/performance-recovery.json'
+PENDING = ROOT / 'data/engine-change-pending.json'
 FIELDS = ('threads', 'threads_batch', 'batch_size', 'ubatch_size', 'priority', 'cpu_poll', 'draft_tokens')
+TUNING_FIELDS=FIELDS+('ngl','kv_cache','mtp','fit_margin_mb')
+
+def profile_settings(current,saved):
+    """A measured speed profile is not authority over ports, models or aliases."""
+    for key in ('model','context','catalog_id'):
+        if key in saved and key in current and saved[key]!=current[key]:
+            raise ValueError('Сохранённый профиль не соответствует текущей модели и контексту.')
+    return {**current,**{key:saved[key] for key in TUNING_FIELDS if key in saved}}
 PROMPTS = [
     'Write a Python function that merges overlapping intervals. Include type hints, a clear docstring, and explain the algorithm.',
     'Объясни подробно, как устроены кэширование, индексы базы данных и очередь фоновых заданий в интернет-магазине.',
@@ -33,13 +43,19 @@ PROMPTS = [
 class Cancelled(Exception):
     pass
 
+class Deferred(Exception):
+    pass
+
 
 class Performance:
     def __init__(self, library, bridge, videos, image_status):
         self.library, self.bridge = library, bridge
         self.videos, self.image_status = videos, image_status
         self.phase, self.message, self.progress = 'ready', '', 0
-        self.pending = None
+        saved=read(PENDING,{})
+        self.pending=saved if isinstance(saved,dict) and type(saved.get('context')) is int and isinstance(saved.get('model_id'),str) else None
+        if self.pending:self.phase='waiting'
+        self.waiting_for=[]
         self.cancel = threading.Event()
         self.task = None
         self.app = None
@@ -75,6 +91,7 @@ class Performance:
         return dict(available=available, active=active, mode='turbo' if active else 'balanced',
                     operation='context' if isinstance(self.pending,dict) else 'performance',
                     phase=self.phase, pending=self.pending, message=self.message, progress=self.progress,
+                    waiting_for=self.waiting_for,
                     measured=saved.get('measurement'), context=cfg.get('context'),
                     settings={k: cfg[k] for k in FIELDS if k in cfg},
                     recovery=bool(read(RECOVERY, {})))
@@ -84,7 +101,10 @@ class Performance:
             raise ValueError('Турбо доступен для локальной модели под управлением Freedom GPT.')
         if self.phase == 'waiting' and not enabled:
             self.pending, self.phase, self.message = None, 'ready', ''
+            write(PENDING,{})
             return self.status()
+        if isinstance(self.pending,dict):
+            raise ValueError('Уже запланирована смена контекста. Дождитесь её или отмените в настройках.')
         if self.phase in {'calibrating', 'applying', 'restoring'}:
             if enabled:
                 return self.status()
@@ -97,13 +117,10 @@ class Performance:
         return self.status()
 
     async def idle(self):
+        self.waiting_for=[]
         if self.app.get('prompt_admissions') or self.app.get('update_applying') or self.videos.busy():
             return False
         if (self.library.activation or {}).get('state') == 'loading':
-            return False
-        if any(v.get('active') for v in self.bridge.live.values()):
-            return False
-        if any(v.get('running') or v.get('pending') for v in self.bridge.snapshots.values()):
             return False
         image = self.image_status()
         if image.get('generating') or image.get('busy'):
@@ -113,7 +130,12 @@ class Performance:
             if library.image_job_active():
                 return False
             listed = await self.bridge.rpc('session.list', scope='live', limit=200)
-            if any(s.get('running') or s.get('pending') for s in listed.get('sessions', [])):
+            def busy(row):
+                pending=row.get('pending')
+                if isinstance(pending,list):pending=any(p.get('status') not in {'completed','done','cancelled','canceled','failed','interrupted','rejected'} for p in pending if isinstance(p,dict))
+                return bool(row.get('running') or pending)
+            self.waiting_for=[{'id':s.get('session_id') or s.get('id'),'title':str(s.get('title') or 'Другой чат')[:120]} for s in listed.get('sessions',[]) if busy(s)]
+            if self.waiting_for:
                 return False
             slots = await asyncio.to_thread(self.slots)
             return bool(slots) and all(not s.get('is_processing', True) for s in slots)
@@ -132,6 +154,7 @@ class Performance:
 
     def restart(self, cfg):
         """Keep the same model, aliases, context and agent configuration."""
+        cfg={**cfg,'port':config()['model_port']}
         marker = STACK / '.tmp/current-server-log.txt'
         prior_log = marker.read_text(encoding='utf-8-sig').strip() if marker.is_file() else ''
         try:
@@ -223,7 +246,17 @@ class Performance:
         first = dict(baseline, threads=min(2, cores) if full_gpu else cores, threads_batch=cores,
                      batch_size=512, ubatch_size=256, priority=1, cpu_poll=0)
         second = dict(first, threads=min(4, cores) if full_gpu else cores, batch_size=1024, ubatch_size=512)
-        if baseline.get('mtp'):
+        item = self.library.model(baseline.get('catalog_id'))
+        architecture = self.library.metadata(item).get('general.architecture') if item else None
+        if (baseline.get('backend') == 'cuda' and baseline.get('mtp')
+                and architecture == 'qwen35' and baseline.get('context', 0) <= 65536):
+            # Fit mode can offload a small number of dense layers to CPU. For
+            # the fast window, measure complete GPU placement with MTP5.
+            # The second candidate leaves more VRAM for desktop applications.
+            first.update(ngl='all', context_mode='selected', threads=min(4, cores),
+                         draft_tokens=5, kv_cache='q8_0', batch_size=512, ubatch_size=256)
+            second = dict(first, kv_cache='q4_0')
+        elif baseline.get('mtp'):
             first['draft_tokens'], second['draft_tokens'] = 3, 2
         return [first, second]
 
@@ -233,11 +266,23 @@ class Performance:
         key = recovery.get('key') or self.identity(current)
         profiles = read(PROFILE, {})
         profile = profiles.get(key, {})
+        if target == 'turbo' and not recovery:
+            # Prefer the measured model/device/context profile over an older
+            # identity-cache entry (which may have no measurement at all).
+            from engine_profiles import load
+            measured = load(current)
+            if measured.get('performance_mode') == 'turbo':
+                evidence = profiles.get(measured.get('performance_key'), {})
+                profile = {**profile, 'turbo': {**current, **measured},
+                           'measurement': evidence.get('measurement') or profile.get('measurement')}
         if not profile and target == 'balanced' and current.get('performance_mode') == 'turbo':
             previous = profiles.get(current.get('performance_key'), {})
-            if all((previous.get('balanced') or {}).get(k) == current.get(k) for k in ('model','context','ngl','kv_cache','mtp')):
+            if any(all((previous.get(name) or {}).get(k) == current.get(k)
+                       for k in ('model','context','ngl','kv_cache','mtp'))
+                   for name in ('balanced', 'turbo')):
                 profile = previous
-        balanced = profile.get('balanced') or current
+                key = current['performance_key']
+        balanced = profile_settings(current,profile.get('balanced') or {})
         previous_activation = self.library.activation
         with self.library.transition, file_lock(STACK / '.tmp/private-model-switch.lock'):
             self.library.activation = {'id': self.library.active_id(), 'state': 'loading'}
@@ -264,7 +309,13 @@ class Performance:
                     self.restart(dict(balanced, performance_key=key, performance_mode='balanced'))
                 elif profile.get('turbo'):
                     self.phase = 'applying'
-                    self.restart(dict(profile['turbo'], performance_key=key, performance_mode='turbo'))
+                    final = dict(profile_settings(current,profile['turbo']), performance_key=key, performance_mode='turbo')
+                    self.restart(final)
+                    from engine_profiles import remember
+                    remember(final, profile.get('measurement'))
+                    profiles[key] = profile
+                    write(PROFILE, profiles)
+                    self.message = ''
                 else:
                     self.phase = 'calibrating'
                     self.progress = 5
@@ -305,6 +356,8 @@ class Performance:
                     self.check_cancel()
                     final = dict(turbo or balanced, performance_key=key, performance_mode='turbo' if turbo else 'balanced')
                     self.restart(final)
+                    from engine_profiles import remember
+                    remember(final, measurement)
                     profiles[key] = {'balanced': balanced, 'turbo': turbo, 'measurement': measurement}
                     write(PROFILE, profiles)
                     out = ROOT / 'output/performance'; out.mkdir(parents=True, exist_ok=True)
@@ -313,6 +366,11 @@ class Performance:
                           'confirmation': confirmed, 'candidates': results})
                     self.message = '' if turbo else 'Текущие настройки уже быстрые: подтверждённого ускорения нет.'
                 self.check_cancel()
+                cfg = read(STACK / 'server-settings.json', {})
+                preferences = read(ROOT / 'data/context-preferences.json', {})
+                selected = preferences.setdefault(cfg['catalog_id'], {})
+                selected['prefer_turbo'] = cfg.get('performance_mode') == 'turbo'
+                write(ROOT / 'data/context-preferences.json', preferences)
                 write(RECOVERY, {})
                 self.progress = 100
             except Exception:
@@ -326,22 +384,35 @@ class Performance:
     async def loop(self):
         while True:
             if self.pending is not None or read(RECOVERY, {}):
-                self.app['performance_busy'] = True
-                self.bridge.performance_hold = True
                 try:
                     if await self.idle():
+                        # Hold new admissions only after work has drained. Holding
+                        # before idle can deadlock against prompt_admissions.
+                        self.app['performance_busy'] = True
+                        self.bridge.performance_hold = True
+                        if not await self.idle():raise Deferred()
+                        if self.pending is None and not read(RECOVERY,{}):raise Cancelled()
                         target = self.pending or 'balanced'
                         if isinstance(target,dict):
                             await asyncio.to_thread(self.context_modes.apply,target)
+                            if target.get('speed_requested') and read(STACK / 'server-settings.json', {}).get('performance_mode') != 'turbo':
+                                await asyncio.to_thread(self.work, 'turbo')
                             await self.context_modes.after_apply(target)
                         else:await asyncio.to_thread(self.work, target)
                         self.phase, self.pending = 'ready', None
+                        write(PENDING,{})
                     else:
                         self.phase = 'waiting'
+                except Deferred:
+                    self.phase='waiting' if self.pending is not None or read(RECOVERY,{}) else 'ready'
                 except Cancelled:
                     self.phase, self.pending, self.message = 'ready', None, ''
+                    write(PENDING,{})
                 except Exception as exc:
-                    self.phase, self.pending, self.message = 'error', None, str(exc)[:400]
+                    logging.getLogger(__name__).exception('Local engine change failed')
+                    message='Не удалось подключиться к локальной модели. Дождитесь её загрузки и повторите переключение.' if isinstance(exc,requests.RequestException) else str(exc)[:400]
+                    self.phase, self.pending, self.message = 'error', None, message
+                    write(PENDING,{})
                 finally:
                     self.app['performance_busy'] = False
                     self.bridge.performance_hold = False
@@ -349,6 +420,20 @@ class Performance:
 
     def start(self, app):
         self.app = app
+        # A healthy server can still be running fallback CPU/offload settings.
+        # Restore the user's measured preference through the normal idle gate;
+        # never restart a model underneath an active answer.
+        cfg = read(STACK / 'server-settings.json', {})
+        selected = read(ROOT / 'data/context-preferences.json', {}).get(cfg.get('catalog_id'), {})
+        if self.pending is None and not read(RECOVERY, {}) and selected.get('prefer_turbo') and self.status()['available']:
+            from engine_profiles import load
+            try:
+                measured = load(cfg)
+            except OSError:
+                measured = {}
+            if measured.get('performance_mode') == 'turbo' and (cfg.get('performance_mode') != 'turbo' or any(cfg.get(k) != measured.get(k) for k in TUNING_FIELDS if k in measured)):
+                self.pending, self.phase = 'turbo', 'waiting'
+                self.message = 'Восстанавливаем сохранённый быстрый профиль после завершения текущих задач.'
         self.task = asyncio.create_task(self.loop())
 
     async def close(self):

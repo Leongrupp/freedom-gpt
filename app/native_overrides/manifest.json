@@ -1,120 +1,205 @@
 {
-  "source": "Reviewed Freedom GPT 1.6.0 delta against clean 1.4.2 runtime",
+  "source": "Working runtime, reviewed public delta for 1.7.0",
   "files": [
     {
+      "path": "agent/compression_summary_budget.py",
+      "bytes": 3737,
+      "sha256": "dc0dcd09141d794f5b0b39f50350d1ea599aceae3406c3b875bd974f866c5f48"
+    },
+    {
+      "path": "agent/context_compressor.py",
+      "bytes": 336487,
+      "sha256": "91cecebafb5102202fd17a220bbfb8bb8452e86dc5bb7d3d4b6a49bba316d9d5"
+    },
+    {
       "path": "agent/conversation_compression.py",
-      "sha256": "2dfc1b0dfdb564d6a343cf99790d5d96e4c80ee3c3c355292eb251f2f01934ac",
-      "bytes": 254598
+      "bytes": 254522,
+      "sha256": "5d07bbcabba7289359ba8be92fa23f4e0f051b0ff0e5330cb69ab5005785ec97"
     },
     {
       "path": "agent/display.py",
-      "sha256": "7fb815b0839842902faa271a4796f625c40ba1ede757fa53a95fc948e616bc2d",
-      "bytes": 56963
+      "bytes": 56963,
+      "sha256": "7fb815b0839842902faa271a4796f625c40ba1ede757fa53a95fc948e616bc2d"
     },
     {
       "path": "agent/freedom_context_recovery.py",
-      "sha256": "84568220c8a98b81248d33437160ae01c254aca3d4db2aa9bd1313e5fed6fd11",
-      "bytes": 3288
+      "bytes": 4520,
+      "sha256": "73840f11d550cc56aa4d3604aa76273e30baa0a47ea4d8d61fa9c5fbab344df2"
     },
     {
       "path": "agent/freedom_local_runtime.py",
-      "sha256": "b457cb602f1279e7d11c0a4ddab3bf734305b1c2bc7e1b13d119a54263f1af65",
-      "bytes": 488
+      "bytes": 488,
+      "sha256": "b457cb602f1279e7d11c0a4ddab3bf734305b1c2bc7e1b13d119a54263f1af65"
     },
     {
       "path": "agent/freedom_local_tokens.py",
-      "sha256": "f32e0adf0104569ba1452dd5b5f6713a84dfb4b27b13e6965fc0832201e9664a",
-      "bytes": 3510
+      "bytes": 3510,
+      "sha256": "f32e0adf0104569ba1452dd5b5f6713a84dfb4b27b13e6965fc0832201e9664a"
     },
     {
       "path": "agent/tool_guardrails.py",
-      "sha256": "e808eea76c86635b97a8eef5b2025c0fe26d8ea718d7a79f72367b13ba069496",
-      "bytes": 37964
+      "bytes": 37964,
+      "sha256": "e808eea76c86635b97a8eef5b2025c0fe26d8ea718d7a79f72367b13ba069496"
     },
     {
       "path": "agent/tool_loop_recovery.py",
-      "sha256": "f9aa8f0eb6ba7575e70734f67a7432bc170ba1507af28dbf2d8b4b7c3be2c82a",
-      "bytes": 6267
+      "bytes": 6267,
+      "sha256": "f9aa8f0eb6ba7575e70734f67a7432bc170ba1507af28dbf2d8b4b7c3be2c82a"
     },
     {
       "path": "agent/turn_context_compaction.py",
-      "sha256": "2a1c83bd5de74b65cc26c7f37e9bb181f95f785a806013e6a39b04bdf3292bad",
-      "bytes": 24963
+      "bytes": 24963,
+      "sha256": "2a1c83bd5de74b65cc26c7f37e9bb181f95f785a806013e6a39b04bdf3292bad"
     },
     {
       "path": "agent/turn_iteration_prep.py",
-      "sha256": "30a0d41a1a0456005354b29e811df6475a1eea9148fac8aeb7bd12f591ab15f9",
-      "bytes": 28450
+      "bytes": 28450,
+      "sha256": "30a0d41a1a0456005354b29e811df6475a1eea9148fac8aeb7bd12f591ab15f9"
     },
     {
       "path": "agent/turn_preflight_gate.py",
-      "sha256": "f64c26f55cdb91296342764b0e626ba9e23227532aa0cf2a1e356a7482b3b827",
-      "bytes": 5979
+      "bytes": 5979,
+      "sha256": "f64c26f55cdb91296342764b0e626ba9e23227532aa0cf2a1e356a7482b3b827"
     },
     {
       "path": "agent/turn_request_assembly.py",
-      "sha256": "eb6737754280947e4c467e4148e500f636108fca5b5c63516a48af7411f10a31",
-      "bytes": 15243
+      "bytes": 15243,
+      "sha256": "eb6737754280947e4c467e4148e500f636108fca5b5c63516a48af7411f10a31"
+    },
+    {
+      "path": "agent/turn_stop_gates.py",
+      "bytes": 10754,
+      "sha256": "9b0733a5a5bc7b96b7e236cbdb97be2649b5a4840d7f08e0d9cb0f62b2c9373c"
+    },
+    {
+      "path": "gateway/queued_api_suffix.py",
+      "bytes": 1655,
+      "sha256": "346e18a7bc1c3b7a9784d514db56c540468fc2c553e8ab36f8e42d09bbef4922"
     },
     {
       "path": "gateway/run_goals.py",
-      "sha256": "29ef9a13fcc34cfb8f4ad51d769675c23e5bda0d5ade1087625546524455b3fb",
-      "bytes": 30559
+      "bytes": 30916,
+      "sha256": "8f14eb3cf3f08c73c97d7a95a2dd9597ac5ef6dfffaab3927bb1ff4ec6699dd6"
+    },
+    {
+      "path": "gateway/run_turn.py",
+      "bytes": 140963,
+      "sha256": "ac42eb298d6b3d9753f8d668b385bd54f359650cef7fa1a27e3b962bf6fcce07"
     },
     {
       "path": "gateway/run_turn_persistence.py",
-      "sha256": "d49825f19cdcb96c9f91e41441db22c84c995bb428e29c62e9d4d18686867ab7",
-      "bytes": 38228
+      "bytes": 38228,
+      "sha256": "d49825f19cdcb96c9f91e41441db22c84c995bb428e29c62e9d4d18686867ab7"
+    },
+    {
+      "path": "gateway/session_automation.py",
+      "bytes": 36482,
+      "sha256": "af67d0c49634016cb8392d21b0f5ce1e890271b020d634c6191c3e35c8749e20"
+    },
+    {
+      "path": "gateway/session_completion_notes.py",
+      "bytes": 5198,
+      "sha256": "5491d14c4304fbc3db3bf53c9adc8620b5e4ff80f336844a67decc7297d2796a"
+    },
+    {
+      "path": "gateway/session_goal_wait.py",
+      "bytes": 4539,
+      "sha256": "636c129ee2ec45979d225f71769331fcf7fdd5a1dee1a87d49c85dc0c815d5c9"
+    },
+    {
+      "path": "gateway/session_ingress.py",
+      "bytes": 23465,
+      "sha256": "59767b0bc02f50e4e744441b9b9eede9bc243054d3a31f454be34a41b2969384"
     },
     {
       "path": "gateway/session_mutation_model.py",
-      "sha256": "7e612793ff313b370bb978a8adc11511560cd7b012fa43fe72dd94e16926f4af",
-      "bytes": 14939
+      "bytes": 14939,
+      "sha256": "7e612793ff313b370bb978a8adc11511560cd7b012fa43fe72dd94e16926f4af"
     },
     {
       "path": "gateway/session_policy_refresh.py",
-      "sha256": "eb54e0fe70dcd6d4079f8a5128e77af5dcd0be42dd7c624abe46ad9ef662ca99",
-      "bytes": 15858
+      "bytes": 16948,
+      "sha256": "e5e94d54a84c2fd25687d76feb89672885dd082ae6ecf24ee8677e9bf377a697"
     },
     {
       "path": "gateway/session_queued_controls.py",
-      "sha256": "7c84a15310e4876b18026128ab8fd3fefee6656ab1d6e27db293a2c79b63ffff",
-      "bytes": 17227
+      "bytes": 16937,
+      "sha256": "c1e3223178177162df65ea55c2af4eeb69090d6d6047d7c99326e465927059c3"
+    },
+    {
+      "path": "gateway/session_settlement_recovery.py",
+      "bytes": 10042,
+      "sha256": "90f655f77aee051332f536898c4006b09009359cf9b11cf64da126c4a2015187"
     },
     {
       "path": "gateway/session_worker_construct.py",
-      "sha256": "7424b694cd2d471fe206c1c35a7d1e25cbde0f3f8f9796c73593b1d1c907cdd0",
-      "bytes": 13864
+      "bytes": 13864,
+      "sha256": "7424b694cd2d471fe206c1c35a7d1e25cbde0f3f8f9796c73593b1d1c907cdd0"
+    },
+    {
+      "path": "hermes_cli/config_defaults.py",
+      "bytes": 214526,
+      "sha256": "b61858368b9ff2c60b5314f03c547129e03f345889709aa099f606634a59d586"
+    },
+    {
+      "path": "hermes_cli/goal_autonomy.py",
+      "bytes": 2785,
+      "sha256": "a59e164806f2778326494f97cc92448fa91dae362cc3e90882882f0f3d4407c0"
     },
     {
       "path": "hermes_cli/goal_command.py",
-      "sha256": "9842e16581ced3b2ea10d1eeadb57b4624be0aacaf9d611ae2e4c6ecad777ef3",
-      "bytes": 9524
+      "bytes": 9524,
+      "sha256": "9842e16581ced3b2ea10d1eeadb57b4624be0aacaf9d611ae2e4c6ecad777ef3"
+    },
+    {
+      "path": "hermes_cli/goal_result_check.py",
+      "bytes": 7235,
+      "sha256": "29a3da009ec117e4ee30d723a9f6ea6e7f328d4284c3bc54a7e25688d01bc19d"
     },
     {
       "path": "hermes_cli/goals.py",
-      "sha256": "32930ea4239eafe88ac62b554651e3a7bc631c8b5d27e58b41e7ce7d2d362cff",
-      "bytes": 86834
+      "bytes": 89011,
+      "sha256": "6b47c8cc6622bb999fe84cc45144d73a7023e76a63e9eab372a5ed37f5fa23d2"
+    },
+    {
+      "path": "hermes_cli/plugin_completion.py",
+      "bytes": 558,
+      "sha256": "a26c299097b619ff12e2fd008657a4a6ca5d56f47e368edbad99f84ee437ce70"
+    },
+    {
+      "path": "hermes_cli/plugins.py",
+      "bytes": 127798,
+      "sha256": "fffbfd39ede44a1f2935a961aff942f0eda58b4e76d69a85e3c77d692ff0a80c"
+    },
+    {
+      "path": "hermes_cli/plugins_dispatch.py",
+      "bytes": 35023,
+      "sha256": "6f65a932cfb25b087829120a82de5065d8bc02ed7a54f52c80c9ec43d47977a4"
+    },
+    {
+      "path": "hermes_cli/task_evidence.py",
+      "bytes": 14851,
+      "sha256": "4e5e32f1e4f21f742b8a32ad3b26803c705ee9fee07a0819bc0d426eb6e17b11"
     },
     {
       "path": "hermes_state_mutations.py",
-      "sha256": "a93e666cf84889c6b716a700955d0015ad0d17e54a8949e0184bf5bc9dd85f11",
-      "bytes": 10789
+      "bytes": 10789,
+      "sha256": "a93e666cf84889c6b716a700955d0015ad0d17e54a8949e0184bf5bc9dd85f11"
     },
     {
       "path": "run_agent.py",
-      "sha256": "a8e21d74db7dbc11db022d14da21ab1dae335a208b393221260dda6d37af2424",
-      "bytes": 84576
+      "bytes": 84576,
+      "sha256": "a8e21d74db7dbc11db022d14da21ab1dae335a208b393221260dda6d37af2424"
     },
     {
       "path": "tools/browser_use_cli.py",
-      "sha256": "bda017157f2b1618ccf5ae3161fdefc45c3368829be63ab114f9daac5a60576d",
-      "bytes": 54160
+      "bytes": 54160,
+      "sha256": "bda017157f2b1618ccf5ae3161fdefc45c3368829be63ab114f9daac5a60576d"
     },
     {
       "path": "tools/terminal_tool_background.py",
-      "sha256": "9fc499027dbb8ee4462bb7eca4f8d9dc2891ab725f615aaba6cce5b12cf24c4f",
-      "bytes": 16296
+      "bytes": 16296,
+      "sha256": "9fc499027dbb8ee4462bb7eca4f8d9dc2891ab725f615aaba6cce5b12cf24c4f"
     }
   ]
 }

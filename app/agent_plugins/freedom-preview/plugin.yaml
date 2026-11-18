@@ -1,5 +1,5 @@
 name: freedom-preview
-version: 1.0.0
-description: Shared local browser preview and visual inspection inside Freedom GPT. Regular browsers remain available.
+version: 1.1.0
+description: Shared browser research, search, page text and visual inspection inside Freedom GPT. No external search API key required.
 provides_tools:
   - preview_browser

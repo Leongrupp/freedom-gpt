@@ -1,15 +1,22 @@
-name: Native macOS release verification
+name: Native release verification
 
 on:
   push:
-    branches: [release/1.6.0]
+    branches: [release/1.7.0]
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Native platform to verify
+        type: choice
+        default: all
+        options: [all, macos, ubuntu]
 
 permissions:
   contents: read
 
 jobs:
   macos:
+    if: github.event_name == 'push' || inputs.platform != 'ubuntu'
     # GitHub hides draft releases from a read-only installation token.
     # Scope write access to this job so its token can download the draft asset.
     permissions:
@@ -31,7 +38,35 @@ jobs:
       - name: Download the draft candidate
         run: |
           mkdir -p .tmp/native-macos
-          gh release download v1.6.0 --repo Leongrupp/freedom-gpt --pattern 'FreedomGPT-1.6.0-macOS-AppleSilicon.zip' --dir .tmp/native-macos
+          gh release download v1.7.0 --repo Leongrupp/freedom-gpt --pattern 'FreedomGPT-1.7.0-macOS-AppleSilicon.zip' --dir .tmp/native-macos
       - name: Verify the actual macOS package
         run: |
           python3 packaging/native_macos_smoke.py
+  ubuntu:
+    if: github.event_name == 'workflow_dispatch' && inputs.platform != 'macos'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the exact release commit
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          git init .
+          git remote add origin https://github.com/Leongrupp/freedom-gpt.git
+          git fetch --depth=1 origin "$RELEASE_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Download the draft Ubuntu installers
+        run: |
+          mkdir -p release/platforms/1.7.0 logs
+          gh release download v1.7.0 --repo Leongrupp/freedom-gpt --pattern '*Ubuntu*' --dir release/platforms/1.7.0
+          docker pull ubuntu:24.04
+      - name: Install and test without network or system Python
+        run: |
+          python3 packaging/qa/verify_native_assets.py ubuntu-x64
+          mkdir -p .tmp/ubuntu-native/source170
+          tar -xzf release/platforms/1.7.0/FreedomGPT-1.7.0-Ubuntu-x64.tar.gz -C .tmp/ubuntu-native/source170
+          docker run --rm --network none -v "$PWD:/work" -v "$PWD/.tmp/ubuntu-native:/qa" ubuntu:24.04 /qa/source170/FreedomGPT/runtime/python/bin/python3 -B /work/packaging/qa/run_ubuntu.py

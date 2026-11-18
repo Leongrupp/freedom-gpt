@@ -27,6 +27,17 @@ class QueueOrder:
             stream.write(json.dumps(value, ensure_ascii=False) + '\n')
             stream.flush(); os.fsync(stream.fileno())
 
+    def _human_waiting(self, conn, sid):
+        from gateway.session_operator import is_viewer_input
+        rows = conn.execute("SELECT seq,admission_id,request_id,payload_json FROM session_admissions "
+                            "WHERE target_session_id=? AND status='queued' ORDER BY seq", (sid,)).fetchall()
+        visible = []
+        for row in rows:
+            payload = json.loads(row['payload_json'])
+            if is_viewer_input({'request_id':row['request_id'],'payload':payload}) and (payload.get('display_v1') or {}).get('kind') != 'hidden':
+                visible.append({'seq':row['seq'],'admission_id':row['admission_id']})
+        return visible
+
     def place_replacement(self, sid, previous, replacement, expected, epoch):
         """Restore an edited waiting row's relative place; never mutate a started input."""
         if not isinstance(expected,list) or previous not in expected:return False
@@ -42,7 +53,7 @@ class QueueOrder:
                 if (fresh.st_dev,fresh.st_ino)!=identity:return False
                 owner=conn.execute('SELECT epoch FROM runtime_epoch WHERE singleton=1').fetchone()
                 if not owner or owner['epoch']!=epoch:return False
-                rows=conn.execute("SELECT seq,admission_id FROM session_admissions WHERE target_session_id=? AND status='queued' ORDER BY seq",(sid,)).fetchall()
+                rows=self._human_waiting(conn,sid)
                 actual=[r['admission_id'] for r in rows]
                 if replacement not in actual:return False
                 known=[i for i in expected if i!=previous and i in actual]
@@ -87,7 +98,7 @@ class QueueOrder:
                 columns = {r['name']: r for r in conn.execute('PRAGMA table_info(session_admissions)')}
                 if not {'seq', 'admission_id', 'target_session_id', 'status', 'payload_digest'} <= columns.keys() or columns['seq']['pk'] != 1:
                     raise QueueConflict('Эта версия хранилища не поддерживает перестановку очереди.')
-                rows = conn.execute("SELECT seq,admission_id FROM session_admissions WHERE target_session_id=? AND status='queued' ORDER BY seq", (sid,)).fetchall()
+                rows = self._human_waiting(conn, sid)
                 actual = [r['admission_id'] for r in rows]
                 if actual != expected or admission not in actual:
                     raise QueueConflict('Очередь изменилась. Она обновлена — повторите действие.')

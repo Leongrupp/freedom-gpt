@@ -1,9 +1,48 @@
 """Offline text-to-video jobs using the bundled native diffusion engine."""
-import asyncio,concurrent.futures,contextlib,importlib.util,json,os,pathlib,re,shutil,subprocess,threading,time,uuid
+import asyncio,concurrent.futures,contextlib,importlib.util,json,os,pathlib,re,shutil,subprocess,threading,time,uuid,urllib.request
 from aiohttp import web
-from bootstrap import ROOT,STACK,PRIVATE,config,read,write
+from bootstrap import ROOT,STACK,PRIVATE,config,read,write,model_url
 from library import library
 from platform_support import native_environment
+
+def engine_progress(text,steps):
+    """Track sampling and decoding separately; tensor upload bars are not frames."""
+    decoded=re.search(r'(?:sampling completed|generating latent video completed)',text)
+    phase='decoding' if decoded else 'sampling'
+    section=text[decoded.end():] if decoded else text
+    counters=re.findall(r'\|[^|\r\n]*\|\s*(\d+)\s*/\s*(\d+)\s*-\s*([\d.]+)(ms|s)/it',section)
+    valid=[row for row in counters if phase=='decoding' or int(row[1])==steps]
+    done,total,seconds=(0,0,0)
+    if valid:
+        done,total=int(valid[-1][0]),int(valid[-1][1])
+        seconds=float(valid[-1][2])/(1000 if valid[-1][3]=='ms' else 1)
+    progress=(75+round(min(1,done/total)*22) if total else 75) if phase=='decoding' else (5+round(min(1,done/steps)*70) if done else 0)
+    return {'phase':phase,'progress':progress,'phase_step':done,'phase_total':total or (steps if phase=='sampling' else None),
+            'eta_seconds':round(max(0,total-done)*seconds) if total else None}
+
+def engine_timings(text):
+    result={}
+    for key,pattern in [('sampling_seconds',r'sampling completed, taking ([\d.]+)s'),
+                        ('decoding_seconds',r'decode_first_stage completed, taking ([\d.]+)s')]:
+        match=re.search(pattern,text)
+        if match:result[key]=float(match[1])
+    return result
+
+def repeated_video_poll(snapshot,ident):
+    """Only the latest consecutive tool calls may release their own waiting turn."""
+    recent=[]
+    for message in reversed(snapshot.get('messages',[])):
+        for call in reversed(message.get('tool_calls') or []):
+            function=call.get('function') or {}
+            try:
+                args=function.get('arguments') or {}
+                if isinstance(args,str):args=json.loads(args)
+                command=str(args.get('command') or '').replace('\\','/').replace('"','').replace("'",'')
+            except (ValueError,AttributeError):return False
+            if function.get('name')!='terminal' or not re.search(r'(?:^|/)media-studio-tool\.py\s+video-status\s+'+re.escape(ident)+r'\s*$',command):return False
+            recent.append(call)
+            if len(recent)==2:return True
+    return False
 
 class Videos:
     def __init__(self):
@@ -50,6 +89,12 @@ class Videos:
     @contextlib.contextmanager
     def handoff(self):
         source=STACK/'creative-kit/image-tool.py';spec=importlib.util.spec_from_file_location('freedom_video_handoff',source);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        # Older installed image helpers hardcode port 11435. Use the current
+        # managed endpoint so VRAM release and model restoration are awaited.
+        opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        def model_http(path):
+            with opener.open(model_url().removesuffix('/v1')+path,timeout=3) as response:return json.load(response)
+        module.http=model_http
         if module.ready():
             with module.gpu_handoff() as lease:
                 try:yield lease,module
@@ -65,7 +110,7 @@ class Videos:
             try:self.process.wait(timeout=15)
             except subprocess.TimeoutExpired:self.process.kill();self.process.wait(timeout=10)
     def gpu_vae(self,job):
-        if not library.device.get('cuda') or library.device.get('vram_gb',0)<15.9 or job['width']*job['height']>512*288 or job['frames']>33:return False
+        if not library.device.get('cuda') or library.device.get('vram_gb',0)<15.9:return False
         try:
             free=subprocess.check_output(['nvidia-smi','--query-gpu=memory.free','--format=csv,noheader,nounits'],text=True,timeout=8,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
             return float(free.splitlines()[0])>=12*1024
@@ -80,15 +125,14 @@ class Videos:
                 if time.monotonic()-started>3500:raise TimeoutError('Лимит одного задания — 55 минут.')
                 with open(job['log'],'rb') as reader:
                     reader.seek(0,2);reader.seek(max(0,reader.tell()-8000));text=reader.read().decode('utf8','replace')
-                steps=re.findall(r'(\d+)\s*/\s*'+str(job['steps'])+r'\b',text)
-                progress=min(95,round(int(steps[-1])/job['steps']*95)) if steps else 0
-                if progress>self.current.get('progress',0):self.save(state='generating',progress=progress)
+                update=engine_progress(text,job['steps'])
+                if any(self.current.get(key)!=value for key,value in update.items()):self.save(state='generating',**update)
             return child.returncode
     def generate(self,item,job):
         started=time.monotonic();success=False
         try:
             if self.stop.is_set():raise InterruptedError()
-            folder=library.folder(item);self.save(state='loading')
+            folder=library.folder(item);self.save(state='loading',phase='loading',eta_seconds=None)
             with self.handoff() as (lease,module):
                 from gpu_lease import add_child
                 if self.stop.is_set():raise InterruptedError()
@@ -105,15 +149,16 @@ class Videos:
                 code=self.run_engine(args,job,lease,started)
                 if code and gpu_vae and re.search(r'out of memory|failed to allocate|cudaMalloc|CUDA.*alloc',pathlib.Path(job['log']).read_text(encoding='utf8',errors='replace'),re.I):
                     shutil.copy2(job['log'],job['log']+'.gpu-attempt')
-                    self.save(state='loading',progress=0,vae_backend='cpu_fallback')
+                    self.save(state='loading',phase='loading',phase_step=0,phase_total=None,eta_seconds=None,progress=0,vae_backend='cpu_fallback')
                     code=self.run_engine([*args,'--vae-on-cpu'],job,lease,started)
                 if code:raise RuntimeError('Видеодвижок завершился с кодом '+str(code)+'. Журнал: '+job['log'])
                 output=pathlib.Path(job['output'])
                 if not output.is_file() or output.stat().st_size<1000:raise RuntimeError('Видеодвижок не создал файл WebM.')
                 with output.open('rb') as stream:
                     if stream.read(4)!=b'\x1aE\xdf\xa3':raise RuntimeError('Неверный заголовок WebM.')
-                self.save(state='restoring',progress=98);success=True
-            self.save(state='complete',progress=100,seconds=round(time.monotonic()-started,2),bytes=pathlib.Path(job['output']).stat().st_size)
+                self.save(state='restoring',phase='restoring',eta_seconds=None,progress=98);success=True
+            timings=engine_timings(pathlib.Path(job['log']).read_text(encoding='utf8',errors='replace'))
+            self.save(state='complete',phase='complete',progress=100,eta_seconds=None,seconds=round(time.monotonic()-started,2),bytes=pathlib.Path(job['output']).stat().st_size,timings=timings)
             if self.on_complete:
                 try:self.on_complete(dict(self.current))
                 except Exception:self.save(presentation_error='Видео сохранено; не удалось обновить список файлов чата.')
@@ -127,6 +172,20 @@ class Videos:
 videos=Videos()
 def register(app,bridge,register_artifact=None):
     async def status(request):return web.json_response(videos.snapshot())
+    async def release_agent(request):
+        value=await request.json();ident=str(value.get('input_id') or '')
+        if not re.fullmatch('[a-f0-9]{32}',ident):raise ValueError('Неверный идентификатор задания.')
+        record=read(ROOT/'data/media-video-receipts'/(ident+'.json'),{})
+        sid=(record.get('request') or {}).get('session_id')
+        generation=record.get('session_generation')
+        if record.get('state')!='waiting_for_agent' or not sid or generation is None:
+            return web.json_response({'yielded':False,'reason':'no_waiting_turn'})
+        snapshot=await bridge.resume(sid)
+        if not snapshot.get('running') or snapshot.get('execution_generation')!=generation:
+            return web.json_response({'yielded':False,'reason':'turn_changed'})
+        if not repeated_video_poll(snapshot,ident):return web.json_response({'yielded':False,'reason':'agent_working'})
+        await bridge.rpc('session.interrupt',session_id=sid,execution_generation=generation)
+        return web.json_response({'yielded':True,'reason':'video_polling_cycle'})
     async def start(request):
         listed=await bridge.rpc('session.list',scope='live',limit=200)
         if any(s.get('running') for s in listed.get('sessions',[])):raise ValueError('Сначала дождитесь завершения текущей задачи агента или остановите её.')
@@ -147,4 +206,4 @@ def register(app,bridge,register_artifact=None):
         path=(ROOT/'output/videos'/ident/'video.webm').resolve()
         if record.get('state')!='complete' or not path.is_relative_to((ROOT/'output/videos').resolve()) or not path.is_file():raise web.HTTPNotFound()
         return web.FileResponse(path,headers={'Content-Type':'video/webm','Content-Disposition':'inline; filename="FreedomGPT-'+ident[:8]+'.webm"'})
-    app.router.add_get('/api/video',status);app.router.add_post('/api/video/generate',start);app.router.add_post('/api/video/cancel',cancel);app.router.add_get('/api/video/files/{ident}',file)
+    app.router.add_get('/api/video',status);app.router.add_post('/api/video/generate',start);app.router.add_post('/api/video/cancel',cancel);app.router.add_post('/api/video/release-agent',release_agent);app.router.add_get('/api/video/files/{ident}',file)

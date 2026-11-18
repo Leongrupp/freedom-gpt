@@ -21,6 +21,12 @@ def ensure_agent():
  if not attachable(result):
   raise RuntimeError('Не удалось запустить службу агента: '+str(result.reason_code or result.state)+'. Подробности: '+str(bootstrap.HOME/'logs/gateway-stdio.log'))
 def main():
+ from ui_lifecycle import startup_lock
+ # Cover port selection, runtime startup and opening the first app window.
+ with startup_lock('application-start.lock',timeout=120):
+  return start_application()
+
+def start_application():
  from ui_lifecycle import spawn_ui,ensure_supervisor
  from preflight import ensure
  ensure(ROOT)
@@ -49,9 +55,18 @@ def main():
   # An earlier crash/restart may have left stale process metadata.
   record=spawn_ui()
  ensure_supervisor(read(ROOT/'.tmp/server-process.json',{}),cfg['ui_port'])
+ # The optional owner-only phone relay is independent of the model and gateway.
+ # A relay failure must never prevent normal local startup.
+ if (ROOT/'data/phone/settings.json').is_file():
+  try:
+   from phone_access import ensure_started
+   ensure_started()
+  except Exception:
+   import logging
+   logging.getLogger('freedom.launch').exception('Optional phone controller could not start')
  if '--no-browser' in sys.argv:return
  url=f"http://127.0.0.1:{cfg['ui_port']}/"
- open_browser(ROOT,url)
+ open_browser(ROOT,url,single_instance=True)
 if __name__=='__main__':
  try:main()
  except Exception as exc:

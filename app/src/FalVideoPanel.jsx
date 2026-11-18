@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {Video,ExternalLink,LoaderCircle,Download,RefreshCw,Square} from 'lucide-react';
 import {api} from './api.js';
 import {t} from './i18n.js';
+import {EnhanceButton} from './EnhanceMedia.jsx';
 
 const phases={queued:'В очереди',submitting:'Отправляем запрос',IN_QUEUE:'В очереди fal.ai',IN_PROGRESS:'Создаём видео',downloading:'Сохраняем MP4 на ПК',cancel_requested:'Остановка запрошена',paused:'Проверка статуса приостановлена',unknown:'Результат отправки неизвестен',failed:'Ошибка',cancelled:'Остановлено',completed:'Готово'};
 export function FalVideoPanel({sid,onEnsureChat,onConnect}){
@@ -30,7 +31,7 @@ export function FalVideoPanel({sid,onEnsureChat,onConnect}){
   {job&&<section className="fal-job" aria-live="polite"><strong>{t(phases[job.state]||job.state)}</strong><p>{job.prompt}</p>{job.error&&<p className="api-error">{t(job.error)}</p>}<div>{job.state==='paused'&&<button disabled={working} onClick={()=>action('resume')}><RefreshCw size={13}/>{t('Проверить статус без нового запуска')}</button>}{!['queued','submitting'].includes(job.state)&&<button disabled={working} onClick={()=>action('cancel')}><Square size={13}/>{t('Запросить отмену')}</button>}</div></section>}
   {issues.map(row=><div className="api-error" key={row.id}><strong>{t(phases[row.state])}</strong><p>{row.error&&t(row.error)}</p>{row.state==='unknown'&&<p>{t('Не повторяйте запуск, пока не проверите запросы и списания в кабинете fal.ai.')}</p>}</div>)}
   {error&&<p className="api-error" role="alert">{t(error)}</p>}
-  {!!results.length&&<section className="fal-results"><h4>{t('Готовые видео')}</h4>{results.map(row=><article key={row.id}><video src={row.url} controls playsInline preload="metadata"/><p>{row.prompt}</p><a href={row.url} download={'FreedomGPT-'+row.id.slice(0,8)+'.mp4'}><Download size={14}/>{t('Скачать MP4')}</a></article>)}</section>}
+  {!!results.length&&<section className="fal-results"><h4>{t('Готовые видео')}</h4>{results.map(row=><article key={row.id}><video src={row.url} controls playsInline preload="metadata"/><p>{row.prompt}</p><a href={row.url} download={'FreedomGPT-'+row.id.slice(0,8)+'.mp4'}><Download size={14}/>{t('Скачать MP4')}</a><EnhanceButton file={{...row,mime:'video/mp4',name:'Freedom-video.mp4'}} sid={sid||row.sid}/></article>)}</section>}
   <p className="api-privacy">{t('Описание отправляется fal.ai. Ссылки сервиса на готовые медиа могут быть публичными. Можно закрыть окно: задача и история сохраняются.')}{data?.usage&&<> · {data.usage.used} / {data.usage.cap} {t('запросов за день в приложении')}</>}</p>
  </div>;
 }

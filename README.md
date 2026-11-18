@@ -4,7 +4,7 @@
 
 [Русский](README.ru.md) · **English**
 
-> **Freedom GPT 1.6.0.** Windows, Ubuntu and Apple Silicon packages, phone companion, achievements and reply notifications. Read the platform requirements and verification limits.
+> **Freedom GPT 1.7.0.** Windows, Ubuntu and Apple Silicon packages, phone companion, achievements and reply notifications. Read the platform requirements and verification limits.
 
 Freedom GPT brings compatible models, tools and project memory together. Delegate an outcome: the agent can edit real files, run commands, work with websites and continue a project within one chat.
 
@@ -52,9 +52,9 @@ A first site, a generated image, a million processed model tokens: achievements 
 
 | System | Download | Requirements |
 |---|---|---|
-| Windows | [EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Windows-x64.zip) | Windows 10/11 x64 |
-| Ubuntu / Linux | [.run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04+ x64 / compatible glibc 2.39+ |
-| macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-macOS-AppleSilicon.zip) | M1+, macOS 26.2+; unsigned / not notarized |
+| Windows | [EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-Setup-1.7.0.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Windows-x64.zip) | Windows 10/11 x64 |
+| Ubuntu / Linux | [.run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-Setup-1.7.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04+ x64 / compatible glibc 2.39+ |
+| macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-macOS-AppleSilicon.zip) | M1+, macOS 26.2+; unsigned / not notarized |
 | iPhone / Android | [Phone pairing](docs/PHONE-ACCESS.md) | phone browser + an active computer |
 
 **Private Python, Node.js/npm, agent libraries and inference engines are included.** System Python and Ollama are not required. Download model weights separately. Git, automation browsers, Blender and specialist tools are separate installations.
@@ -67,7 +67,7 @@ A first site, a generated image, a million processed model tokens: achievements 
 |---|---|
 | ![Goals](assets/screenshots/goal-en.png) | ![Models](assets/screenshots/models-en.png) |
 
-The captures above show the actual Windows app using the neutral ExpenseLab project. See the new 1.6.0 panels below. [Capture details](docs/SCREENSHOTS.md).
+The captures above show the actual Windows app using the neutral ExpenseLab project. See the new 1.7.0 panels below. [Capture details](docs/SCREENSHOTS.md).
 
 ![Actual reply notification and settings](assets/screenshots/notifications-160.png)
 
@@ -98,3 +98,9 @@ Optional development support: [project page](https://aionpc.ru/en/#support). The
 ## Licenses
 
 Freedom GPT source is MIT-licensed. Hermes and other components retain their licenses and attribution. See [NOTICE](NOTICE), [LICENSE](LICENSE) and [licenses](licenses). Clean packages exclude the author’s chats, credentials, model weights and private profile.
+
+## New in 1.7.0
+
+Shared project Neurosphere, specialist AI agents with dedicated chats, personality and conversation settings, updated navigation and persistent measured Turbo profiles. Voice models and personal profiles, optional camera tools and VR require separate setup and compatible hardware. No author data is bundled.
+
+![Freedom GPT 1.7.0](assets/screenshots/workspace-170-en.png)

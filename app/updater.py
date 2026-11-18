@@ -82,6 +82,7 @@ class Updates:
    await asyncio.sleep(5)
  async def try_apply(self,app,bridge):
   if not self.package or not self.payload or app.get('prompt_admissions',0) or app.get('performance_busy'):return
+  if app.get('enhance_service') and app['enhance_service'].has_active():return
   from library import library
   from video import videos
   if videos.busy():return

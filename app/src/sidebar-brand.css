@@ -1,0 +1,16 @@
+.sidebar .brand>.sidebar-brand-mark{position:relative;display:block;flex:0 0 28px;width:28px;height:28px;border-radius:8px;isolation:isolate;perspective:180px}
+.sidebar-brand-mark svg{display:block;width:100%;height:100%;transform-origin:50% 70%}
+.sidebar-brand-mark::after{position:absolute;inset:0;content:'';border-radius:inherit;background:linear-gradient(110deg,transparent 20%,#fff9 48%,transparent 75%);opacity:0;pointer-events:none;mix-blend-mode:soft-light}
+.sidebar-brand-mark[data-animating=true] svg{animation:sidebar-logo-lift 2.2s cubic-bezier(.2,.8,.2,1) both;filter:drop-shadow(0 0 7px #ad8cfa55)}
+.sidebar-brand-mark[data-animating=true]::after{animation:sidebar-logo-shine 1.6s .25s ease-out both}
+.sidebar .brand>.sidebar-brand-copy{min-width:0;flex:1}
+.sidebar-brand-name{position:relative;display:block;width:max-content;max-width:100%;line-height:1.25;white-space:pre;letter-spacing:-.5px}
+.sidebar-brand-measure{visibility:hidden;display:block}
+.sidebar-brand-typed{position:absolute;inset:0;white-space:pre}
+.sidebar-brand-typed i{display:inline-block;width:1px;height:.9em;vertical-align:-.03em;margin-left:2px;background:var(--accent);box-shadow:0 0 5px #b2a1ef77;animation:sidebar-logo-caret .55s steps(1,end) infinite}
+@keyframes sidebar-logo-lift{0%{transform:translateY(0) rotateY(0) rotateZ(0) scale(1)}22%{transform:translateY(-2px) rotateY(-20deg) rotateZ(-7deg) scale(1.04)}53%{transform:translateY(-1px) rotateY(18deg) rotateZ(5deg) scale(1.02)}78%{transform:translateY(-1px) rotateY(-7deg) rotateZ(-2deg)}100%{transform:translateY(0) rotateY(0) rotateZ(0) scale(1)}}
+@keyframes sidebar-logo-shine{0%{opacity:0;transform:translateX(-65%)}20%{opacity:.8}80%{opacity:.5}100%{opacity:0;transform:translateX(65%)}}
+@keyframes sidebar-logo-caret{50%{opacity:0}}
+@media(max-width:960px){.sidebar .brand>.sidebar-brand-mark{flex-basis:26px;width:26px;height:26px}}
+@media(max-width:760px){.sidebar .brand>.sidebar-brand-mark{flex-basis:28px;width:28px;height:28px}}
+@media(prefers-reduced-motion:reduce){.sidebar-brand-mark svg,.sidebar-brand-mark::after,.sidebar-brand-typed i{animation:none!important}.sidebar-brand-mark::after,.sidebar-brand-typed i{display:none}}

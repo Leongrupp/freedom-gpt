@@ -2,6 +2,7 @@ import {localStore,sessionStore} from './browserStorage.js';
 import React, {useEffect, useState} from 'react';
 import {Clock3, Check, X, ListOrdered, CornerDownRight, ShieldCheck, Shield, BookOpen, Plus, Search, Save, Cpu, ChevronRight, Sparkles, GitBranch, Eye, EyeOff} from 'lucide-react';
 import {api} from './api.js';
+import {skillDisplayName,skillDisplayDescription} from './replySkills.js';
 import {t, getLocale, getIntlLocale} from './i18n.js';
 import {AutoModelsPanel} from './AutoModelsPanel.jsx';
 
@@ -21,13 +22,13 @@ export function RunClock({started, label}) {
   useEffect(()=>{setNow(Date.now()/1000);const timer=setInterval(()=>setNow(Date.now()/1000),1000);return()=>clearInterval(timer)},[started]);
   return started ? <span className="run-clock"><Clock3 size={12}/>{label||t('В работе')} {duration(now-started)}</span> : null;
 }
-export function MessageTiming({message,onBranch,branchDisabled=false}) {
+export function MessageTiming({message,onBranch,branchDisabled=false,stopped=false}) {
   const timing=message.work_timing;
   const date=asDate(timing?.finished||message.timestamp);
   return <div className="message-timing">
-    {date&&<time dateTime={date.toISOString()} title={date.toLocaleString(getIntlLocale())}>{timing?t('Завершено')+' ':''}{formatTime(timing?.finished||message.timestamp)}</time>}
+    {date&&<time dateTime={date.toISOString()} title={date.toLocaleString(getIntlLocale())}>{timing?t(stopped?'Остановлено':'Завершено')+' ':''}{formatTime(timing?.finished||message.timestamp)}</time>}
     {onBranch&&<button type="button" className="message-branch-button" aria-label={t('Создать ветку чата')} title={branchDisabled?t('Дождитесь завершения ответа и очереди'):t('Создать ветку чата')} disabled={branchDisabled} onClick={onBranch}><GitBranch size={12}/></button>}
-    {timing?.elapsed_seconds!=null&&<><span>·</span><span><Check size={11}/>{t('Завершено за')} {duration(timing.elapsed_seconds)}</span></>}
+    {timing?.elapsed_seconds!=null&&<><span>·</span><span>{!stopped&&<Check size={11}/>} {t(stopped?'Остановлено через':'Завершено за')} {duration(timing.elapsed_seconds)}</span></>}
     {timing?.first_output_seconds!=null&&<span title={t('Время до первого вывода, включая обработку контекста')}>· {t('До ответа')} {duration(timing.first_output_seconds)}</span>}
     {timing?.model&&<span className="turn-model">{timing.model}</span>}
   </div>;
@@ -108,5 +109,5 @@ export function SkillsPanel({sid,learning,onLearning,onTeach,onUse}) {
     <div className="skills-toolbar"><span>{skills.length} {t('навыков доступно')}</span><button className="secondary-panel-button" onClick={()=>setEditing(!editing)}><Plus size={14}/>{t('Научить агента')}</button>{sid&&<button className="secondary-panel-button" onClick={onTeach}><BookOpen size={14}/>{t('Из опыта этого чата')}</button>}</div>
     {saved&&<p className="skill-saved" role="status"><Check size={14}/>{t('Навык сохранён:')} {saved}. {t('Его можно использовать в следующих задачах.')}</p>}
     {editing&&<form className="skill-editor" onSubmit={save}><label>{t('Короткое имя латиницей')}<input required pattern="[a-z0-9][a-z0-9-]{1,63}" placeholder="my-coding-workflow" value={name} onChange={e=>setName(e.target.value)}/></label><label>{t('Когда применять')}<input required maxLength={600} placeholder={t('Например: при создании сайтов на Django')} value={description} onChange={e=>setDescription(e.target.value)}/></label><label>{t('Чему научить')}<textarea required rows={7} maxLength={60000} placeholder={t('Опишите шаги, ваши предпочтения, пример результата и способ проверки…')} value={instructions} onChange={e=>setInstructions(e.target.value)}/></label><button className="primary-button" disabled={working}><Save size={14}/>{t('Сохранить навык')}</button></form>}
-    <div className="modal-search"><Search size={15}/><input placeholder={t('Найти навык…')} value={search} onChange={e=>setSearch(e.target.value)}/></div><div className="skills-list">{filtered.map(skill=><div className="skill-row" key={skill.id}><BookOpen size={16}/><div><strong>{skill.name}</strong><p>{skill.description}</p></div>{sid&&<button className="icon-button" title={t('Использовать в чате')} aria-label={t('Использовать в чате')+' '+skill.name} onClick={()=>onUse(skill.name)}><CornerDownRight size={16}/></button>}</div>)}{!filtered.length&&<p className="panel-footnote">{t('Навыки не найдены')}</p>}</div>{error&&<p className="panel-error" role="alert">{t(error)}</p>}</div>;
+    <div className="modal-search"><Search size={15}/><input placeholder={t('Найти навык…')} value={search} onChange={e=>setSearch(e.target.value)}/></div><div className="skills-list">{filtered.map(skill=><div className="skill-row" key={skill.id}><BookOpen size={16}/><div><strong>{skillDisplayName(skill)}</strong><p>{skillDisplayDescription(skill)}</p></div>{sid&&<button className="icon-button" title={t('Использовать в чате')} aria-label={t('Использовать в чате')+' '+skill.name} onClick={()=>onUse(skill.name)}><CornerDownRight size={16}/></button>}</div>)}{!filtered.length&&<p className="panel-footnote">{t('Навыки не найдены')}</p>}</div>{error&&<p className="panel-error" role="alert">{t(error)}</p>}</div>;
 }

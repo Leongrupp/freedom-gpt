@@ -156,10 +156,12 @@ class WorkspaceFeatures:
                   'elapsed_seconds':max(0,finished-started) if finished and started else None,
                   'first_output_seconds':max(0,current['first_output']-started) if current.get('first_output') and started else None}
         pending = []
+        from human_queue import human_input
+        human_receipts = set(turns) | {note['admission_id'] for note in notes}
         for row in snapshot.get('pending',[]):
-            if row.get('status') == 'queued' or row.get('steering'):
+            if (row.get('status') == 'queued' or row.get('steering')) and human_input(row, human_receipts):
                 local = turns.get(row.get('admission_id'),{})
-                pending.append({**row,'text':local.get('text') or row.get('text',''),'created':local.get('created'),'files':json.loads(local.get('file_ids') or '[]')})
+                pending.append({**row,'user_input':True,'text':local.get('text') or row.get('text',''),'created':local.get('created'),'files':json.loads(local.get('file_ids') or '[]')})
         pending_by_id = {row['admission_id']:row for row in pending}
         for note in notes:
             row = pending_by_id.get(note['admission_id'], {})
@@ -377,7 +379,13 @@ class WorkspaceFeatures:
             old = conn.execute('SELECT * FROM workspace_notes WHERE input_id=?',(input_id,)).fetchone()
             if old and (old['session_id']!=sid or old['text']!=text):
                 raise ValueError('Идентификатор заметки уже использован.')
-        receipt = await self.bridge.rpc('prompt.submit',session_id=sid,input_id=input_id,text=text,queued=True)
+        from web_research import research_requested,research_note
+        turn_params={}
+        if research_requested(text,data.get('web_search',False)):
+            if data.get('web_browser') is not None and hasattr(self,'preview'):
+                self.preview.select_browser(sid,data['web_browser'],data.get('search_engine','auto'))
+            turn_params['api_text']=text+'\n\n[Настройки владельца: выполнение и память]\n'+research_note(sid)
+        receipt = await self.bridge.rpc('prompt.submit',session_id=sid,input_id=input_id,text=text,queued=True,**turn_params)
         with self.db() as conn:
             conn.execute('INSERT OR IGNORE INTO workspace_notes VALUES(?,?,?,?,?)',(input_id,sid,text,time.time(),receipt['admission_id']))
         self.admitted(sid,input_id,receipt,self.selected_model(sid))
@@ -411,7 +419,7 @@ class WorkspaceFeatures:
                     if response.status==200:body=await response.json()
         except (OSError,ClientError,asyncio.TimeoutError):pass
         rows=library.session_models()
-        from model_routes import catalog_id
+        from managed_models import catalog_id
         known={m['id'] for m in rows}
         for m in body.get('data',[]):
             if not isinstance(m.get('id'),str) or m['id'] in known or catalog_id(m['id']):continue
@@ -427,10 +435,7 @@ class WorkspaceFeatures:
         sid = request.match_info['sid'];data = await request.json()
         selected = str(data.get('model') or '').strip()
         options = json.loads((await self.model_options(request)).body)
-        # The configured default alias is hidden when a catalog row already
-        # represents that same local engine. Auto must still be able to restore
-        # older chats that used the default alias before catalog routes existed.
-        if selected != self.portable.model_id() and selected not in {row['id'] for row in options['models']} and not (getattr(self,'cloud',None) and self.cloud.auto and self.cloud.auto.target(selected)):
+        if selected not in {row['id'] for row in options['models']} and not (getattr(self,'cloud',None) and self.cloud.auto and self.cloud.auto.target(selected)):
             raise ValueError('Выберите модель, доступную на подключённом локальном API.')
         snapshot = await self.bridge.resume(sid)
         item=library.route_item(selected)
@@ -507,3 +512,5 @@ class WorkspaceFeatures:
         app.router.add_post('/api/sessions/{sid}/model',self.model_set)
         app.router.add_get('/api/skills',self.skills)
         app.router.add_post('/api/skills',self.skill_save)
+
+EXECUTION_NOTE += '\nДля обычного поиска в интернете используй web_search, для чтения страниц web_extract: здесь они подключены к выбранному владельцем браузеру, который виден в этом же чате или в настоящем окне Chrome/Яндекс. При ошибке поискового сервиса попробуй preview_browser с action search; для известного URL используй open и затем read. Чтение текста не требует vision-модели. Не ограничивайся обещанием открыть браузер: выполни действие и используй реальный результат. Капча и вход требуют участия владельца, защиту сайта не обходи.'

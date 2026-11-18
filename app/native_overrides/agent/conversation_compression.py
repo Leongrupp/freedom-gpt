@@ -1220,12 +1220,11 @@ def run_compress_context_with_progress_timeout(
         idle = min(idle, ceiling)
     fence = fence if fence is not None else CompressionCommitFence()
     fence.set_precommit_deadline_monotonic(precommit_deadline_monotonic)
-    # Read BEFORE this attempt runs: the host's ``stalled`` record and the cancelled worker's
-    # ``stall_interrupted`` record both land during the unwind below, and this stall must not count as
+    from agent.freedom_context_recovery import automatic_timeout_recovery
     # One prior timeout-class failure = the route already burned a full idle window. An over-window request
     # cannot be sent unchanged, so it earns the deterministic fallback on its first stall (#114594).
     escalate_deterministic = stall_fallback and (
-        request_exceeds_window or _prior_timeout_failures(telemetry_agent) >= 1
+        request_exceeds_window or _prior_timeout_failures(telemetry_agent) >= 1 or automatic_timeout_recovery(telemetry_agent)
     )
     # Sync mirror of gateway hygiene's run_in_executor + wait_for loop: offload,
     # poll idle budget + ceiling, fence-cancel on timeout so no late commit lands.

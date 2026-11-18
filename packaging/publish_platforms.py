@@ -1,5 +1,7 @@
 """Publish one explicitly approved, verified platform release; keep older transfer holds."""
 import argparse,hashlib,json,os,pathlib,re,shutil,subprocess,time
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from publish import github_env
 ROOT=pathlib.Path(__file__).resolve().parent.parent
 SAFE=['.gitignore','.gitattributes','.github','README.md','README.ru.md','INSTALL.md','INSTALL.ru.md','BUILD.md','CROSS-PLATFORM.md','VERIFICATION.md','LICENSE','NOTICE','SECURITY.md','SUPPORT.md','CODE_OF_CONDUCT.md','CONTRIBUTING.md','Start-Website.cmd','Export-to-SSD.cmd','FILEZILLA-MODELS.txt','deploy','app','packaging','site','assets','licenses','docs','connect']
@@ -63,8 +65,10 @@ def main():
   if check and r.returncode:raise RuntimeError('Command failed: '+str(args[:3])+' '+r.stderr[-900:])
   return r
  def api(path):return json.loads(run([gh,'api',path]).stdout)
+ state_lock=threading.Lock()
  def state(**kw):
-  status.write_text(json.dumps({'version':v,'phase':a.phase,'time':time.time(),**kw},indent=2));print(json.dumps(kw),flush=True)
+  with state_lock:
+   status.write_text(json.dumps({'version':v,'phase':a.phase,'time':time.time(),**kw},indent=2));print(json.dumps(kw),flush=True)
  if a.phase=='source':
   pinned=json.loads(approval.read_text()).get('source_commit')
   if not pinned:raise ValueError('Freeze the reviewed release source before uploading')
@@ -96,17 +100,19 @@ def main():
   if not release.get('draft'):raise RuntimeError('Refusing to change already-public release assets')
   commit=run(['git','rev-parse','origin/main']).stdout.strip()
   run([gh,'release','edit',tag,'--repo',repo,'--notes-file',notes,'--target',commit])
-  for number,file in enumerate(assets):
+  def upload(entry):
+   number,file=entry
    release=api(release_path);existing=next((x for x in release['assets'] if x['name']==file.name),None);good=existing and existing.get('state')=='uploaded' and existing['size']==expected[file.name]['bytes'] and existing.get('digest')=='sha256:'+expected[file.name]['sha256']
    if not good:
     if existing:run([gh,'api','--method','DELETE','repos/'+repo+'/releases/assets/'+str(existing['id'])])
     for attempt in range(3):
-     state(uploading=file.name,completed=number,total=len(assets),attempt=attempt+1)
+     state(uploading=file.name,asset_index=number,total=len(assets),attempt=attempt+1)
      r=run([gh,'release','upload',tag,file,'--repo',repo],timeout=10800,check=False)
      if not r.returncode:break
      if attempt==2:raise RuntimeError('Upload failed: '+file.name+' '+r.stderr[-500:])
      current=api(release_path);partial=next((x for x in current['assets'] if x['name']==file.name),None)
      if partial:run([gh,'api','--method','DELETE','repos/'+repo+'/releases/assets/'+str(partial['id'])])
+  with ThreadPoolExecutor(max_workers=2) as pool:list(pool.map(upload,enumerate(assets)))
   state(draft_uploaded=True,total=len(assets));return
  uploaded={f['name']:f for f in release['assets']}
  for name,info in expected.items():

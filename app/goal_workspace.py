@@ -18,6 +18,8 @@ import uuid
 from aiohttp import web
 import psutil
 from workspace_features import EXECUTION_NOTE, LEARNING_NOTE
+from agent_autonomy import DEFAULT_VERIFICATION,GOAL_RULES
+from arshi_policy import RULES as ARSHI_RULES, enabled as arshi_enabled
 
 
 class GoalWorkspace:
@@ -48,7 +50,8 @@ class GoalWorkspace:
         contract = goal.get('contract') or {}
         return {'objective': re.sub(r'^Задание владельца (?:--|—|-)\s*', '', goal.get('title') or ''),
                 'verification': contract.get('verification') or '',
-                'constraints': contract.get('constraints') or ''}
+                'constraints': contract.get('constraints') or '',
+                'arshi': arshi_enabled(goal)}
 
     def archive_goal(self, sid, goal):
         """Archive each completed attempt once; never clear a different/new user draft."""
@@ -63,7 +66,7 @@ class GoalWorkspace:
                  json.dumps(goal, ensure_ascii=False), time.time())).rowcount
             if inserted:
                 draft = conn.execute('SELECT fields,revision FROM workspace_goal_drafts WHERE session_id=?', (sid,)).fetchone()
-                normalize = lambda data: {key: ' '.join(str(data.get(key) or '').split()) for key in fields}
+                normalize = lambda data: {key: (data.get(key, False) is True) if key=='arshi' else ' '.join(str(data.get(key) or (DEFAULT_VERIFICATION if key=='verification' else '')).split()) for key in fields}
                 if draft and normalize(json.loads(draft['fields'])) == normalize(fields):
                     conn.execute('UPDATE workspace_goal_drafts SET fields=?,revision=revision+1,updated=? WHERE session_id=? AND revision=?',
                                  (json.dumps({'objective':'','verification':'','constraints':''}), time.time(), sid, draft['revision']))
@@ -76,15 +79,24 @@ class GoalWorkspace:
                  'reopen_count': row['reopen_count'], 'last_reopened': row['last_reopened']} for row in rows]
 
     @staticmethod
-    def command(fields):
+    def command(fields, cwd=None, sid=None):
         line = lambda value: ' '.join(value.splitlines())
         command = '/goal -- Задание владельца — '+line(fields['objective'])
         for key in ('verification', 'constraints'):
-            if fields[key]:
-                command += '\n'+key+': '+line(fields[key])
-        return command+('\nboundaries: Сохраняй прогресс и оставшиеся шаги в памяти проекта. '
-                        'При внешнем препятствии или необходимости решения владельца остановись и объясни причину. '
-                        'Готовность подтверждай фактическим результатом; не повторяй одинаковые неудачные действия.')
+            value=fields[key] or (DEFAULT_VERIFICATION if key=='verification' else '')
+            if value:
+                command += '\n'+key+': '+line(value)
+        scope=('Рабочая папка этого чата: '+str(cwd)+'. Относительные пути относятся к этой папке; '
+               'используй её абсолютный путь при работе с файлами. ') if cwd else ''
+        arshi = ''
+        if fields.get('arshi') is True:
+            arshi = ' ' + ARSHI_RULES
+            if sid and re.fullmatch(r'[A-Za-z0-9_-]{1,160}', sid):
+                arshi += (' Фактический ID текущего чата: '+sid+'. Каталог контрольных точек относительно папки проекта: '
+                          '.hermes/arshi/'+sid+'/. В отчётах указывай ПОЛНЫЕ пути каждого файла относительно '
+                          'папки проекта, например .hermes/arshi/'+sid+'/STATE.md; не перечисляй только имена файлов '
+                          'с отдельным упоминанием каталога: проверка результатов читает каждый путь независимо.')
+        return command+'\nboundaries: '+scope+GOAL_RULES+arshi
 
     def engine_status(self):
         root = pathlib.Path(self.workspace.root)
@@ -92,9 +104,11 @@ class GoalWorkspace:
         try:
             record = json.loads((home/'gateway.pid').read_text(encoding='utf-8-sig'))
             process = psutil.Process(record['pid'])
-            modified = max((root/name).stat().st_mtime for name in
+            modified = max((root/name if not name.startswith('agent_plugins/') else pathlib.Path(__file__).resolve().parent/name).stat().st_mtime for name in
                            ('runtime/hermes/hermes_cli/goals.py', 'runtime/hermes/gateway/run_goals.py',
-                            'runtime/hermes/hermes_cli/goal_command.py'))
+                            'runtime/hermes/hermes_cli/goal_command.py', 'runtime/hermes/hermes_cli/goal_autonomy.py',
+                            'runtime/hermes/hermes_cli/goal_result_check.py',
+                            'agent_plugins/freedom-progress/arshi.py'))
             with sqlite3.connect('file:'+(home/'state.db').as_posix()+'?mode=ro', uri=True) as conn:
                 pending = conn.execute("SELECT COUNT(*) FROM session_admissions WHERE status IN ('queued','started','unknown')").fetchone()[0]
             return {'ready': process.create_time() >= modified, 'pending': pending}
@@ -127,12 +141,14 @@ class GoalWorkspace:
                     await asyncio.wait_for(proc.wait(), 35)
                 except asyncio.TimeoutError:
                     raise web.HTTPConflict(text='Применение ещё продолжается. Обновите состояние через несколько секунд.')
-            if proc.returncode != 0:
-                raise web.HTTPConflict(text='Обновление движка не применено. Подробности в локальном журнале.')
+            # On Windows the CLI may report a missing system service, then successfully
+            # fall back to a direct spawn. Confirm the owned live engine, not only its exit code.
             for _ in range(50):
                 if self.bridge.ready.is_set() and (await asyncio.to_thread(self.engine_status))['ready']:
                     return
                 await asyncio.sleep(.1)
+            if proc.returncode != 0:
+                raise web.HTTPConflict(text='Обновление движка не подтверждено. Подробности в локальном журнале.')
             raise web.HTTPConflict(text='Движок переподключается. Обновите состояние цели.')
         finally:
             request.app['update_applying'] = False
@@ -161,9 +177,12 @@ class GoalWorkspace:
         result = {key: str(fields.get(key) or '').strip() for key in ('objective', 'verification', 'constraints')}
         if not result['objective'] or sum(map(len, result.values())) > 1900:
             raise web.HTTPBadRequest(text='Опишите цель: не более 1900 символов вместе с критериями и ограничениями.')
+        if type(fields.get('arshi', False)) is not bool:
+            raise web.HTTPBadRequest(text='Некорректный режим АРЧИ.')
+        result['arshi'] = fields.get('arshi', False)
         return result
 
-    async def enqueue(self, sid, dispatch, snapshot):
+    async def enqueue(self, sid, dispatch, snapshot, context=None):
         if dispatch.get('type') != 'send' or not dispatch.get('message'):
             raise web.HTTPConflict(text='Движок не подтвердил запуск цели. Обновите её состояние.')
         input_id = 'goal_' + uuid.uuid4().hex
@@ -175,7 +194,15 @@ class GoalWorkspace:
         notes += ('\nРаботай по сохранённой цели и критериям готовности. После значимого шага сохраняй '
                   'в памяти проекта факты, принятые решения, изменённые файлы и оставшиеся шаги. '
                   'В итогах шага приводи проверенные результаты и препятствия. Не объявляй цель выполненной без доказательств.')
-        api_text = message+'\n\n[Выполнение и память]\n'+notes
+        if arshi_enabled(snapshot.get('goal')):
+            # Load through Hermes' actual profile skill resolver, not a guessed directory.
+            # Persist these exact bytes with the admission; lost ACK retries cannot change them.
+            from tools.skills_tool import skill_view
+            skill = json.loads(await asyncio.to_thread(skill_view, 'arshi', preprocess=False))
+            if not skill.get('success') or not skill.get('content'):
+                raise web.HTTPConflict(text='Навык arshi недоступен в текущем профиле Hermes. Цель оставлена на паузе.')
+            notes += '\n\n[Загруженный навык arshi]\n' + skill['content']
+        api_text = message+('\n\n[Согласованный контекст]\n'+context if context else '')+'\n\n[Выполнение и память]\n'+notes
         # Store the exact wire payload. An explicit recovery reuses this input id;
         # the owner returns its original receipt instead of admitting a second task.
         with self.db() as conn:
@@ -198,7 +225,7 @@ class GoalWorkspace:
         except web.HTTPException as exc:
             return web.json_response({'error': exc.text}, status=exc.status)
 
-    async def _change(self, request):
+    async def _change(self, request, kickoff_context=None):
         sid = request.match_info['sid']
         data = await request.json()
         async with self.locks.setdefault(sid, asyncio.Lock()):
@@ -272,7 +299,7 @@ class GoalWorkspace:
                             if not draft or data.get('draft_revision') != draft['revision']:
                                 raise web.HTTPConflict(text='Сначала сохраните актуальное описание цели.')
                             fields = draft['fields']
-                        dispatch = await self.bridge.rpc('slash.exec', session_id=sid, command=self.command(fields))
+                        dispatch = await self.bridge.rpc('slash.exec', session_id=sid, command=self.command(fields,info.get('cwd'),sid))
                         if repeated and dispatch.get('message'):
                             dispatch['message'] += ('\n\nПользователь проверил прежний результат и не принял его. '
                                 'Предыдущая отметка о достижении этой цели отозвана пользователем. '
@@ -287,7 +314,7 @@ class GoalWorkspace:
                     if not after['goal'] or after['goal']['status'] != 'active':
                         raise web.HTTPConflict(text='Не удалось включить цель. Откройте её состояние заново.')
                     try:
-                        await self.enqueue(sid, dispatch, after)
+                        await self.enqueue(sid, dispatch, after, context=kickoff_context)
                         if repeated:
                             with self.db() as conn:
                                 conn.execute('UPDATE workspace_goal_history SET reopen_count=reopen_count+1,last_reopened=? WHERE id=? AND session_id=?',

@@ -188,6 +188,7 @@ class CloudAPI:
                     account=str(data.get('account_id') or '').strip()
                     if not re.fullmatch(r'[a-fA-F0-9]{32}',account):raise ValueError('Account ID Cloudflare должен содержать 32 шестнадцатеричных символа.')
                     url='https://api.cloudflare.com/client/v4/user/tokens/verify'
+                elif provider=='stability':url='https://api.stability.ai/v1/user/balance'
                 elif provider=='openrouter':url=card['base']+'/key'
                 elif provider=='gemini':
                     url='https://generativelanguage.googleapis.com/v1beta/models';headers={'x-goog-api-key':key}
@@ -195,7 +196,7 @@ class CloudAPI:
                 async with http.get(url,headers=headers,allow_redirects=False) as r:
                     if r.status!=200:raise ValueError(self.upstream_error(r.status,paid))
                     body=await r.json()
-            if provider=='fal':rows=[]
+            if provider in {'fal','stability'}:rows=[]
             elif provider=='cloudflare':
                 if not body.get('success') or (body.get('result') or {}).get('status')!='active':raise ValueError('Cloudflare не подтвердил активность токена.')
                 rows=[]

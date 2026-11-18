@@ -1,0 +1,24 @@
+/* The original composer remains mounted; only the empty-chat layout changes. */
+.main.welcome-main{overflow-y:auto;scrollbar-width:thin}
+.welcome-main .conversation.welcome-view{flex:0 0 auto;overflow:visible;padding:clamp(52px,10vh,104px) 28px 0;scroll-behavior:auto}
+.welcome-main .welcome{padding:0;animation:none}
+.welcome-main .welcome .eyebrow{margin:16px 0 15px}
+.welcome-main .welcome h1{margin:0;font-size:clamp(27px,2.3vw,34px);line-height:1.25}
+.welcome-main .composer-zone{flex:0 0 auto;margin:32px 0 0;padding-bottom:36px}
+.welcome-brand{position:relative;display:flex;align-items:center;justify-content:center;isolation:isolate;width:270px;height:90px;margin:0 auto 14px;user-select:none}
+.welcome-brand-halo{position:absolute;inset:-34px 0;background:radial-gradient(ellipse,#ab91f31c,transparent 67%);opacity:0;animation:welcome-halo 3.5s ease forwards}
+.welcome-brand-word{position:absolute;display:flex;align-items:center;font-size:48px;font-weight:500;line-height:1.15;letter-spacing:-2.6px;color:#e8e0ff;filter:drop-shadow(0 3px 19px #ae8ffb22);animation:welcome-word-away .55s cubic-bezier(.2,.7,.2,1) 2.35s both}
+.welcome-brand-word>span{display:block;clip-path:inset(0 100% 0 0);background:linear-gradient(115deg,#eee9ff 5%,#c9b4ff 60%,#9e8af2);background-clip:text;-webkit-text-fill-color:transparent;animation:welcome-type 1.15s steps(7,end) .15s both}
+.welcome-brand-word>i{position:absolute;left:0;top:12%;width:2px;height:80%;border-radius:2px;background:#c4afff;box-shadow:0 0 11px #ba9cff66;animation:welcome-caret 1.15s steps(7,end) .15s both,welcome-caret-fade .4s ease 1.7s forwards}
+.welcome-brand-logo{position:absolute;width:57px;height:57px;border-radius:17px;opacity:0;transform:scale(.65) rotate(-8deg);filter:blur(5px);box-shadow:0 9px 40px #9b7fdb1c;animation:welcome-logo-in .85s cubic-bezier(.17,.8,.23,1) 2.55s forwards}
+.welcome-brand-spark{position:absolute;top:14px;left:91px;width:85px;height:62px;opacity:0;background:linear-gradient(110deg,transparent 30%,#f3edff38 48%,transparent 65%);transform:translateX(-45px) skewX(-10deg);mix-blend-mode:screen;pointer-events:none;animation:welcome-shimmer 1s ease 3.1s forwards}
+@keyframes welcome-type{to{clip-path:inset(0 0 0 0)}}
+@keyframes welcome-caret{to{left:100%}}
+@keyframes welcome-caret-fade{to{opacity:0}}
+@keyframes welcome-word-away{from{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}to{opacity:0;transform:translateY(-2px) scale(.86);filter:blur(6px)}}
+@keyframes welcome-logo-in{to{opacity:1;transform:scale(1) rotate(0);filter:blur(0)}}
+@keyframes welcome-halo{0%{opacity:0;transform:scale(.8)}45%{opacity:1}100%{opacity:.65;transform:scale(1)}}
+@keyframes welcome-shimmer{0%{opacity:0;transform:translateX(-45px) skewX(-10deg)}35%{opacity:.65}100%{opacity:0;transform:translateX(65px) skewX(-10deg)}}
+@media(max-width:760px){.welcome-main .conversation.welcome-view{padding:clamp(35px,8vh,72px) 18px 0}.welcome-main .composer-zone{margin-top:27px}.welcome-main .welcome h1{font-size:27px;letter-spacing:-.8px}.welcome-main .welcome .eyebrow{font-size:8px;letter-spacing:1.4px}.welcome-brand{height:80px;margin-bottom:12px}.welcome-brand-word{font-size:43px}.welcome-brand-logo{width:52px;height:52px}}
+@media(max-height:650px) and (min-width:761px){.welcome-main .conversation.welcome-view{padding-top:25px}.welcome-brand{height:65px;margin-bottom:5px}.welcome-main .composer-zone{margin-top:22px}}
+@media(prefers-reduced-motion:reduce){.welcome-brand-word,.welcome-brand-spark{display:none}.welcome-brand-halo{animation:none;opacity:.65}.welcome-brand-logo{animation:none;opacity:1;transform:none;filter:none}}

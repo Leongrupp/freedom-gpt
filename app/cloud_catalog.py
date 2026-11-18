@@ -68,3 +68,15 @@ PROVIDERS.update({
 })
 # All previously listed services now have explicit, opt-in paid integrations.
 UNAVAILABLE=[]
+
+
+PROVIDERS['stability']={'name':'Stable Audio','kind':'music','mark':'♫','billing':'trial','daily_cap':10,
+ 'base':'https://api.stability.ai','key_url':'https://platform.stability.ai/account/keys',
+ 'pricing_url':'https://docs.stability.ai/pricing','docs_url':'https://docs.stability.ai/api-reference',
+ 'summary':'Инструментальная музыка через официальный Stable Audio API. Трек сохраняется на вашем ПК и открывается в плеере Freedom.',
+ 'quota':'Новым аккаунтам дают 25 стартовых кредитов без карты. Это разовый пробный запас, а не ежемесячный бесплатный тариф. Генерация расходует кредиты. После исчерпания остановитесь или используйте локальный ACE-Step.',
+ 'privacy':'Описание музыки отправляется Stability AI. Не подключайте платный биллинг для пробного режима. Приложение не может отличить подарочные и купленные кредиты; оно не покупает кредиты и не повторяет генерацию автоматически.',
+ 'steps':['Создайте аккаунт на официальной платформе Stability AI. Проверьте наличие стартовых кредитов; карту добавлять не нужно.',
+          'В Account → API keys создайте ключ. Вставьте его ниже: проверка только читает баланс, без генерации.',
+          'Откройте «Создать музыку» → «Через API». Подтвердите расход пробных кредитов перед запуском. Для постоянной бесплатной работы выберите локальную модель.'],
+ 'models':[]}

@@ -18,7 +18,7 @@ try:
  while not (STACK/'.tmp/stop-server').exists():
   if gpu_reserved():time.sleep(1);continue
   cfg=read(STACK/'server-settings.json',{});engine=native_binary(ROOT,'llama',cfg.get('backend'))
-  args=[str(engine),'-m',cfg['model'],'--host','127.0.0.1','--port',str(cfg['port']),'--alias',cfg['alias'],'-c',str(cfg['context']),'-np','1','-ngl',str(cfg['ngl']),'-fa','on','-ctk','q8_0','-ctv','q8_0','-t',str(cfg['threads']),'-tb',str(cfg['threads']),'-b','512','-ub','256','--metrics','--slots','--no-webui','--cache-prompt','--log-verbosity','3']
+  args=[str(engine),'-m',cfg['model'],'--host','127.0.0.1','--port',str(cfg['port']),'--alias',cfg['alias'],'-c',str(cfg['context']),'-np','1','-ngl',str(cfg['ngl']),'-fa','on','-ctk',cfg.get('kv_cache','q8_0'),'-ctv',cfg.get('kv_cache','q8_0'),'-t',str(cfg['threads']),'-tb',str(cfg['threads']),'-b','512','-ub','256','--metrics','--slots','--no-webui','--cache-prompt','--log-verbosity','3']
   if cfg.get('context_mode')=='auto':
    # Size a new model once. Keep that allocated window on worker recovery so
    # an existing agent never outgrows a silently reduced server context.

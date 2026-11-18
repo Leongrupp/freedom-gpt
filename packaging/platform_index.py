@@ -1,5 +1,5 @@
 """Assemble a local download index only; never publishes or uploads."""
-import json,pathlib,shutil
+import json,pathlib,shutil,os
 from platform_bundle import ROOT,VERSION,sha
 from publish_platforms import verify_package_reports,verify_native_macos
 
@@ -13,7 +13,11 @@ def main():
  for item in release['files']:
   file=ROOT/'release'/item['name'];target=out/file.name
   if file.stat().st_size!=item['bytes'] or sha(file)!=item['sha256']:raise ValueError('Windows release integrity: '+file.name)
-  shutil.copy2(file,target)
+  if target.exists():
+   if sha(target)!=item['sha256']:raise ValueError('Existing staged asset changed: '+target.name)
+  else:
+   try:os.link(file,target)
+   except OSError:shutil.copy2(file,target)
  (out/'windows-x64.json').write_text(json.dumps({'version':VERSION,'platform':'windows-x64','files':release['files'],'published':False,'core_runtime_tested':True},indent=2))
  notes={
   'windows-x64':('Windows 10/11 x64','Проверено на Windows 11. Python, Node.js и движки внутри. Модели отдельно.','Tested on Windows 11. Python, Node.js and engines included; models separate.'),

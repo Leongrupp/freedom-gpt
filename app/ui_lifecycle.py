@@ -55,9 +55,9 @@ def request_stop():
 
 
 @contextmanager
-def startup_lock(name):
+def startup_lock(name,timeout=10):
     from platform_support import file_lock
-    deadline = time.monotonic() + 10
+    deadline = time.monotonic() + timeout
     while True:
         try:
             handle = file_lock(ROOT / '.tmp' / name)

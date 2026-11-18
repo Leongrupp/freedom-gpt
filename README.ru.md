@@ -4,7 +4,7 @@
 
 **Русский** · [English](README.md)
 
-> **Freedom GPT 1.6.0.** Сборки Windows, Ubuntu и Apple Silicon, доступ с телефона, награды и уведомления об ответах. Перед установкой ознакомьтесь с требованиями и проверками платформ.
+> **Freedom GPT 1.7.0.** Сборки Windows, Ubuntu и Apple Silicon, доступ с телефона, награды и уведомления об ответах. Перед установкой ознакомьтесь с требованиями и проверками платформ.
 
 Freedom GPT связывает совместимые нейросети, инструменты и память проекта. Поручите результат: агент может править реальные файлы, запускать команды, работать с сайтами и продолжать проект в одном чате.
 
@@ -52,10 +52,10 @@ Freedom GPT связывает совместимые нейросети, инс
 
 | Система | Скачать | Требования |
 |---|---|---|
-| Windows | [EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Windows-x64.zip) | Windows 10/11 x64 |
-| Ubuntu / Linux | [.run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-Setup-1.6.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04+ x64 / compatible glibc 2.39+ |
-| macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.6.0/FreedomGPT-1.6.0-macOS-AppleSilicon.zip) | M1+, macOS 26.2+; unsigned / not notarized |
-| iPhone / Android | [Подключение телефона](docs/PHONE-ACCESS.md) | Обзор 1.6.0: браузер телефона + работающий ПК |
+| Windows | [EXE](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-Setup-1.7.0.exe) · [ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Windows-x64.zip) | Windows 10/11 x64 |
+| Ubuntu / Linux | [.run](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-Setup-1.7.0-Ubuntu-x64.run) · [DEB](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Ubuntu-amd64.deb) · [TAR.GZ](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-Ubuntu-x64.tar.gz) | Ubuntu 24.04+ x64 / compatible glibc 2.39+ |
+| macOS | [Apple Silicon .app ZIP](https://github.com/Leongrupp/freedom-gpt/releases/download/v1.7.0/FreedomGPT-1.7.0-macOS-AppleSilicon.zip) | M1+, macOS 26.2+; unsigned / not notarized |
+| iPhone / Android | [Подключение телефона](docs/PHONE-ACCESS.md) | Обзор 1.7.0: браузер телефона + работающий ПК |
 
 **Python, Node.js/npm, библиотеки агента и движки уже внутри.** Системный Python и Ollama не нужны. Веса моделей скачиваются отдельно. Git, браузеры автоматизации, Blender и специализированные инструменты устанавливаются отдельно.
 
@@ -67,9 +67,9 @@ Freedom GPT связывает совместимые нейросети, инс
 |---|---|
 | ![Goals](assets/screenshots/goal-ru.png) | ![Models](assets/screenshots/models-ru.png) |
 
-Снимки выше сделаны в настоящей Windows-версии на нейтральном проекте ExpenseLab. Новые панели 1.6.0 — ниже. Подробности и происхождение снимков: [SCREENSHOTS](docs/SCREENSHOTS.md).
+Снимки выше сделаны в настоящей Windows-версии на нейтральном проекте ExpenseLab. Новые панели 1.7.0 — ниже. Подробности и происхождение снимков: [SCREENSHOTS](docs/SCREENSHOTS.md).
 
-![Настоящие уведомления и настройки 1.6.0](assets/screenshots/notifications-160.png)
+![Настоящие уведомления и настройки 1.7.0](assets/screenshots/notifications-160.png)
 
 ## Начать за три шага
 
@@ -98,3 +98,9 @@ Freedom GPT связывает совместимые нейросети, инс
 ## Лицензии
 
 Исходный код Freedom GPT — MIT. Hermes и другие компоненты сохраняют свои лицензии и сведения об авторах. См. [NOTICE](NOTICE), [LICENSE](LICENSE), [licenses](licenses). Чистые сборки не содержат личных чатов, ключей, моделей и профиля автора.
+
+## Новое в 1.7.0
+
+Общая Нейросфера проектов, команда ИИ-специалистов с личными чатами, настройки характера и общения, обновлённое меню и сохранение измеренных профилей турбо. Голосовые модели и личные профили, дополнительные инструменты камеры и VR требуют отдельной настройки и совместимого оборудования. Личные данные автора не включены.
+
+![Freedom GPT 1.7.0](assets/screenshots/workspace-170-ru.png)

@@ -1,0 +1,5 @@
+.chat-jump-anchor{position:relative;flex:0 0 0;height:0;z-index:8;pointer-events:none}
+.chat-jump-bottom{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:34px;height:34px;display:grid;place-items:center;padding:0;border:1px solid var(--border);border-radius:50%;background:var(--panel);color:var(--text);box-shadow:0 3px 12px #0003;cursor:pointer;pointer-events:auto;transition:background .15s,border-color .15s,box-shadow .15s}
+.chat-jump-bottom:hover{background:var(--surface-hover);border-color:var(--muted);box-shadow:0 4px 16px #0004}
+.chat-jump-bottom:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.chat-jump-bottom:disabled{opacity:.5;cursor:wait}

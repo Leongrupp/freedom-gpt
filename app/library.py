@@ -76,6 +76,8 @@ class Library:
   cfg.update(context=context,native_context=self.native_context(item),context_verified=True);write(STACK/'server-settings.json',cfg)
   previous=read(ROOT/'data/model-contexts.json',{})
   previous[item['id']]={'context':context,'native_context':cfg['native_context'],'mode':cfg.get('context_mode','manual')};write(ROOT/'data/model-contexts.json',previous)
+  from compression_profile import sync_local_compression
+  sync_local_compression(cfg)
   return context
  def session_models(self):
   from model_routes import alias
@@ -226,11 +228,15 @@ class Library:
    ngl='auto' if backend!='cpu' and auto_context else ngl;mode='auto' if auto_context else 'selected'
    if selected.get('device')==device_key and selected.get('ngl') is not None:ngl=selected['ngl'];mode='selected'
   if device.get('ram_available_gb',0)<required_ram:raise ValueError('Недостаточно свободной RAM для этого режима: нужно примерно '+str(round(required_ram,1))+' ГБ. Закройте другие модели/тяжёлые приложения или выберите более лёгкую модель.')
-  return {'model':str(self.folder(item)/'model.gguf'),'mmproj':str(self.folder(item)/'mmproj.gguf') if any(f['name']=='mmproj.gguf' for f in item['files']) else None,
+  result={'model':str(self.folder(item)/'model.gguf'),'mmproj':str(self.folder(item)/'mmproj.gguf') if any(f['name']=='mmproj.gguf' for f in item['files']) else None,
           'context':context,'port':config()['model_port'],'alias':'freedom-local','threads':max(1,min(16,device.get('physical_cores') or 4)),
           'backend':backend,'ngl':ngl,'mtp':bool((item.get('mtp') or any(key.endswith('.nextn_predict_layers') and value for key,value in metadata.items())) and ngl!='0'),'kv_cache':'q8_0',
           'native_context':self.native_context(item),'context_mode':mode,'context_verified':False,
           'fit_min_context':context if selected_context else min(65536,context),'fit_margin_mb':2048 if selected_context else 1024}
+  result['catalog_id']=item['id']
+  from engine_profiles import load
+  result.update(load(result))
+  return result
  def start_model(self,item):
   from model_routes import alias
   cfg=self.engine_config(item);cfg.update(catalog_id=item['id'],api_alias=alias(item['id']));write(STACK/'server-settings.json',cfg);write_hermes(cfg['context'])

@@ -1,8 +1,25 @@
 {
-  "version": "1.6.0",
+  "version": "1.7.0",
   "macos": {
-    "file": "FreedomGPT-1.6.0-macOS-AppleSilicon.zip",
-    "bytes": 320246128,
-    "sha256": "68f60acb7d3ea1e0af9a8e4f8463d5300ad8edb70c1b161b46c3c96346ad87d2"
-  }
+    "file": "FreedomGPT-1.7.0-macOS-AppleSilicon.zip",
+    "bytes": 382566475,
+    "sha256": "bbae34b1a4eb8b2bd299b2ae16b17cc0c8c877e7d508bada878d30a0eb12abf6"
+  },
+  "ubuntu-x64": [
+    {
+      "file": "FreedomGPT-1.7.0-Ubuntu-x64.tar.gz",
+      "bytes": 1406861669,
+      "sha256": "62cea10705c3108df5d0b0b4559a7455749a9c577599ad34d838d79cd6ef3e29"
+    },
+    {
+      "file": "FreedomGPT-1.7.0-Ubuntu-amd64.deb",
+      "bytes": 1406314262,
+      "sha256": "2c5bc78385c14dccc9ec3fc22413fd2f75ac8bc029d877d645ad3a5d0b666f05"
+    },
+    {
+      "file": "FreedomGPT-Setup-1.7.0-Ubuntu-x64.run",
+      "bytes": 1406862275,
+      "sha256": "a165ba43b1ab7c060fdd5ca51a725bbd7e6f030ba03466f15cb4a84b37afee7e"
+    }
+  ]
 }

@@ -12,5 +12,14 @@ def store_for(portable,snapshot,sid):
     candidate=(snapshot.get('info') or {}).get('cwd')
     session=re.sub(r'[^A-Za-z0-9_.-]','_',snapshot.get('stored_session_id') or sid)
     binding=portable.HOME/'continuity'/session/'project.json'
-    if binding.is_file():candidate=json.loads(binding.read_text(encoding='utf-8-sig'))['project']
+    if binding.is_file():
+        try:
+            data=json.loads(binding.read_text(encoding='utf-8-sig'))
+            selected=data.get('project') if isinstance(data,dict) else None
+            if isinstance(selected,str) and selected.strip():
+                return module.ProjectStore(selected)
+        except (OSError,ValueError,TypeError):
+            # A stale/corrupt binding must not hide valid current-workspace memory.
+            # ProjectStore still enforces the existing A: project/junction scope.
+            pass
     return module.ProjectStore(candidate) if candidate else None

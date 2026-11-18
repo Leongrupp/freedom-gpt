@@ -955,7 +955,8 @@ def judge_goal(
         return "continue", f"goal_judge auxiliary client unavailable: {exc}", False, None, True
     except Exception as exc:
         logger.info("goal judge: API call failed (%s) — falling through to continue", exc)
-        return "continue", f"judge error: {type(exc).__name__}", False, None, True
+        from hermes_cli.goal_autonomy import transport_reason
+        return "continue", transport_reason(exc), False, None, True
 
     verdict, reason, parse_failed, wait_directive = _parse_judge_response(raw)
     logger.info("goal judge: verdict=%s reason=%s%s", verdict, _truncate(reason, 120),
@@ -1325,8 +1326,9 @@ class GoalManager:
         replay the recorded failure when "nothing changed", but porcelain sees neither the contents
         of an untracked or already-modified file nor inputs outside the repo, so a repaired input
         was replayed as still-failing until retry exhaustion paused the goal (#110649). The
-        retry cap below still bounds a genuinely stuck red suite.
+        Finite goals retain the retry cap; opted-in unlimited goals change repair strategy instead.
         """
+        from hermes_cli.goal_autonomy import gate_retry_exhausted,gate_repair_prompt,gate_retry_limit
         state = self._state
         if state is None or not state.gates:
             return None
@@ -1348,7 +1350,7 @@ class GoalManager:
 
             gate.attempts += 1
 
-            if gate.attempts > gate.max_retries:
+            if gate_retry_exhausted(state,gate):
                 return self._pause_decision(
                     f"quality gate exhausted {gate.attempts - 1} retries: $ {gate.command}",
                     "gate_failed", f"gate exhausted retries: $ {gate.command}",
@@ -1361,13 +1363,14 @@ class GoalManager:
             self._save()
             prompt = CONTINUATION_PROMPT_GATE_FAILED_TEMPLATE.format(
                 goal=state.goal, command=gate.command, exit_code=exit_code, attempt=gate.attempts,
-                max_retries=gate.max_retries, output=tail or "(no output)",
+                max_retries=gate_retry_limit(state,gate), output=tail or "(no output)",
             )
+            prompt = gate_repair_prompt(state,gate,prompt)
             return _decision(
                 "active", True, prompt, "gate_failed",
                 f"gate failed (exit {exit_code}): $ {gate.command}",
                 f"✗ Quality gate failed ({state.turns_used} turns, "
-                f"attempt {gate.attempts}/{gate.max_retries}): $ {gate.command}",
+                f"attempt {gate.attempts}/{gate_retry_limit(state,gate)}): $ {gate.command}",
             )
 
         self._save()
@@ -1499,7 +1502,7 @@ class GoalManager:
     def evaluate_after_turn(
         self, last_response: str, *, user_initiated: bool = True,
         background_processes: Optional[list[dict[str, Any]]] = None,
-        active_delegations: int = 0,
+        active_delegations: int = 0, turn_failure=None,
     ) -> dict[str, Any]:
         """Commit a verdict only against the exact goal version that was judged.
 
@@ -1517,7 +1520,7 @@ class GoalManager:
         try:
             return self._evaluate_after_turn_current(
                 last_response, user_initiated=user_initiated,
-                background_processes=background_processes, active_delegations=active_delegations)
+                background_processes=background_processes, active_delegations=active_delegations,turn_failure=turn_failure)
         except _GoalChangedDuringEvaluation:
             self._state = load_goal(self.session_id)
             return _decision(self._state.status if self._state else None, False, None,
@@ -1528,7 +1531,7 @@ class GoalManager:
     def _evaluate_after_turn_current(
         self, last_response: str, *, user_initiated: bool = True,
         background_processes: Optional[list[dict[str, Any]]] = None,
-        active_delegations: int = 0,
+        active_delegations: int = 0, turn_failure=None,
     ) -> dict[str, Any]:
         """Run gates + judge and update state. Return a decision dict (``status``, ``should_continue``,
         ``continuation_prompt``, ``verdict``, ``reason``, ``message``). Both real user prompts and our
@@ -1541,6 +1544,14 @@ class GoalManager:
         if self.is_waiting():
             return self._waiting_decision(state)
 
+        from hermes_cli.goal_autonomy import recoverable_context_failure
+        if recoverable_context_failure(state,turn_failure):
+            state.last_verdict='continue'
+            state.last_reason='Temporary context overflow; native compression must recover before continuing the goal'
+            self.wait_for_seconds(30,reason=state.last_reason)
+            return _decision('active',False,None,'wait',state.last_reason,
+                             '⏳ Восстанавливаем рабочий контекст. Цель сохранена; продолжение после ожидания.')
+
         state.turns_used += 1
         state.last_turn_at = time.time()
 
@@ -1552,8 +1563,9 @@ class GoalManager:
                 return self._budget_pause(state, "gate_failed", gate_decision.get("reason", ""), note=" (a quality gate is still failing)")
             return gate_decision
 
+        from hermes_cli.goal_result_check import reviewer_evidence
         verdict, reason, parse_failed, wait_directive, transport_failed = judge_goal(
-            state.goal, last_response, subgoals=state.subgoals or None, background_processes=background_processes,
+            state.goal, last_response + reviewer_evidence(self.session_id), subgoals=state.subgoals or None, background_processes=background_processes,
             contract=state.contract if state.has_contract() else None, active_delegations=active_delegations,
         )
         state.last_verdict = verdict
@@ -1580,6 +1592,15 @@ class GoalManager:
             )
 
         if verdict == "done":
+            from hermes_cli.goal_result_check import completion_artifact_issue
+            issue=completion_artifact_issue(self.session_id,last_response)
+            if issue:
+                state.last_verdict,state.last_reason='continue',issue
+                if state.max_turns>0 and state.turns_used>=state.max_turns:
+                    return self._budget_pause(state,'continue',issue)
+                self._save()
+                return _decision('active',True,(self.next_continuation_prompt() or '')+'\n\n'+issue,
+                                 'continue',issue,'↻ Local artifact verification found missing output; continuing the goal.')
             state.status = "done"
             self._save()
             return _decision("done", False, None, "done", reason, f"✓ Goal achieved: {reason}")
@@ -1587,6 +1608,13 @@ class GoalManager:
         # Persistent judge failures (API unreachable / unparseable output) auto-pause and point at the
         # goal_judge config so a broken judge can't burn the whole turn budget.
         n_tx, n_parse = state.consecutive_transport_failures, state.consecutive_parse_failures
+        if transport_failed:
+            from hermes_cli.goal_autonomy import transport_backoff
+            delay=transport_backoff(state,reason)
+            if delay:
+                self.wait_for_seconds(delay,reason=reason)
+                return _decision('active',False,None,'wait',reason,
+                                 f'⏳ Временный сбой проверки цели. Повторная проверка через {delay} с; цель сохранена.')
         if n_tx >= DEFAULT_MAX_CONSECUTIVE_TRANSPORT_FAILURES:
             return self._pause_decision(
                 f"judge API unreachable {n_tx} turns in a row (check auxiliary.goal_judge provider/key in config.yaml)",

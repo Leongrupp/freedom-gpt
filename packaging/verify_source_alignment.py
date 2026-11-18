@@ -12,11 +12,19 @@ def sha(data):return hashlib.sha256(data).hexdigest()
 def main():
     expected={}
     for name in ['bootstrap.py','launch.py','stop.py','server.py','library.py','engine_supervisor.py','gguf_info.py',
-                 'generate-image-request.py','updater.py','apply_update.py','update_protocol.py','version.json','catalog.json']:
+                 'generate-image-request.py','updater.py','apply_update.py','update_protocol.py','version.json','catalog.json','README.txt','init-project-memory.py']:
         expected[name]=sha((ROOT/'app'/name).read_bytes())
     for name in [*MODULES,'discovery.py','video.py','platform_support.py','preflight.py','system_check.py']:
         expected['runtime/freedom/'+name]=sha((ROOT/'app'/name).read_bytes())
     overrides=json.loads((ROOT/'app/native_overrides/manifest.json').read_text(encoding='utf8'))
+    for file in (ROOT/'app/builtin_skills/arshi').rglob('*'):
+        if file.is_file():
+            relative=file.relative_to(ROOT/'app/builtin_skills/arshi').as_posix()
+            expected['stack/hermes-runtime/skills/arshi/'+relative]=sha(file.read_bytes())
+            expected['runtime/freedom/builtin_skills/arshi/'+relative]=sha(file.read_bytes())
+    for file in (ROOT/'app/agent_plugins/freedom-progress').rglob('*'):
+        if file.is_file() and file.name!='runtime.json' and '__pycache__' not in file.parts:
+            expected['stack/hermes-runtime/plugins/freedom-progress/'+file.relative_to(ROOT/'app/agent_plugins/freedom-progress').as_posix()]=sha(file.read_bytes())
     for item in overrides['files']:
         source=ROOT/'app/native_overrides'/item['path']
         assert sha(source.read_bytes())==item['sha256']

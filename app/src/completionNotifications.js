@@ -30,7 +30,7 @@ export function watchNotificationPreferences(listener){
 export function publishCompletionFrame(frame){
   if(frame?.type!=='gateway.event'||frame.event_type!=='message.complete'||!frame.session_id)return;
   const p=frame.payload||{};
-  if(p.error||p.failure_reason||p.partial||
+  if(p.notification_only||p.error||p.failure_reason||p.partial||
     (p.status&&p.status!=='complete')||
     (p.outcome&&!['complete','completed','settled','success'].includes(p.outcome)))return;
   // Child watch mirrors have text only. A real completed turn has a status or

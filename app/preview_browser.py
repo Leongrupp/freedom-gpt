@@ -20,6 +20,10 @@ log=logging.getLogger('freedom.preview')
 class PreviewBrowser:
     def __init__(self,root,portable,bridge,artifact):
         self.root,self.portable,self.bridge,self.artifact=root,portable,bridge,artifact
+        from browser_store import BrowserStore
+        self.store=BrowserStore(root);self.history_seen={}
+        from browser_launch import BrowserLaunch
+        self.launch=BrowserLaunch(root)
         source=root/'agent_plugins/freedom-preview'
         if not source.is_dir():source=root/'runtime/freedom/agent_plugins/freedom-preview'
         if source.is_dir():
@@ -30,7 +34,7 @@ class PreviewBrowser:
             portable.write(target/'runtime.json',{'app_relative':__import__('os').path.relpath(root,target)})
         self.lock=asyncio.Lock();self.start_lock=asyncio.Lock();self.process=None;self.log=None
         self.reader=None;self.pending={};self.pending_processes={};self.latest={};self.activities={};self.notifications=set()
-        self.sequences={};self.presentation_epoch=uuid.uuid4().hex
+        self.inflight_sessions={};self.sequences={};self.presentation_epoch=uuid.uuid4().hex
         path=root/'data/preview-control.json';saved=portable.read(path,{})
         self.key=saved.get('key') or secrets.token_urlsafe(40)
         portable.write(path,{'key':self.key,'url':f"http://127.0.0.1:{portable.config()['ui_port']}/preview-control"})
@@ -70,7 +74,7 @@ class PreviewBrowser:
         home=self.root/'.cache/preview-browser';home.mkdir(parents=True,exist_ok=True)
         # Keep Windows identity folders valid for Edge's OS services. Playwright's
         # isolated user-data-dir, temp files, disk cache and crash dumps stay on A:.
-        env.update(TEMP=str(self.root/'.tmp'),TMP=str(self.root/'.tmp'),HOME=str(home))
+        env.update(TEMP=str(self.root/'.tmp'),TMP=str(self.root/'.tmp'),HOME=str(home),FREEDOM_PYTHON=__import__('sys').executable)
         node=self.root/'runtime/node/node.exe'
         if not node.is_file():node=self.root/'runtime/node/bin/node'
         self.log=(self.root/'logs/preview-browser.log').open('ab')
@@ -83,6 +87,10 @@ class PreviewBrowser:
 
     def presentation(self,sid,result):
         result=dict(result)
+        visit=(result.get('visit_id'),result.get('title'))
+        if visit[0] and self.history_seen.get(sid)!=visit:
+            try:self.store.visit(visit[0],result.get('url',''),result.get('title',''));self.history_seen[sid]=visit
+            except Exception:log.warning('Browser history could not record a visit')
         self.sequences=getattr(self,'sequences',{})
         self.sequences[sid]=self.sequences.get(sid,0)+1
         result.update(sequence=self.sequences[sid],presentation_epoch=getattr(self,'presentation_epoch','legacy'))
@@ -133,7 +141,15 @@ class PreviewBrowser:
 
     async def call(self,sid,data):
         sid=self.session(sid);data=dict(data);action=data.get('action','status')
+        choice=self.launch.choice(sid) if hasattr(self,'launch') else {'browser':'builtin','engine':'auto'}
+        if hasattr(self,'launch') and action in {'open','search'} and sid not in self.launch.read().get('sessions',{}):self.launch.select(sid,choice['browser'],choice['engine'])
+        data.update(browser=choice['browser'],search_engine=choice['engine'])
+        if action=='login_fill' and data.get('source')!='credential-vault':raise ValueError('Используйте кнопку сохранённых входов в панели браузера.')
         if action=='open':data['url']=self.target(data.get('url'))
+        if action=='search':
+            data['query']=str(data.get('query') or '').strip()
+            if not data['query'] or len(data['query'])>2000:raise ValueError('Укажите поисковый запрос до 2000 символов.')
+            data['limit']=max(1,min(10,int(data.get('limit') or 5)))
         if action=='adopt':data['from']=self.session(data.get('from'))
         if action=='viewport':
             data['width']=max(320,min(1920,int(data.get('width',1280))));data['height']=max(320,min(1200,int(data.get('height',800))))
@@ -149,6 +165,8 @@ class PreviewBrowser:
         if action=='status' and self.pending and sid in self.latest:return self.presentation(sid,self.latest[sid])
         await self.start();identifier=uuid.uuid4().hex;future=asyncio.get_running_loop().create_future()
         self.pending[identifier]=future
+        self.inflight_sessions=getattr(self,'inflight_sessions',{})
+        if action!='status':self.inflight_sessions[identifier]=sid
         process=self.process;self.pending_processes[identifier]=process
         try:
             async with self.lock:
@@ -160,7 +178,7 @@ class PreviewBrowser:
             if result['result'].get('state')=='idle' and self.activities.get(sid,{}).get('active'):await self.finish(sid)
             return self.presentation(sid,result['result'])
         finally:
-            self.pending.pop(identifier,None);self.pending_processes.pop(identifier,None)
+            self.pending.pop(identifier,None);self.pending_processes.pop(identifier,None);self.inflight_sessions.pop(identifier,None)
 
     async def status(self,request):return web.json_response(await self.call(request.match_info['sid'],{'action':'status'}))
 
@@ -171,7 +189,10 @@ class PreviewBrowser:
 
     async def agent(self,request):
         if not secrets.compare_digest(request.headers.get('Authorization',''),'Bearer '+self.key):raise web.HTTPUnauthorized()
-        sid=self.session(request.match_info['sid']);data={**await request.json(),'source':'agent'};action=data.get('action','status')
+        return web.json_response(await self.agent_action(request.match_info['sid'],await request.json()))
+
+    async def agent_action(self,sid,data):
+        sid=self.session(sid);data={**data,'source':'agent'};action=data.get('action','status')
         if action not in {'status','close'}:
             await self.start()
             previous=self.activities.get(sid,{})
@@ -186,7 +207,47 @@ class PreviewBrowser:
             result['activity']=dict(self.activities.get(sid,{'active':False}))
         await self.bridge.broadcast({'type':'preview.changed','session_id':sid,'preview':result,'open':action not in {'status','close'} and bool(self.activities.get(sid,{}).get('active'))})
         # Screenshots remain evidence for the agent; they do not fill the chat's generated-media gallery.
-        return web.json_response(result)
+        return result
+
+    async def history(self,request):
+        if request.method=='DELETE':self.store.clear_history();return web.json_response({'ok':True})
+        return web.json_response({'visits':self.store.history(request.query.get('q',''))},headers={'Cache-Control':'no-store'})
+
+    async def browser_choices(self,request):
+        return web.json_response({'browsers':self.launch.inventory()},headers={'Cache-Control':'no-store'})
+
+    def select_browser(self,sid,browser,engine):
+        current=self.launch.choice(sid)
+        running=getattr(self.bridge,'snapshots',{}).get(sid,{}).get('running')
+        if (running or sid in getattr(self,'inflight_sessions',{}).values()) and current!={'browser':browser,'engine':engine}:
+            raise ValueError('Дождитесь окончания текущего действия браузера перед переключением.')
+        return self.launch.select(sid,browser,engine)
+
+    async def browser_choice(self,request):
+        sid=self.session(request.match_info['sid'])
+        if request.method=='POST':
+            data=await request.json();self.select_browser(sid,data.get('browser'),data.get('engine','auto'))
+        return web.json_response(self.launch.choice(sid),headers={'Cache-Control':'no-store'})
+
+    async def logins(self,request):
+        from browser_store import origin
+        sid=self.session(request.match_info['sid']);status=await self.call(sid,{'action':'status'})
+        if status.get('state')!='ready':
+            if request.method=='GET':return web.json_response({'origin':None,'logins':[]})
+            raise ValueError('Сначала откройте сайт в панели просмотра.')
+        site=origin(status.get('url',''))
+        if request.method=='GET':return web.json_response({'origin':site,'logins':self.store.logins(site)},headers={'Cache-Control':'no-store'})
+        data=await request.json()
+        if data.get('origin')!=site:raise ValueError('Сайт изменился. Откройте сохранённые входы заново.')
+        action=data.get('action')
+        if action=='save':self.store.save_login(site,data.get('username'),data.get('password'))
+        elif action=='delete':self.store.remove_login(site,data.get('id'))
+        elif action=='fill':
+            row=self.store.login(site,data.get('id'))
+            result=await self.call(sid,{'action':'login_fill','source':'credential-vault','origin':site,'username':row['username'],'password':row['password']})
+            await self.bridge.broadcast({'type':'preview.changed','session_id':sid,'preview':result})
+        else:raise ValueError('Выберите сохранение, заполнение или удаление входа.')
+        return web.json_response({'ok':True,'origin':site,'logins':self.store.logins(site)},headers={'Cache-Control':'no-store'})
 
     async def frame(self,request):
         sid=self.session(request.match_info['sid']);key=hashlib.sha256(sid.encode()).hexdigest()[:24]
@@ -222,6 +283,10 @@ class PreviewBrowser:
         if self.log:self.log.close();self.log=None
 
     def register(self,app):
+        app.router.add_get('/api/browser/choices',self.browser_choices)
+        app.router.add_get('/api/browser/{sid}/preferences',self.browser_choice);app.router.add_post('/api/browser/{sid}/preferences',self.browser_choice)
+        app.router.add_get('/api/browser/history',self.history);app.router.add_delete('/api/browser/history',self.history)
+        app.router.add_get('/api/browser/{sid}/logins',self.logins);app.router.add_post('/api/browser/{sid}/logins',self.logins)
         app.router.add_get('/api/preview/{sid}',self.status);app.router.add_post('/api/preview/{sid}',self.action)
         app.router.add_get('/api/preview/{sid}/frame',self.frame)
         app.router.add_get('/api/preview/{sid}/shots/{name}',self.shot)

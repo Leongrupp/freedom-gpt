@@ -8,6 +8,7 @@ calling session. The creation flags (request_json), the model route and a commit
 pick stay; a session with a turn running or queued keeps the policy that turn was admitted under.
 """
 import asyncio
+import copy
 import json
 import logging
 from dataclasses import asdict, replace
@@ -38,6 +39,7 @@ def refreshed_policy(policy, live, terminal, *, picked=(), mcp_only=False):
         toolsets, terminal = policy.toolsets, json.loads(policy.terminal_json)
     else:
         toolsets = _settings(policy, config, live, picked)
+        _compression_config(config, live, secrets, replaced)
         terminal = _terminal(policy, terminal, picked)
         _extract_config_secrets(terminal, secrets, (None,))
         replaced.add(None)
@@ -47,6 +49,23 @@ def refreshed_policy(policy, live, terminal, *, picked=(), mcp_only=False):
         return policy, {}, set()
     policy = replace(policy, toolsets=toolsets, config_json=json.dumps(config), terminal_json=json.dumps(terminal))
     return policy, secrets, replaced
+
+
+def _compression_config(config, live, secrets, replaced):
+    """Refresh profile-owned compression routes, without changing the session's model or reasoning.
+
+    Keeping these frozen made an existing conversation keep timing out after the
+    owner repaired auxiliary.compression. Rebind its private values like MCP keys.
+    """
+    from gateway.session_policy import _extract_config_secrets
+    _follow(config, live, 'compression')
+    if 'auxiliary' in live:
+        config['auxiliary'] = copy.deepcopy(live['auxiliary'])
+    else:
+        config.pop('auxiliary', None)
+    if isinstance(config.get('auxiliary'), dict):
+        _extract_config_secrets(config['auxiliary'], secrets, ('auxiliary',))
+    replaced.add('auxiliary')
 
 
 def _settings(policy, config, live, picked):
@@ -69,6 +88,11 @@ def _settings(policy, config, live, picked):
     if 'max_turns' not in request:
         _follow(config, live, 'max_turns')
     _follow(config, live, 'checkpoints')
+    goals=dict(config.get('goals') or {})
+    for key in ('max_turns','continue_failed_gates','verify_reported_files','verify_tool_evidence'):
+        _follow(goals,live.get('goals') or {},key)
+    if goals or 'goals' in config:
+        config['goals']=goals
     _follow(config, live, 'tool_loop_guardrails')
     if request.get('checkpoints') is True:
         section = config.get('checkpoints')

@@ -12,17 +12,17 @@ const stepCount=value=>{
   const unit=n%10===1&&n%100!==11?'шаг':n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?'шага':'шагов';
   return `${n} ${unit}`;
 };
-const empty={objective:'',verification:'',constraints:''};
+const empty={objective:'',verification:'',constraints:'',arshi:false};
 const liveGoal=state=>['active','paused'].includes(state?.goal?.status)?state.goal:null;
 const statusLabel=goal=>!goal?t('Не включена'):goal.status==='paused'?t('На паузе'):goal.wait_barrier?t('Ожидает результат'):t('Активна');
-const nativeFields=goal=>goal?{objective:goal.title.replace(/^Задание владельца (?:--|—|-)\s*/,''),verification:goal.contract?.verification||'',constraints:goal.contract?.constraints||''}:empty;
+const nativeFields=goal=>goal?{objective:goal.title.replace(/^Задание владельца (?:--|—|-)\s*/,''),verification:goal.contract?.verification||'',constraints:goal.contract?.constraints||'',arshi:goal.contract?.boundaries?.includes('[Freedom arshi:v1]')||false}:empty;
 const editorFields=state=>state?.goal?.status==='active'?nativeFields(state.goal):state?.draft?.fields?.objective?state.draft.fields:nativeFields(liveGoal(state));
 const formKey=state=>[state?.goal?.created_at||'',state?.goal?.status||'',state?.draft?.revision||0].join(':');
 
 export function GoalButton({state,onClick}) {
   const goal=liveGoal(state),active=goal?.status==='active',count=state?.history?.length||0;
   return <button className={'goal-button '+(active?'is-active':'')} onClick={onClick} title={t('Цель проекта: результат и самостоятельное продолжение')}>
-    <Target size={13}/><span>{t('Цель')}</span>{goal?<><i className={'goal-dot '+goal.status}/><span className="goal-chip-status">{statusLabel(goal)}</span></>:count>0?<><History size={11}/><span className="goal-chip-status">{count}</span></>:null}
+    <Target size={13}/><span>{nativeFields(goal).arshi?'АРЧИ':t('Цель')}</span>{goal?<><i className={'goal-dot '+goal.status}/><span className="goal-chip-status">{statusLabel(goal)}</span></>:count>0?<><History size={11}/><span className="goal-chip-status">{count}</span></>:null}
   </button>;
 }
 
@@ -41,7 +41,7 @@ export function GoalPanel({sid,state,onChanged,workBusy}) {
   },[state]);
   const goal=liveGoal(current),active=goal?.status==='active',draft=current?.draft,history=current?.history||[];
   const showEditor=!!goal||!history.length||composing||!!fields.objective;
-  const length=Object.values(fields).reduce((n,s)=>n+s.length,0);
+  const length=['objective','verification','constraints'].reduce((n,key)=>n+(fields[key]||'').length,0);
   const changed=dirty.current||JSON.stringify(fields)!==JSON.stringify(draft?.fields?.objective?draft.fields:nativeFields(goal));
   function adopt(data,syncFields=false){
     if(!mounted.current)return;
@@ -73,6 +73,8 @@ export function GoalPanel({sid,state,onChanged,workBusy}) {
     {!showEditor&&<button className="goal-new-button" type="button" onClick={()=>setComposing(true)}><Plus size={15}/>{t('Новая цель')}</button>}
     {current?.engine&&!current.engine.ready&&<div className="goal-engine-note"><div><RefreshCw size={16}/><strong>{t('Осталось применить обновление движка')}</strong></div><p>{t('Текущие задания продолжаются. Для надёжной паузы цели нужен штатный перезапуск свободного агента. Модель остаётся загруженной.')}</p><button type="button" className="secondary-panel-button" disabled={working||current.engine.pending!==0} onClick={()=>action('apply_engine')}><RefreshCw size={14}/>{t('Применить обновление движка')}</button>{current.engine.pending>0&&<small>{t('Агент занят. Завершите текущие задания и обновите состояние.')}</small>}</div>}
     {showEditor&&<>
+    <label className={'arshi-mode '+(fields.arshi?'selected':'')}><input type="checkbox" checked={!!fields.arshi} disabled={active||working} onChange={e=>edit('arshi',e.target.checked)}/><span><strong>АРЧИ · ночная работа</strong><small>План → действие → проверка → память → следующий шаг</small></span></label>
+    {fields.arshi&&<div className="arshi-description"><p>Пока вы заняты или спите, агент работает по этой цели, сохраняет контрольные точки и проверяет результат. Голос и микрофон не нужны.</p><p>Оставьте ПК и движок включёнными, без сна. После аварийного прерывания сначала проверяется состояние; ручная пауза сохраняется.</p><p>Отчёт и журнал — в папке проекта: <code>.hermes/arshi/ID чата/</code>. Режим включится вместе с целью, сохранение описания не запускает работу.</p></div>}
     <div className="goal-activation"><div><strong>{t('Работать по цели')}</strong><span>{statusLabel(goal)}</span></div><button type="button" className={'toggle '+(active?'on':'')} role="switch" aria-label={t('Работать по цели')} aria-checked={active} disabled={working||(!active&&(workBusy||!fields.objective.trim()||length>1900||current?.unavailable||!current?.engine?.ready))} onClick={()=>action(active?'pause':goal?.status==='paused'&&!changed?'resume':'activate')}><span/></button></div>
     <div className="goal-fields">
       <label>{t('К чему нужно прийти')}<textarea autoFocus rows={3} disabled={active||working} placeholder={t('Например: закончить локальный планировщик задач и подготовить его к использованию.')} value={fields.objective} maxLength={1900} onChange={e=>edit('objective',e.target.value)}/></label>

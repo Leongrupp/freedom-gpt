@@ -20,3 +20,14 @@ export async function installedBrowser(chromium){
  }
  throw Error('Для просмотра установите Microsoft Edge, Google Chrome или Chromium.');
 }
+
+export function namedBrowserCandidates(browser,platform=process.platform,env=process.env){
+ if(!['chrome','yandex'].includes(browser))throw Error('Неизвестный браузер.');
+ if(platform==='win32')return [env.PROGRAMFILES||'C:\\Program Files',env['PROGRAMFILES(X86)']||'C:\\Program Files (x86)',env.LOCALAPPDATA].filter(Boolean).map(root=>path.win32.join(root,browser==='chrome'?'Google/Chrome/Application/chrome.exe':'Yandex/YandexBrowser/Application/browser.exe'));
+ return browser==='chrome'?browserCandidates(platform,env).filter(p=>/chrome/i.test(p)):[];
+}
+export async function selectedBrowser(chromium,browser='builtin'){
+ if(browser==='builtin')return installedBrowser(chromium);
+ for(const candidate of namedBrowserCandidates(browser)){try{await fs.access(candidate);return candidate}catch{}}
+ throw Error((browser==='chrome'?'Google Chrome':'Яндекс Браузер')+' не найден на этом ПК.');
+}

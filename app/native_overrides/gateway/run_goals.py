@@ -294,7 +294,7 @@ class GatewayGoalsMixin:
         return factory(sid)
 
     async def _post_turn_goal_continuation(
-        self, *, session_entry: Any, source: Any, final_response: str,
+        self, *, session_entry: Any, source: Any, final_response: str, turn_failure=None,
     ) -> None:
         """Run the goal judge after a gateway turn (AFTER delivery) and, if still active, enqueue a
         continuation through the adapter FIFO so a simultaneous real user message takes priority."""
@@ -322,6 +322,7 @@ class GatewayGoalsMixin:
             lambda: mgr.evaluate_after_turn(
                 final_response or "", user_initiated=True, background_processes=_bg_procs,
                 active_delegations=_active_deleg,
+                turn_failure=turn_failure,
             ),
         )
         msg = decision.get("message") or ""
@@ -379,7 +380,8 @@ class GatewayGoalsMixin:
             hooks.insert(0, ("goal continuation", self._post_turn_goal_continuation))
         for label, hook in hooks:
             try:
-                await hook(session_entry=session_entry, source=source, final_response=final_text)
+                await hook(session_entry=session_entry, source=source, final_response=final_text,
+                           **({'turn_failure':agent_result if isinstance(agent_result,dict) else getattr(event,'_goal_turn_failure',None)} if label=='goal continuation' else {}))
             except Exception as exc:
                 logger.debug("%s hook failed: %s", label, exc)
         self._publish_local_control(source, only_if_present=True)
@@ -546,6 +548,8 @@ class GatewayGoalsMixin:
             # Warm once per scan: the scan reads every persisted loop and a cold cache would
             # run the state.db init on the loop thread before the first read.
             await self._warm_goals_session_db("loop wakeup")
+            from gateway.session_goal_wait import wake_due_local_goals
+            await wake_due_local_goals(self)
             # Off-loop too: the read is lock-free under WAL but convoys on the writer lock without it.
             active_loops = await self._run_in_executor_with_context(list_active_loops)
             now = time.time()

@@ -56,8 +56,14 @@ class ContextModes:
         if type(value) is not int or value not in status['choices']:raise ValueError('Выберите объём в пределах установленной модели.')
         if self.performance.phase not in {'ready','error','waiting'}:raise ValueError('Дождитесь текущей настройки двигателя.')
         if self.performance.pending is not None:raise ValueError('Уже запланировано изменение. Сначала отмените его.')
-        if value==status['context']:return self.status(sid)
-        self.performance.pending={'context':value,'sid':sid,'model_id':status['model_id']}
+        fastest=value==min(status['choices'])
+        if value==status['context'] and (not fastest or (status['gpu_only'] and status['performance']['active'])):
+            return self.status(sid)
+        self.performance.pending={'context':value,'sid':sid,'model_id':status['model_id'],
+                                  'prefer_turbo':fastest or status['performance']['active'],
+                                  'speed_requested':fastest}
+        from engine_performance import PENDING
+        write(PENDING,self.performance.pending)
         self.performance.phase,self.performance.message='waiting',''
         self.performance.cancel.clear()
         return self.status(sid)
@@ -76,11 +82,17 @@ class ContextModes:
         cfg['threads']=int(hardware.get('physical_cores') or before.get('threads') or 4)
         verified=read(ROOT/'data/model-context-profiles.json',{}).get(item['id'],{})
         prefer_turbo=before.get('performance_mode')=='turbo' or old_preferences.get(item['id'],{}).get('prefer_turbo',False)
+        prefer_turbo=prefer_turbo or target.get('prefer_turbo',False)
+        target['prefer_turbo']=prefer_turbo
         if verified.get('device')==device and verified.get('context')==value:
             cfg.update(ngl=verified['ngl'],context_mode='verified')
             key=perf.identity(cfg);cached=read(ROOT/'data/performance-profiles.json',{}).get(key,{})
             if prefer_turbo and cached.get('turbo'):
-                cfg.update(cached['turbo']);cfg.update(performance_key=key,performance_mode='turbo',reasoning_budget=-1)
+                from engine_performance import profile_settings
+                cfg=profile_settings(cfg,cached['turbo']);cfg.update(performance_key=key,performance_mode='turbo',reasoning_budget=-1)
+        from engine_profiles import load
+        measured=load(cfg)
+        if prefer_turbo and measured:cfg.update(measured)
         with self.library.transition,file_lock(STACK/'.tmp/private-model-switch.lock'):
             self.library.activation={'id':item['id'],'state':'loading'}
             write(ROOT/'archive/context-settings'/f'{time.time_ns()}.json',{'engine':before,'application':old_app})
